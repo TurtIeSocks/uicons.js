@@ -1,0 +1,28 @@
+{
+  "name": "uicons.js",
+  "version": "1.0.0",
+  "description": "UICONS JavaScript Library",
+  "repository": "https://github.com/TurtIeSocks/uicons.js",
+  "author": "TurtIeSocks <58572875+TurtIeSocks@users.noreply.github.com>",
+  "license": "MIT",
+  "private": false,
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "build:ts": "tsc --project tsconfig.build.json"
+  },
+  "devDependencies": {
+    "@na-ji/pogo-protos": "latest",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/node": "^20.11.26",
+    "geojson": "^0.5.0",
+    "tslib": "^2.6.2",
+    "typescript": "^5.4.2",
+    "vite": "^5.1.6"
+  }
+}

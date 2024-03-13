@@ -1,6 +1,6 @@
 {
   "name": "uicons.js",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "UICONS JavaScript Library",
   "repository": "https://github.com/TurtIeSocks/uicons.js",
   "author": "TurtIeSocks <58572875+TurtIeSocks@users.noreply.github.com>",
@@ -20,9 +20,14 @@
     "@na-ji/pogo-protos": "latest",
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/node": "^20.11.26",
-    "geojson": "^0.5.0",
+    "@types/react": "^18.2.65",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^4.2.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "tslib": "^2.6.2",
     "typescript": "^5.4.2",
-    "vite": "^5.1.6"
+    "vite": "^5.1.6",
+    "vite-plugin-checker": "^0.6.4"
   }
 }

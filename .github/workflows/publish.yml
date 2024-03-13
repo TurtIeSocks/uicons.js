@@ -19,6 +19,7 @@ jobs:
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
+      - run: npm install -g pnpm
       - run: pnpm install
       - run: pnpm run build:ts
       - uses: JS-DevTools/npm-publish@v1

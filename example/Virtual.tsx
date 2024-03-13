@@ -39,7 +39,12 @@ function GitHub() {
 
 const COMPONENTS: VirtuosoGridProps<
   Props,
-  { setIcon: Setter; setAudio: Setter }
+  {
+    setIcon: Setter
+    setAudio: Setter
+    full: boolean
+    setFull: React.Dispatch<React.SetStateAction<boolean>>
+  }
 >['components'] = {
   List: React.forwardRef(({ className, ...props }, ref) => (
     <div ref={ref} {...props} className={`${className} flex-container`} />
@@ -67,6 +72,9 @@ const COMPONENTS: VirtuosoGridProps<
           <Setter set={context.setIcon} styles={ICON_STYLES} />
           <span>Audio</span>
           <Setter set={context.setAudio} styles={AUDIO_STYLES} />
+          <button onClick={() => context.setFull((full) => !full)}>
+            {context.full ? 'Show only Masterfile' : 'Show full Repo'}
+          </button>
         </div>
       )}
     </header>
@@ -77,17 +85,21 @@ export function Virtual({
   mons,
   setIcon,
   setAudio,
+  full,
+  setFull,
 }: {
   mons: Props[]
   setIcon: Setter
   setAudio: Setter
+  full: boolean
+  setFull: React.Dispatch<React.SetStateAction<boolean>>
 }) {
   return (
     <VirtuosoGrid
       className="virtuoso-container"
       totalCount={mons.length}
       data={mons}
-      context={{ setIcon, setAudio }}
+      context={{ setIcon, setAudio, full, setFull }}
       components={COMPONENTS}
       itemContent={(_, props) => <Tile key={props.title} {...props} />}
       overscan={50}

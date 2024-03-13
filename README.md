@@ -2,6 +2,9 @@
 
 uicons.js is a JavaScript class based on the [UICONS](https://github.com/UIcons/UIcons) specification. It can be used with any file extensions. Works in the browser and in Node.js. View the example code to see implementation details for both audio and image files.
 
+### [Demo Page](https://turtiesocks.github.io/uicons.js/)
+
+
 ## Installation
 
 [![npm version](https://badge.fury.io/js/uicons.js.svg)](https://badge.fury.io/js/uicons.js)

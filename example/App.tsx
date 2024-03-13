@@ -1,102 +1,25 @@
 import * as React from 'react'
-import { UICONS } from '../src'
 
-interface Form {
-  attack?: number
-  defense?: number
-  stamina?: number
-}
-
-interface Pokemon extends Required<Form> {
-  forms: Record<string, Form>
-  temp_evolutions?: Record<string, Form>
-}
-
-function Tile({
-  title,
-  src,
-  cry,
-}: {
-  title: string
-  src: string
-  cry: string
-}) {
-  return (
-    <button
-      className="flex-item"
-      onClick={() => new Audio(cry).play()}
-      type="button"
-    >
-      <h3>{title}</h3>
-      <img src={src} alt={title} />
-    </button>
-  )
-}
+import { getFullMons, getMasterfile } from './utils'
+import { AUDIO_STYLES, ICON_STYLES } from './styles'
+import { Virtual } from './Virtual'
+import type { Props, RawMon } from './types'
 
 export default function App() {
-  const [masterfile, setMasterfile] = React.useState<Record<string, Pokemon>>(
-    {}
-  )
-  const [uicons, setUicons] = React.useState<UICONS | null>(null)
-  const [uaudio, setUaudio] = React.useState<UICONS | null>(null)
+  const [mons, setMons] = React.useState<Props[]>([])
+  const [rawMons, setRawMons] = React.useState<RawMon[]>([])
+  const [icon, setIcon] = React.useState(ICON_STYLES[0])
+  const [audio, setAudio] = React.useState(AUDIO_STYLES[0])
 
-  React.useEffect(() => {
-    ;(async () => {
-      const newUicons = new UICONS(
-        'https://raw.githubusercontent.com/nileplumb/PkmnHomeIcons/master/UICONS'
-      )
-      await newUicons.remoteInit()
-      const newUaudio = new UICONS(
-        'https://raw.githubusercontent.com/WatWowMap/wwm-uaudio/main/'
-      )
-      await newUaudio.remoteInit()
-      const masterfile = await fetch(
-        'https://raw.githubusercontent.com/WatWowMap/Masterfile-Generator/master/master-latest-basics.json'
-      )
-      const json = await masterfile.json()
-      setMasterfile(json.pokemon)
-      setUicons(newUicons)
-      setUaudio(newUaudio)
-    })()
+  React.useLayoutEffect(() => {
+    getMasterfile().then((newRawMons) => setRawMons(newRawMons))
   }, [])
 
-  return uicons && uaudio ? (
-    <div>
-      <h1>UICONS Example Page</h1>
-      <h2>Click to Hear Their Cry</h2>
-      <div className="flex-container">
-        {Object.entries(masterfile).map(([id, pokemon]) => {
-          const forms = Object.keys(pokemon.forms)
-          return (
-            <React.Fragment key={id}>
-              {forms.length ? (
-                forms.map((form) => (
-                  <Tile
-                    key={`${id}-${form}`}
-                    title={`${id}-${form}`}
-                    src={uicons.pokemon(id, form)}
-                    cry={uaudio.pokemon(id, form)}
-                  />
-                ))
-              ) : (
-                <Tile
-                  title={id}
-                  src={uicons.pokemon(id)}
-                  cry={uaudio.pokemon(id)}
-                />
-              )}
-              {Object.keys(pokemon.temp_evolutions || {}).map((evo) => (
-                <Tile
-                  key={`${id}-${evo}`}
-                  title={`${id}-${evo}`}
-                  src={uicons.pokemon(id, 0, evo)}
-                  cry={uaudio.pokemon(id, 0, evo)}
-                />
-              ))}
-            </React.Fragment>
-          )
-        })}
-      </div>
-    </div>
-  ) : null
+  React.useEffect(() => {
+    getFullMons(icon, audio, rawMons).then((newMons) =>
+      setMons(newMons)
+    )
+  }, [rawMons, icon, audio])
+
+  return <Virtual mons={mons} setAudio={setAudio} setIcon={setIcon} />
 }

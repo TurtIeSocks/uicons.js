@@ -15,11 +15,18 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Setup Node.js environment
+      - name: Build Static Content
         uses: actions/setup-node@v4.0.2
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
       - run: npm install -g pnpm
       - run: pnpm install
-      - run: pnpm run deploy
+      - run: pnpm run build
+
+      - name: Publish GH Pages
+        uses: peaceiris/actions-gh-pages@v3.9.3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist-web
+  

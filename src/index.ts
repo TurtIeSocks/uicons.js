@@ -1,4 +1,11 @@
-import type { UiconsIndex, RewardTypeKeys, TimeOfDay } from './types'
+import type {
+  UiconsIndex,
+  RewardTypeKeys,
+  TimeOfDay,
+  ExtensionMap,
+  Paths,
+} from './types'
+import { buildExtensions } from './util'
 
 /**
  * Universal ICONS Class for Pokémon GO asset management
@@ -6,7 +13,7 @@ import type { UiconsIndex, RewardTypeKeys, TimeOfDay } from './types'
  * Can be used with any image or audio extensions, as long as they follow the UICONS guidelines
  * @see https://github.com/UIcons/UIcons
  * @example
- * // Without generic
+ * // Without generic and with the optional label argument
  * const uicons = new UICONS('https://example.com/uicons', 'cagemons')
  * // With stronger typing from index file
  * const uicons = new UICONS<UiconsIndex>('https://example.com/uicons', 'cagemons')
@@ -17,7 +24,7 @@ import type { UiconsIndex, RewardTypeKeys, TimeOfDay } from './types'
  */
 export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   #path: string
-  #extension: string
+  #extensionMap: ExtensionMap
   #label: string
 
   #device: Set<Index['device'][number]>
@@ -35,7 +42,6 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   #weather: Set<Index['weather'][number]>
 
   constructor(path: string, label?: string) {
-    this.#extension = 'png'
     this.#path = path.endsWith('/') ? path.slice(0, -1) : path
     this.#label = label || this.#path
 
@@ -78,7 +84,8 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
         `Failed to fetch ${this.#path} ${data.status} ${data.statusText}`
       )
     }
-    this.init(await data.json())
+    const indexFile = await data.json()
+    this.init(indexFile)
   }
 
   init(data: UiconsIndex) {
@@ -93,7 +100,9 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     Object.assign(
       this.#reward,
       Object.fromEntries(
-        Object.entries(data.reward || {}).map(([k, v]) => [k, new Set(v)])
+        Object.entries(data.reward || {})
+          .filter(([, v]) => Array.isArray(v))
+          .map(([k, v]) => [k, new Set(v)])
       )
     )
     this.#spawnpoint = new Set(data.spawnpoint || [])
@@ -101,28 +110,136 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     this.#type = new Set(data.type || [])
     this.#weather = new Set(data.weather || [])
 
-    this.#extension =
-      Object.values(data)
-        .find((d) =>
-          Array.isArray(d)
-            ? d.length > 0
-            : Object.values(d).find((e) =>
-                Array.isArray(e) ? e.length > 0 : false
-              )
-        )?.[0]
-        .split('.')
-        .pop() || this.#extension
+    this.#extensionMap = buildExtensions(data)
   }
 
-  getPokemon(
-    pokemonId = 0,
-    form = 0,
-    evolution = 0,
-    gender = 0,
-    costume = 0,
-    alignment = 0,
+  has(location: Paths<Index>, fileName: string): boolean {
+    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+    const [first, second] = location.split('.', 2)
+    switch (first) {
+      case 'device':
+        return this.#device.has(`${fileName}.${this.#extensionMap.device}`)
+      case 'gym':
+        return this.#gym.has(`${fileName}.${this.#extensionMap.gym}`)
+      case 'invasion':
+        return this.#invasion.has(`${fileName}.${this.#extensionMap.invasion}`)
+      case 'misc':
+        return this.#misc.has(`${fileName}.${this.#extensionMap.misc}`)
+      case 'nest':
+        return this.#nest.has(`${fileName}.${this.#extensionMap.nest}`)
+      case 'pokemon':
+        return this.#pokemon.has(`${fileName}.${this.#extensionMap.pokemon}`)
+      case 'pokestop':
+        return this.#pokestop.has(`${fileName}.${this.#extensionMap.pokestop}`)
+      case 'raid':
+        return this.#raid.egg.has(`${fileName}.${this.#extensionMap.raid.egg}`)
+      case 'reward':
+        return second in this.#reward
+          ? this.#reward[second]?.has(
+              `${fileName}.${this.#extensionMap.reward[second]}`
+            ) ?? false
+          : false
+      case 'spawnpoint':
+        return this.#spawnpoint.has(
+          `${fileName}.${this.#extensionMap.spawnpoint}`
+        )
+      case 'team':
+        return this.#team.has(`${fileName}.${this.#extensionMap.team}`)
+      case 'type':
+        return this.#type.has(`${fileName}.${this.#extensionMap.type}`)
+      case 'weather':
+        return this.#weather.has(`${fileName}.${this.#extensionMap.weather}`)
+      default:
+        return false
+    }
+  }
+
+  device(online = false): string {
+    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+    return online && this.#device.has(`1.${this.#extensionMap.device}`)
+      ? `${this.#path}/device/1.${this.#extensionMap.device}`
+      : `${this.#path}/device/0.${this.#extensionMap.device}`
+  }
+
+  gym(
+    teamId: string | number = 0,
+    trainerCount: string | number = 0,
+    inBattle = false,
+    ex = false,
+    ar = false
+  ): string {
+    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+    const baseUrl = `${this.#path}/gym`
+
+    const trainerSuffixes = trainerCount ? [`_t${trainerCount}`, ''] : ['']
+    const inBattleSuffixes = inBattle ? ['_b', ''] : ['']
+    const exSuffixes = ex ? ['_ex', ''] : ['']
+    const arSuffixes = ar ? ['_ar', ''] : ['']
+    for (let t = 0; t < trainerSuffixes.length; t += 1) {
+      for (let b = 0; b < inBattleSuffixes.length; b += 1) {
+        for (let e = 0; e < exSuffixes.length; e += 1) {
+          for (let a = 0; a < arSuffixes.length; a += 1) {
+            const result = `${teamId}${trainerSuffixes[t]}${
+              inBattleSuffixes[b]
+            }${exSuffixes[e]}${arSuffixes[a]}.${this.#extensionMap.gym}`
+            if (this.#gym.has(result)) {
+              return `${baseUrl}/${result}`
+            }
+          }
+        }
+      }
+    }
+    return `${baseUrl}/0.${this.#extensionMap.gym}`
+  }
+
+  invasion(gruntId: string | number = 0, confirmed = false): string {
+    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+    const baseUrl = `${this.#path}/invasion`
+
+    const confirmedSuffixes = confirmed ? [''] : ['_u', '']
+    for (let c = 0; c < confirmedSuffixes.length; c += 1) {
+      const result = `${gruntId}${confirmedSuffixes[c]}.${
+        this.#extensionMap.invasion
+      }`
+      if (this.#invasion.has(result)) {
+        return `${baseUrl}/${result}`
+      }
+    }
+    return `${baseUrl}/0.${this.#extensionMap.invasion}`
+  }
+
+  /** Argument should be the filename without the extension */
+  misc(fileName: string): string {
+    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+    const baseUrl = `${this.#path}/misc`
+
+    if (this.#misc.has(`${fileName}.${this.#extensionMap.misc}`)) {
+      return `${baseUrl}/${fileName}.${this.#extensionMap.misc}`
+    }
+    return `${baseUrl}/0.${this.#extensionMap.misc}`
+  }
+
+  nest(typeId: string | number = 0): string {
+    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+    const baseUrl = `${this.#path}/nest`
+
+    const result = `${typeId}.${this.#extensionMap.nest}`
+    if (this.#nest.has(result)) {
+      return `${baseUrl}/${result}`
+    }
+    return `${baseUrl}/0.${this.#extensionMap.nest}`
+  }
+
+  pokemon(
+    pokemonId: string | number = 0,
+    form: string | number = 0,
+    evolution: string | number = 0,
+    gender: string | number = 0,
+    costume: string | number = 0,
+    alignment: string | number = 0,
     shiny = false
-  ): Index['pokemon'][number] {
+  ): string {
+    if (!this.#extensionMap) throw new Error('UICONS not initialized')
     const baseUrl = `${this.#path}/pokemon`
 
     const evolutionSuffixes = evolution ? [`_e${evolution}`, ''] : ['']
@@ -142,7 +259,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
                   formSuffixes[f]
                 }${costumeSuffixes[c]}${genderSuffixes[g]}${
                   alignmentSuffixes[a]
-                }${shinySuffixes[s]}.${this.#extension}`
+                }${shinySuffixes[s]}.${this.#extensionMap.pokemon}`
                 if (this.#pokemon.has(result)) {
                   return `${baseUrl}/${result}`
                 }
@@ -152,27 +269,18 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
         }
       }
     }
-    return `${baseUrl}/0.${this.#extension}`
+    return `${baseUrl}/0.${this.#extensionMap.pokemon}`
   }
 
-  getType(typeId = 0): Index['type'][number] {
-    const baseUrl = `${this.#path}/type`
-
-    const result = `${typeId}.${this.#extension}`
-    if (this.#type.has(result)) {
-      return `${baseUrl}/${result}`
-    }
-    return `${baseUrl}/0.${this.#extension}`
-  }
-
-  getPokestop(
-    lureId = 0,
+  pokestop(
+    lureId: string | number = 0,
+    power: string | number = 0,
+    display: string | number = 0,
     invasionActive = false,
     questActive = false,
-    ar = false,
-    power = 0,
-    display = ''
-  ): Index['pokestop'][number] {
+    ar = false
+  ): string {
+    if (!this.#extensionMap) throw new Error('UICONS not initialized')
     const baseUrl = `${this.#path}/pokestop`
 
     const invasionSuffixes =
@@ -187,7 +295,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
           for (let p = 0; p < powerUpSuffixes.length; p += 1) {
             const result = `${lureId}${invasionSuffixes[i]}${questSuffixes[q]}${
               arSuffixes[a]
-            }${powerUpSuffixes[p]}.${this.#extension}`
+            }${powerUpSuffixes[p]}.${this.#extensionMap.pokestop}`
             if (this.#pokestop.has(result)) {
               return `${baseUrl}/${result}`
             }
@@ -195,21 +303,47 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
         }
       }
     }
-    return `${baseUrl}/0.${this.#extension}`
+    return `${baseUrl}/0.${this.#extensionMap.pokestop}`
   }
 
-  getReward<U extends RewardTypeKeys>(
+  raidEgg(level: string | number = 0, hatched = false, ex = false): string {
+    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+    const baseUrl = `${this.#path}/raid/egg`
+
+    const hatchedSuffixes = hatched ? ['_h', ''] : ['']
+    const exSuffixes = ex ? ['_ex', ''] : ['']
+    for (let h = 0; h < hatchedSuffixes.length; h += 1) {
+      for (let e = 0; e < exSuffixes.length; e += 1) {
+        const result = `${level}${hatchedSuffixes[h]}${exSuffixes[e]}.${
+          this.#extensionMap.raid.egg
+        }`
+        if (this.#raid.egg.has(result)) {
+          return `${baseUrl}/${result}`
+        }
+      }
+    }
+    return `${baseUrl}/0.${this.#extensionMap.raid.egg}`
+  }
+
+  reward<U extends RewardTypeKeys>(
     // @ts-ignore // TODO: WHY TS
     questRewardType: U = 'unset',
-    rewardId = 0,
-    amount = 0
-  ): Index['reward'][U][number] {
+    rewardId: string | number = 0,
+    amount: string | number = 0
+  ): string {
+    if (!this.#extensionMap) throw new Error('UICONS not initialized')
     const baseUrl = `${this.#path}/reward/${questRewardType}`
 
     if (this.#reward[questRewardType]) {
-      const amountSuffixes = amount > 1 ? [`_a${amount}`, ''] : ['']
+      const amountSafe = typeof amount === 'number' ? amount : +amount
+      const amountSuffixes =
+        Number.isInteger(amountSafe) && amountSafe > 1
+          ? [`_a${amount}`, '']
+          : ['']
       for (let a = 0; a < amountSuffixes.length; a += 1) {
-        const result = `${rewardId}${amountSuffixes[a]}.${this.#extension}`
+        const result = `${rewardId}${amountSuffixes[a]}.${
+          this.#extensionMap.reward[questRewardType]
+        }`
         if (this.#reward[questRewardType].has(result)) {
           return `${baseUrl}/${result}`
         }
@@ -220,129 +354,55 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
         `Missing category: ${questRewardType}`
       )
     }
-    return `${baseUrl}/0.${this.#extension}`
+    return `${baseUrl}/0.${this.#extensionMap.reward[questRewardType]}`
   }
 
-  getInvasion(gruntId = 0, confirmed = false): Index['invasion'][number] {
-    const baseUrl = `${this.#path}/invasion`
-
-    const confirmedSuffixes = confirmed ? [''] : ['_u', '']
-    for (let c = 0; c < confirmedSuffixes.length; c += 1) {
-      const result = `${gruntId}${confirmedSuffixes[c]}.${this.#extension}`
-      if (this.#invasion.has(result)) {
-        return `${baseUrl}/${result}`
-      }
-    }
-    return `${baseUrl}/0.${this.#extension}`
+  spawnpoint(hasTth = false): string {
+    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+    return hasTth && this.#spawnpoint.has(`1.${this.#extensionMap.spawnpoint}`)
+      ? `${this.#path}/spawnpoint/1.${this.#extensionMap.spawnpoint}`
+      : `${this.#path}/spawnpoint/0.${this.#extensionMap.spawnpoint}`
   }
 
-  getGym(
-    teamId = 0,
-    trainerCount = 0,
-    inBattle = false,
-    ex = false,
-    ar = false
-  ): Index['gym'][number] {
-    const baseUrl = `${this.#path}/gym`
-
-    const trainerSuffixes = trainerCount ? [`_t${trainerCount}`, ''] : ['']
-    const inBattleSuffixes = inBattle ? ['_b', ''] : ['']
-    const exSuffixes = ex ? ['_ex', ''] : ['']
-    const arSuffixes = ar ? ['_ar', ''] : ['']
-    for (let t = 0; t < trainerSuffixes.length; t += 1) {
-      for (let b = 0; b < inBattleSuffixes.length; b += 1) {
-        for (let e = 0; e < exSuffixes.length; e += 1) {
-          for (let a = 0; a < arSuffixes.length; a += 1) {
-            const result = `${teamId}${trainerSuffixes[t]}${
-              inBattleSuffixes[b]
-            }${exSuffixes[e]}${arSuffixes[a]}.${this.#extension}`
-            if (this.#gym.has(result)) {
-              return `${baseUrl}/${result}`
-            }
-          }
-        }
-      }
-    }
-    return `${baseUrl}/0.${this.#extension}`
-  }
-
-  getEgg(level = 0, hatched = false, ex = false): Index['raid']['egg'][number] {
-    const baseUrl = `${this.#path}/raid/egg`
-
-    const hatchedSuffixes = hatched ? ['_h', ''] : ['']
-    const exSuffixes = ex ? ['_ex', ''] : ['']
-    for (let h = 0; h < hatchedSuffixes.length; h += 1) {
-      for (let e = 0; e < exSuffixes.length; e += 1) {
-        const result = `${level}${hatchedSuffixes[h]}${exSuffixes[e]}.${
-          this.#extension
-        }`
-        if (this.#raid.egg.has(result)) {
-          return `${baseUrl}/${result}`
-        }
-      }
-    }
-    return `${baseUrl}/0.${this.#extension}`
-  }
-
-  getTeam(teamId = 0): Index['team'][number] {
+  team(teamId: string | number = 0): string {
+    if (!this.#extensionMap) throw new Error('UICONS not initialized')
     const baseUrl = `${this.#path}/team`
 
-    const result = `${teamId}.${this.#extension}`
+    const result = `${teamId}.${this.#extensionMap}`
     if (this.#team.has(result)) {
       return `${baseUrl}/${result}`
     }
-    return `${baseUrl}/0.${this.#extension}`
+    return `${baseUrl}/0.${this.#extensionMap.team}`
   }
 
-  getWeather(
-    weatherId = 0,
+  type(typeId: string | number = 0): string {
+    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+    const baseUrl = `${this.#path}/type`
+
+    const result = `${typeId}.${this.#extensionMap.type}`
+    if (this.#type.has(result)) {
+      return `${baseUrl}/${result}`
+    }
+    return `${baseUrl}/0.${this.#extensionMap.type}`
+  }
+
+  weather(
+    weatherId: string | number = 0,
     timeOfDay: TimeOfDay = 'day'
-  ): Index['weather'][number] {
+  ): string {
+    if (!this.#extensionMap) throw new Error('UICONS not initialized')
     const baseUrl = `${this.#path}/weather`
 
     const timeSuffixes = timeOfDay === 'night' ? ['_n', ''] : ['_d', '']
     for (let t = 0; t < timeSuffixes.length; t += 1) {
-      const result = `${weatherId}${timeSuffixes[t]}.${this.#extension}`
+      const result = `${weatherId}${timeSuffixes[t]}.${
+        this.#extensionMap.weather
+      }`
       if (this.#weather.has(result)) {
         return `${baseUrl}/${result}`
       }
     }
-    return `${baseUrl}/0.${this.#extension}`
-  }
-
-  getNest(typeId = 0): Index['nest'][number] {
-    const baseUrl = `${this.#path}/nest`
-
-    const result = `${typeId}.${this.#extension}`
-    if (this.#nest.has(result)) {
-      return `${baseUrl}/${result}`
-    }
-    return `${baseUrl}/0.${this.#extension}`
-  }
-
-  miscHas(fileName: string) {
-    return this.#misc.has(`${fileName}.${this.#extension}`)
-  }
-
-  getMisc(fileName: string): Index['misc'][number] {
-    const baseUrl = `${this.#path}/misc`
-
-    if (this.miscHas(fileName)) {
-      return `${baseUrl}/${fileName}.${this.#extension}`
-    }
-    return `${baseUrl}/0.${this.#extension}`
-  }
-
-  getDevice(online = false): Index['device'][number] {
-    return online && this.#device.has(`1.${this.#extension}`)
-      ? `${this.#path}/device/1.${this.#extension}`
-      : `${this.#path}/device/0.${this.#extension}`
-  }
-
-  getSpawnpoint(hasTth = false): Index['spawnpoint'][number] {
-    return hasTth && this.#spawnpoint.has(`1.${this.#extension}`)
-      ? `${this.#path}/spawnpoint/1.${this.#extension}`
-      : `${this.#path}/spawnpoint/0.${this.#extension}`
+    return `${baseUrl}/0.${this.#extensionMap.weather}`
   }
 }
 

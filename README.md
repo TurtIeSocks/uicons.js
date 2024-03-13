@@ -1,6 +1,6 @@
 # UICONS.js
 
-UICONS.js is a JavaScript class wrapper around the [UICONS](https://github.com/UIcons/UIcons) specification. It can be used with any extension, including images and audio. Works in the browser and in Node.js.
+UICONS.js is a JavaScript class wrapper around the [UICONS](https://github.com/UIcons/UIcons) specification. It can be used with any file extensions. Works in the browser and in Node.js.
 
 ## Usage
 
@@ -20,7 +20,7 @@ await uicons.remoteInit()
 
 // Sync initialization if you already have contents of the index.json
 const indexJson = await fetch('https://www.uicons-repo.com/index.json').then(res => res.json())
-icons.init(indexJson)
+uicons.init(indexJson)
 
 // Below are some example usages with variable names for demonstration, see intellisense in your IDE for type information
 const pokemon = uicons.getPokemon(pokemon_id, form_id, evolution_id, gender_id, costume_id, alignment_id, shiny)

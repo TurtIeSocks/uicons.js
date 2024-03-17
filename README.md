@@ -4,7 +4,6 @@ uicons.js is a JavaScript class based on the [UICONS](https://github.com/UIcons/
 
 ### [Demo Page](https://turtiesocks.github.io/uicons.js/)
 
-
 ## Installation
 
 [![npm version](https://badge.fury.io/js/uicons.js.svg)](https://badge.fury.io/js/uicons.js)
@@ -44,11 +43,11 @@ const pokemon = uicons.pokemon(
 const type = uicons.type(type_id)
 const pokestop = uicons.pokestop(
   lure_id,
+  power,
+  display,
   invasion_active,
   quest_active,
-  ar,
-  power,
-  display
+  ar
 )
 const reward = uicons.reward(reward_type_id, reward_id, amount)
 const invasion = uicons.invasion(grunt_id, confirmed)

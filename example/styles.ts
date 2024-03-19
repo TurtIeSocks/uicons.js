@@ -29,6 +29,10 @@ export const ICON_STYLES: Asset[] = [
     name: 'Half Shiny',
     path: 'https://raw.githubusercontent.com/jms412/PkmnShuffleMap/master/UICONS_Half_Shiny_Sparkles_256/',
   },
+  {
+    name: 'Circles',
+    path: 'https://raw.githubusercontent.com/TurtIeSocks/rust-uicons/main/uicons/safe/svg',
+  }
 ]
 
 export const AUDIO_STYLES: Asset[] = [

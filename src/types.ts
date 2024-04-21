@@ -28,31 +28,6 @@ export type ExtensionMap<T = UiconsIndex> = {
     : ExtensionMap<T[K]>
 }
 
-type DeepKeys<T, P extends string = ''> = {
-  [K in keyof T]-?: K extends string
-    ? P extends ''
-      ? `${K}` | `${K}.${DeepKeys<T[K], K>}`
-      : `${P}.${K}.${DeepKeys<T[K], P & K>}`
-    : never
-}[keyof T]
-
-type ConfigPaths<T extends object> = DeepKeys<T>
-
-type PathValue<T, P> = P extends `${infer K}.${infer Rest}`
-  ? K extends keyof T
-    ? Rest extends DeepKeys<T[K]>
-      ? PathValue<T[K], Rest>
-      : never
-    : never
-  : P extends keyof T
-  ? T[P]
-  : never
-
-type ConfigPathValue<T extends object, P extends ConfigPaths<T>> = PathValue<
-  T,
-  P
->
-
 type Join<K, P> = K extends string | number
   ? P extends string | number
     ? `${K}${'' extends P ? '' : '.'}${P}`

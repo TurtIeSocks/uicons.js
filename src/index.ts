@@ -324,7 +324,6 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   }
 
   /**
-   *
    * @param lureId the ID of the lure at the pokestop, 0 for no lure, see TROY_DISK values in Rpc.Item
    * @param power the power up level of the pokestop, 0 for no power up, see Rpc.FortPowerUpLevel
    * @param display the display ID of the pokestop, 0 for no display, see Rpc.IncidentDisplayType

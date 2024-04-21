@@ -49,6 +49,7 @@ const pokestop = uicons.pokestop(
   quest_active,
   ar
 )
+// Please note that in some cases, such as with Stardust, the `reward_id` is the `amount` of the reward
 const reward = uicons.reward(reward_type_id, reward_id, amount)
 const invasion = uicons.invasion(grunt_id, confirmed)
 const gym = uicons.gym(team_id, trainer_count, in_battle, ex, ar)

@@ -41,6 +41,10 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   #type: Set<Index['type'][number]>
   #weather: Set<Index['weather'][number]>
 
+  /**
+   * @param path The base URL of the UICONS repository
+   * @param label Optional label for debugging purposes
+   */
   constructor(path: string, label?: string) {
     this.#path = path.endsWith('/') ? path.slice(0, -1) : path
     this.#label = label || this.#path
@@ -77,6 +81,10 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     this.#weather = new Set()
   }
 
+  /**
+   * This is used to initialize the UICONS class asynchronously by automatically fetching the index.json file
+   * from the remote UICONS repository provided in the constructor
+   */
   async remoteInit(): Promise<void> {
     const data = await fetch(`${this.#path}/index.json`)
     if (!data.ok) {
@@ -88,6 +96,10 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     this.init(indexFile)
   }
 
+  /**
+   * This is used to initialize the UICONS class if you have already fetched the index.json file and want init the class synchronously
+   * @param data The index.json file from the UICONS repository
+   */
   init(data: UiconsIndex) {
     this.#device = new Set(data.device || [])
     this.#gym = new Set(data.gym || [])
@@ -113,6 +125,11 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     this.#extensionMap = buildExtensions(data)
   }
 
+  /**
+   * Check to see if an icon path exists in the UICONS repository
+   * @param location This is the dot notation path of the folders in the UICONS repository
+   * @param fileName The filename without the extension
+   */
   has(location: Paths<Index>, fileName: string): boolean {
     if (!this.#extensionMap) throw new Error('UICONS not initialized')
     const [first, second] = location.split('.', 2)
@@ -135,9 +152,9 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
         return this.#raid.egg.has(`${fileName}.${this.#extensionMap.raid.egg}`)
       case 'reward':
         return second in this.#reward
-          ? this.#reward[second]?.has(
+          ? !!this.#reward[second]?.has(
               `${fileName}.${this.#extensionMap.reward[second]}`
-            ) ?? false
+            )
           : false
       case 'spawnpoint':
         return this.#spawnpoint.has(
@@ -154,6 +171,10 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     }
   }
 
+  /**
+   * @param online a boolean to determine if the device is online or offline
+   * @returns the src of the device icon
+   */
   device(online = false): string {
     if (!this.#extensionMap) throw new Error('UICONS not initialized')
     return online && this.#device.has(`1.${this.#extensionMap.device}`)
@@ -161,6 +182,14 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
       : `${this.#path}/device/0.${this.#extensionMap.device}`
   }
 
+  /**
+   * @param teamId the team id of the gym, see Rpc.Team
+   * @param trainerCount the number of trainers in the gym
+   * @param inBattle is the gym is in battle
+   * @param ex is the gym an EX raid gym
+   * @param ar is the gym AR eligible
+   * @returns the src of the gym icon
+   */
   gym(
     teamId: string | number = 0,
     trainerCount: string | number = 0,
@@ -192,6 +221,11 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     return `${baseUrl}/0.${this.#extensionMap.gym}`
   }
 
+  /**
+   * @param gruntId the grunt id of the invasion, see Rpc.EnumWrapper.InvasionCharacter
+   * @param confirmed if the invasion is confirmed - used for giovanni/decoy images
+   * @returns the src of the invasion icon
+   */
   invasion(gruntId: string | number = 0, confirmed = false): string {
     if (!this.#extensionMap) throw new Error('UICONS not initialized')
     const baseUrl = `${this.#path}/invasion`
@@ -208,7 +242,10 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     return `${baseUrl}/0.${this.#extensionMap.invasion}`
   }
 
-  /** Argument should be the filename without the extension */
+  /**
+   * @param fileName the filename without the extension
+   * @returns the src of the misc icon
+   */
   misc(fileName: string): string {
     if (!this.#extensionMap) throw new Error('UICONS not initialized')
     const baseUrl = `${this.#path}/misc`
@@ -219,6 +256,10 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     return `${baseUrl}/0.${this.#extensionMap.misc}`
   }
 
+  /**
+   * @param typeId the pokemon type ID that is nesting, see Rpc.HoloPokemonType
+   * @returns the src of the nest icon
+   */
   nest(typeId: string | number = 0): string {
     if (!this.#extensionMap) throw new Error('UICONS not initialized')
     const baseUrl = `${this.#path}/nest`
@@ -230,6 +271,16 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     return `${baseUrl}/0.${this.#extensionMap.nest}`
   }
 
+  /**
+   * @param pokemonId the pokemon ID
+   * @param form the form ID of the pokemon, see Rpc.PokemonDisplayProto.Form
+   * @param evolution the [mega] evolution ID of the pokemon, see Rpc.HoloTemporaryEvolutionId
+   * @param gender the gender ID of the pokemon, see Rpc.BelugaPokemonProto.PokemonGender
+   * @param costume the costume ID of the pokemon, see Rpc.PokemonDisplayProto.Costume
+   * @param alignment the alignment ID of the pokemon, such as shadow or purified, see Rpc.PokemonDisplayProto.Alignment
+   * @param shiny if the pokemon is shiny
+   * @returns the src of the pokemon icon
+   */
   pokemon(
     pokemonId: string | number = 0,
     form: string | number = 0,
@@ -272,6 +323,16 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     return `${baseUrl}/0.${this.#extensionMap.pokemon}`
   }
 
+  /**
+   *
+   * @param lureId the ID of the lure at the pokestop, 0 for no lure, see TROY_DISK values in Rpc.Item
+   * @param power the power up level of the pokestop, 0 for no power up, see Rpc.FortPowerUpLevel
+   * @param display the display ID of the pokestop, 0 for no display, see Rpc.IncidentDisplayType
+   * @param invasionActive does the pokestop currently have an invasion
+   * @param questActive does the pokestop currently have an active quest
+   * @param ar is the pokestop AR eligible
+   * @returns
+   */
   pokestop(
     lureId: string | number = 0,
     power: string | number = 0,
@@ -306,6 +367,12 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     return `${baseUrl}/0.${this.#extensionMap.pokestop}`
   }
 
+  /**
+   * @param level the level of the raid egg, see Rpc.RaidLevel
+   * @param hatched if the raid egg has hatched
+   * @param ex if the raid egg is an EX raid egg
+   * @returns the src of the raid egg icon
+   */
   raidEgg(level: string | number = 0, hatched = false, ex = false): string {
     if (!this.#extensionMap) throw new Error('UICONS not initialized')
     const baseUrl = `${this.#path}/raid/egg`
@@ -325,10 +392,16 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     return `${baseUrl}/0.${this.#extensionMap.raid.egg}`
   }
 
+  /**
+   * @param questRewardType the type of quest reward, see Rpc.QuestRewardProto.Type
+   * @param rewardIdOrAmount the ID or the amount of the reward. This depends on the complexity of the reward type. For example, item rewards use the item ID, while stardust rewards use the amount of stardust. Best to check uicons repository to see which of them use the `_a` flag
+   * @param amount the amount of the reward
+   * @returns the src of the quest reward icon
+   */
   reward<U extends RewardTypeKeys>(
     // @ts-ignore // TODO: WHY TS
     questRewardType: U = 'unset',
-    rewardId: string | number = 0,
+    rewardIdOrAmount: string | number = 0,
     amount: string | number = 0
   ): string {
     if (!this.#extensionMap) throw new Error('UICONS not initialized')
@@ -340,8 +413,9 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
         Number.isInteger(amountSafe) && amountSafe > 1
           ? [`_a${amount}`, '']
           : ['']
+      const safeId = +rewardIdOrAmount || amountSafe || 0
       for (let a = 0; a < amountSuffixes.length; a += 1) {
-        const result = `${rewardId}${amountSuffixes[a]}.${
+        const result = `${safeId}${amountSuffixes[a]}.${
           this.#extensionMap.reward[questRewardType]
         }`
         if (this.#reward[questRewardType].has(result)) {
@@ -357,6 +431,10 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     return `${baseUrl}/0.${this.#extensionMap.reward[questRewardType]}`
   }
 
+  /**
+   * @param hasTth if the spawnpoint has a confirmed timer or not
+   * @returns the src of the spawnpoint icon
+   */
   spawnpoint(hasTth = false): string {
     if (!this.#extensionMap) throw new Error('UICONS not initialized')
     return hasTth && this.#spawnpoint.has(`1.${this.#extensionMap.spawnpoint}`)
@@ -364,6 +442,10 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
       : `${this.#path}/spawnpoint/0.${this.#extensionMap.spawnpoint}`
   }
 
+  /**
+   * @param teamId the team ID, see Rpc.Team
+   * @returns the src of the team icon
+   */
   team(teamId: string | number = 0): string {
     if (!this.#extensionMap) throw new Error('UICONS not initialized')
     const baseUrl = `${this.#path}/team`
@@ -375,6 +457,10 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     return `${baseUrl}/0.${this.#extensionMap.team}`
   }
 
+  /**
+   * @param typeId the pokemon type ID, see Rpc.HoloPokemonType
+   * @returns the src of the pokemon type icon
+   */
   type(typeId: string | number = 0): string {
     if (!this.#extensionMap) throw new Error('UICONS not initialized')
     const baseUrl = `${this.#path}/type`
@@ -386,6 +472,11 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     return `${baseUrl}/0.${this.#extensionMap.type}`
   }
 
+  /**
+   * @param weatherId the weather ID, see Rpc.GameplayWeatherProto.WeatherCondition
+   * @param timeOfDay the time of day, either 'day' or 'night'
+   * @returns the src of the weather icon
+   */
   weather(
     weatherId: string | number = 0,
     timeOfDay: TimeOfDay = 'day'

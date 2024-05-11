@@ -449,7 +449,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     if (!this.#extensionMap) throw new Error('UICONS not initialized')
     const baseUrl = `${this.#path}/team`
 
-    const result = `${teamId}.${this.#extensionMap}`
+    const result = `${teamId}.${this.#extensionMap.team}`
     if (this.#team.has(result)) {
       return `${baseUrl}/${result}`
     }

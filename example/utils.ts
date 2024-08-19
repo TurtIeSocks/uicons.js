@@ -1,4 +1,4 @@
-import { UICONS, UiconsIndex } from '../src'
+import { UICONS, UiconsIndex } from '../dist'
 import { MASTERFILE_URL } from './styles'
 import type { Asset, Pokemon, Props, RawMon } from './types'
 

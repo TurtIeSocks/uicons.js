@@ -1,20 +1,18 @@
 import { resolve } from 'path'
 
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import react from '@vitejs/plugin-react-swc'
 import checker from 'vite-plugin-checker'
 import typescript from '@rollup/plugin-typescript'
 
 export default defineConfig(({ mode }) => {
-  const isRelease = process.argv.includes('-r')
+  const isClient = process.argv.includes('-r')
   return {
-    base: isRelease ? '/uicons.js/' : undefined,
+    base: isClient ? '/uicons.js/' : undefined,
     plugins:
-      mode === 'development' || isRelease
+      mode === 'development' || isClient
         ? [
-            react({
-              jsxRuntime: 'classic',
-            }),
+            react(),
             checker({
               overlay: {
                 initialIsOpen: false,
@@ -27,26 +25,31 @@ export default defineConfig(({ mode }) => {
         : [],
     build: {
       target: ['safari11.1', 'chrome64', 'firefox66', 'edge88'],
-      outDir: isRelease ? resolve(__dirname, './dist-web') : resolve(__dirname, './dist'),
-      sourcemap: isRelease ? false : true,
-      minify: isRelease ? 'esbuild' : false,
+      outDir: isClient
+        ? resolve(__dirname, './dist-web')
+        : resolve(__dirname, './dist'),
+      sourcemap: isClient ? false : false,
+      minify: isClient ? 'esbuild' : false,
       input:
-        mode === 'development' || isRelease
+        mode === 'development' || isClient
           ? { main: resolve(__dirname, 'index.html') }
           : undefined,
       lib:
-        mode === 'development' || isRelease
+        mode === 'development' || isClient
           ? undefined
           : {
               name: 'uicons.js',
               entry: 'src/index.ts',
-              fileName: 'index',
+              fileName: (format, entry) => `${entry}.${format === 'cjs' ? 'cjs' : 'mjs'}`,
+              formats: ['es', 'cjs'],
             },
       rollupOptions:
-        mode === 'development' || isRelease
-          ? {}
+        mode === 'development' || isClient
+          ? {
+              external: [],
+            }
           : {
-              plugins: [typescript({ tsconfig: './tsconfig.build.json' })],
+              plugins: [typescript({ tsconfig: './tsconfig.json' })],
             },
       assetsDir: '',
       emptyOutDir: true,

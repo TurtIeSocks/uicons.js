@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/TurtIeSocks/uicons.js/compare/v1.2.0...v1.2.1) (2024-08-28)
+
+
+### Bug Fixes
+
+* try again ([1c78a19](https://github.com/TurtIeSocks/uicons.js/commit/1c78a19edf82c0b832562b5fc6c99d5f3b7acecd))
+
 # 1.0.0 (2024-08-28)
 
 

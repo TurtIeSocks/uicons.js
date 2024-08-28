@@ -1,9 +1,14 @@
+import type { Rpc } from '@na-ji/pogo-protos'
 import type {
   UiconsIndex,
   RewardTypeKeys,
   TimeOfDay,
   ExtensionMap,
   Paths,
+  EnumVal,
+  StringOrNumber,
+  TrainerCounts,
+  LureIDs,
 } from './types.js'
 
 /**
@@ -94,7 +99,11 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
         .filter(([_, value]) => value !== '')
     )
   }
-  
+
+  #isReady() {
+    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+  }
+
   /**
    * This is used to initialize the UICONS class asynchronously by automatically fetching the index.json file
    * from the remote UICONS repository provided in the constructor
@@ -114,7 +123,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
    * This is used to initialize the UICONS class if you have already fetched the index.json file and want init the class synchronously
    * @param data The index.json file from the UICONS repository
    */
-  init(data: UiconsIndex) {
+  init(data: Index) {
     this.#device = new Set(data.device || [])
     this.#gym = new Set(data.gym || [])
     this.#invasion = new Set(data.invasion || [])
@@ -145,8 +154,8 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
    * @param location This is the dot notation path of the folders in the UICONS repository
    * @param fileName The filename without the extension
    */
-  has(location: Paths<Index>, fileName: string): boolean {
-    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+  has(location: Paths<Index>, fileName: string | number): boolean {
+    this.#isReady()
     const [first, second] = location.split('.', 2)
     switch (first) {
       case 'device':
@@ -164,7 +173,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
       case 'pokestop':
         return this.#pokestop.has(`${fileName}.${this.#extensionMap.pokestop}`)
       case 'raid':
-        return this.#raid.egg.has(`${fileName}.${this.#extensionMap.raid.egg}`)
+        return this.#raid.egg.has(`${fileName}.${this.#extensionMap.raid?.egg}`)
       case 'reward':
         return second in this.#reward
           ? !!this.#reward[second]?.has(
@@ -191,14 +200,14 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
    * @returns the src of the device icon
    */
   device(online = false): string {
-    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+    this.#isReady()
     return online && this.#device.has(`1.${this.#extensionMap.device}`)
       ? `${this.#path}/device/1.${this.#extensionMap.device}`
       : `${this.#path}/device/0.${this.#extensionMap.device}`
   }
 
   /**
-   * @param teamId the team id of the gym, see Rpc.Team
+   * @param teamId the team id of the gym, @see Rpc.Team
    * @param trainerCount the number of trainers in the gym
    * @param inBattle is the gym is in battle
    * @param ex is the gym an EX raid gym
@@ -206,13 +215,27 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
    * @returns the src of the gym icon
    */
   gym(
-    teamId: string | number = 0,
+    teamId?: EnumVal<typeof Rpc.Team>,
+    trainerCount?: TrainerCounts,
+    inBattle?: boolean,
+    ex?: boolean,
+    ar?: boolean
+  ): string
+  gym(
+    teamId?: string | number,
+    trainerCount?: string | number,
+    inBattle?: boolean,
+    ex?: boolean,
+    ar?: boolean
+  ): string
+  gym(
+    teamId = 0,
     trainerCount: string | number = 0,
     inBattle = false,
     ex = false,
     ar = false
   ): string {
-    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+    this.#isReady()
     const baseUrl = `${this.#path}/gym`
 
     const trainerSuffixes = trainerCount ? [`_t${trainerCount}`, ''] : ['']
@@ -237,12 +260,17 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   }
 
   /**
-   * @param gruntId the grunt id of the invasion, see Rpc.EnumWrapper.InvasionCharacter
+   * @param gruntId the grunt id of the invasion, @see Rpc.EnumWrapper.InvasionCharacter
    * @param confirmed if the invasion is confirmed - used for giovanni/decoy images
    * @returns the src of the invasion icon
    */
-  invasion(gruntId: string | number = 0, confirmed = false): string {
-    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+  invasion(
+    gruntId?: EnumVal<typeof Rpc.EnumWrapper.InvasionCharacter>,
+    confirmed?: boolean
+  ): string
+  invasion(gruntId?: string | number, confirmed?: boolean): string
+  invasion(gruntId = 0, confirmed = false): string {
+    this.#isReady()
     const baseUrl = `${this.#path}/invasion`
 
     const confirmedSuffixes = confirmed ? [''] : ['_u', '']
@@ -261,8 +289,8 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
    * @param fileName the filename without the extension
    * @returns the src of the misc icon
    */
-  misc(fileName: string): string {
-    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+  misc(fileName?: string | number): string {
+    this.#isReady()
     const baseUrl = `${this.#path}/misc`
 
     if (this.#misc.has(`${fileName}.${this.#extensionMap.misc}`)) {
@@ -272,11 +300,13 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   }
 
   /**
-   * @param typeId the pokemon type ID that is nesting, see Rpc.HoloPokemonType
+   * @param typeId the pokemon type ID that is nesting, @see Rpc.HoloPokemonType
    * @returns the src of the nest icon
    */
-  nest(typeId: string | number = 0): string {
-    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+  nest(typeId?: EnumVal<typeof Rpc.HoloPokemonType>): string
+  nest(typeId?: string | number): string
+  nest(typeId = 0): string {
+    this.#isReady()
     const baseUrl = `${this.#path}/nest`
 
     const result = `${typeId}.${this.#extensionMap.nest}`
@@ -288,24 +318,42 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
 
   /**
    * @param pokemonId the pokemon ID
-   * @param form the form ID of the pokemon, see Rpc.PokemonDisplayProto.Form
-   * @param evolution the [mega] evolution ID of the pokemon, see Rpc.HoloTemporaryEvolutionId
-   * @param gender the gender ID of the pokemon, see Rpc.BelugaPokemonProto.PokemonGender
-   * @param costume the costume ID of the pokemon, see Rpc.PokemonDisplayProto.Costume
-   * @param alignment the alignment ID of the pokemon, such as shadow or purified, see Rpc.PokemonDisplayProto.Alignment
+   * @param form the form ID of the pokemon, @see Rpc.PokemonDisplayProto.Form
+   * @param evolution the [mega] evolution ID of the pokemon, @see Rpc.HoloTemporaryEvolutionId
+   * @param gender the gender ID of the pokemon, @see Rpc.PokemonDisplayProto.PokemonGender
+   * @param costume the costume ID of the pokemon, @see Rpc.PokemonDisplayProto.Costume
+   * @param alignment the alignment ID of the pokemon, such as shadow or purified, @see Rpc.PokemonDisplayProto.Alignment
    * @param shiny if the pokemon is shiny
    * @returns the src of the pokemon icon
    */
   pokemon(
-    pokemonId: string | number = 0,
-    form: string | number = 0,
-    evolution: string | number = 0,
-    gender: string | number = 0,
-    costume: string | number = 0,
-    alignment: string | number = 0,
+    pokemonId?: EnumVal<typeof Rpc.HoloPokemonId>,
+    form?: EnumVal<typeof Rpc.PokemonDisplayProto.Form>,
+    evolution?: EnumVal<typeof Rpc.HoloTemporaryEvolutionId>,
+    gender?: EnumVal<typeof Rpc.PokemonDisplayProto.Gender>,
+    costume?: EnumVal<typeof Rpc.PokemonDisplayProto.Costume>,
+    alignment?: EnumVal<typeof Rpc.PokemonDisplayProto.Alignment>,
+    shiny?: boolean
+  ): string
+  pokemon(
+    pokemonId?: string | number,
+    form?: string | number,
+    evolution?: string | number,
+    gender?: string | number,
+    costume?: string | number,
+    alignment?: string | number,
+    shiny?: boolean
+  ): string
+  pokemon(
+    pokemonId = 0,
+    form = 0,
+    evolution = 0,
+    gender = 0,
+    costume = 0,
+    alignment = 0,
     shiny = false
   ): string {
-    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+    this.#isReady()
     const baseUrl = `${this.#path}/pokemon`
 
     const evolutionSuffixes = evolution ? [`_e${evolution}`, ''] : ['']
@@ -339,27 +387,43 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   }
 
   /**
-   * @param lureId the ID of the lure at the pokestop, 0 for no lure, see TROY_DISK values in Rpc.Item
-   * @param power the power up level of the pokestop, 0 for no power up, see Rpc.FortPowerUpLevel
-   * @param display the display ID of the pokestop, 0 for no display, see Rpc.IncidentDisplayType
+   * @param lureId the ID of the lure at the pokestop, 0 for no lure, @see Rpc.TROY_DISK values in Rpc.Item
+   * @param power the power up level of the pokestop, 0 for no power up, @see Rpc.FortPowerUpLevel
+   * @param display the display ID of the pokestop, 0 for no display, @see Rpc.IncidentDisplayType
    * @param invasionActive does the pokestop currently have an invasion
    * @param questActive does the pokestop currently have an active quest
    * @param ar is the pokestop AR eligible
    * @returns
    */
   pokestop(
-    lureId: string | number = 0,
-    power: string | number = 0,
-    display: string | number = 0,
+    lureId?: LureIDs,
+    power?: EnumVal<typeof Rpc.FortPowerUpLevel>,
+    display?: EnumVal<typeof Rpc.IncidentDisplayType>,
+    invasionActive?: boolean,
+    questActive?: boolean,
+    ar?: boolean
+  ): string
+  pokestop(
+    lureId?: string | number,
+    power?: string | number,
+    display?: string | number,
+    invasionActive?: boolean,
+    questActive?: boolean,
+    ar?: boolean
+  ): string
+  pokestop(
+    lureId = 0,
+    power = 0,
+    display = 0,
     invasionActive = false,
     questActive = false,
     ar = false
   ): string {
-    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+    this.#isReady()
     const baseUrl = `${this.#path}/pokestop`
 
     const invasionSuffixes =
-      invasionActive || display ? [`_i${display}`, ''] : ['']
+      invasionActive || display ? [`_i${display || ''}`, ''] : ['']
     const questSuffixes = questActive ? ['_q', ''] : ['']
     const arSuffixes = ar ? ['_ar', ''] : ['']
     const powerUpSuffixes = power ? [`_p${power}`, ''] : ['']
@@ -382,13 +446,19 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   }
 
   /**
-   * @param level the level of the raid egg, see Rpc.RaidLevel
+   * @param level the level of the raid egg, @see Rpc.RaidLevel
    * @param hatched if the raid egg has hatched
    * @param ex if the raid egg is an EX raid egg
    * @returns the src of the raid egg icon
    */
-  raidEgg(level: string | number = 0, hatched = false, ex = false): string {
-    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+  raidEgg(
+    level?: EnumVal<typeof Rpc.RaidLevel>,
+    hatched?: boolean,
+    ex?: boolean
+  ): string
+  raidEgg(level?: string | number, hatched?: boolean, ex?: boolean): string
+  raidEgg(level = 0, hatched = false, ex = false): string {
+    this.#isReady()
     const baseUrl = `${this.#path}/raid/egg`
 
     const hatchedSuffixes = hatched ? ['_h', ''] : ['']
@@ -407,42 +477,53 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   }
 
   /**
-   * @param questRewardType the type of quest reward, see Rpc.QuestRewardProto.Type
-   * @param rewardIdOrAmount the ID or the amount of the reward. This depends on the complexity of the reward type. For example, item rewards use the item ID, while stardust rewards use the amount of stardust. Best to check uicons repository to see which of them use the `_a` flag
+   * @param questRewardType the type of quest reward, @see Rpc.QuestRewardProto.Type
+   * @param rewardId the ID or the amount of the reward. This depends on the complexity of the reward type. For example, item rewards use the item ID, while stardust rewards use the amount of stardust. Best to check uicons repository to see which of them use the `_a` flag
    * @param amount the amount of the reward
    * @returns the src of the quest reward icon
    */
   reward<U extends RewardTypeKeys>(
-    // @ts-ignore // TODO: WHY TS
-    questRewardType: U = 'unset',
-    rewardIdOrAmount: string | number = 0,
-    amount: string | number = 0
+    questRewardType?: U,
+    rewardId?: string | number,
+    amount?: string | number
+  ): string
+  reward<U extends RewardTypeKeys>(
+    questRewardType?: U,
+    amount?: string | number
+  ): string
+  reward<U extends RewardTypeKeys>(
+    questRewardType?: U,
+    rewardId = 0,
+    amount = 0
   ): string {
-    if (!this.#extensionMap) throw new Error('UICONS not initialized')
-    const baseUrl = `${this.#path}/reward/${questRewardType}`
+    this.#isReady()
+    const safeRewardType = questRewardType || 'unset'
+    const baseUrl = `${this.#path}/reward/${safeRewardType}`
 
-    if (this.#reward[questRewardType]) {
+    if (this.#reward[safeRewardType]) {
       const amountSafe = typeof amount === 'number' ? amount : +amount
       const amountSuffixes =
         Number.isInteger(amountSafe) && amountSafe > 1
           ? [`_a${amount}`, '']
           : ['']
-      const safeId = +rewardIdOrAmount || amountSafe || 0
+      const safeId = +rewardId || amountSafe || 0
       for (let a = 0; a < amountSuffixes.length; a += 1) {
         const result = `${safeId}${amountSuffixes[a]}.${
-          this.#extensionMap.reward[questRewardType]
+          this.#extensionMap.reward[safeRewardType]
         }`
-        if (this.#reward[questRewardType].has(result)) {
+        if (this.#reward[safeRewardType].has(result)) {
           return `${baseUrl}/${result}`
         }
       }
     } else {
       console.warn(
-        `[${this.#label.toUpperCase()}]`,
-        `Missing category: ${questRewardType}`
+        'UICONS',
+        this.#label.toUpperCase(),
+        `Missing category: ${safeRewardType}`
       )
+      return this.misc(0)
     }
-    return `${baseUrl}/0.${this.#extensionMap.reward[questRewardType]}`
+    return `${baseUrl}/0.${this.#extensionMap.reward[safeRewardType]}`
   }
 
   /**
@@ -450,18 +531,20 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
    * @returns the src of the spawnpoint icon
    */
   spawnpoint(hasTth = false): string {
-    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+    this.#isReady()
     return hasTth && this.#spawnpoint.has(`1.${this.#extensionMap.spawnpoint}`)
       ? `${this.#path}/spawnpoint/1.${this.#extensionMap.spawnpoint}`
       : `${this.#path}/spawnpoint/0.${this.#extensionMap.spawnpoint}`
   }
 
   /**
-   * @param teamId the team ID, see Rpc.Team
+   * @param teamId the team ID, @see Rpc.Team
    * @returns the src of the team icon
    */
-  team(teamId: string | number = 0): string {
-    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+  team(teamId?: EnumVal<typeof Rpc.Team>): string
+  team(teamId?: string | number): string
+  team(teamId = 0): string {
+    this.#isReady()
     const baseUrl = `${this.#path}/team`
 
     const result = `${teamId}.${this.#extensionMap.team}`
@@ -472,11 +555,13 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   }
 
   /**
-   * @param typeId the pokemon type ID, see Rpc.HoloPokemonType
+   * @param typeId the pokemon type ID, @see Rpc.HoloPokemonType
    * @returns the src of the pokemon type icon
    */
-  type(typeId: string | number = 0): string {
-    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+  type(typeId?: EnumVal<typeof Rpc.HoloPokemonType>): string
+  type(typeId?: string | number): string
+  type(typeId = 0): string {
+    this.#isReady()
     const baseUrl = `${this.#path}/type`
 
     const result = `${typeId}.${this.#extensionMap.type}`
@@ -487,15 +572,17 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   }
 
   /**
-   * @param weatherId the weather ID, see Rpc.GameplayWeatherProto.WeatherCondition
+   * @param weatherId the weather ID, @see Rpc.GameplayWeatherProto.WeatherCondition
    * @param timeOfDay the time of day, either 'day' or 'night'
    * @returns the src of the weather icon
    */
   weather(
-    weatherId: string | number = 0,
-    timeOfDay: TimeOfDay = 'day'
-  ): string {
-    if (!this.#extensionMap) throw new Error('UICONS not initialized')
+    weatherId?: EnumVal<typeof Rpc.GameplayWeatherProto.WeatherCondition>,
+    timeOfDay?: TimeOfDay
+  ): string
+  weather(weatherId?: string | number, timeOfDay?: string): string
+  weather(weatherId = 0, timeOfDay = 'day'): string {
+    this.#isReady()
     const baseUrl = `${this.#path}/weather`
 
     const timeSuffixes = timeOfDay === 'night' ? ['_n', ''] : ['_d', '']

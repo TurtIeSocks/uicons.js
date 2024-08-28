@@ -15,23 +15,76 @@
   "types": "dist/index.d.ts",
   "module": "dist/index.mjs",
   "scripts": {
+    "preinstall": "pnpm upgrade @na-ji/pogo-protos",
     "start": "vite",
     "build": "vite build -- -r",
-    "build:ts": "vite build"
+    "build:ts": "vite build",
+    "test": "jest",
+    "prepare": "husky install"
   },
   "devDependencies": {
-    "@na-ji/pogo-protos": "^2",
-    "@rollup/plugin-typescript": "11.1.6",
-    "@types/node": "22.4.1",
-    "@types/react": "18.3.3",
-    "@types/react-dom": "18.3.0",
-    "@vitejs/plugin-react-swc": "3.7.0",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "@commitlint/cli": "^19.4.1",
+    "@commitlint/config-conventional": "^19.4.1",
+    "@na-ji/pogo-protos": "^2.149.0",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react-swc": "^3.7.0",
+    "commitizen": "^4.3.0",
+    "husky": "^9.1.5",
+    "jest": "^29.7.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-virtuoso": "^4.7.2",
+    "semantic-release": "^24.1.0",
+    "ts-jest": "^29.2.5",
     "tslib": "^2.6.2",
-    "typescript": "5.5.4",
-    "vite": "5.4.1",
-    "vite-plugin-checker": "0.7.2"
+    "typescript": "^5.5.4",
+    "vite": "^5.4.1",
+    "vite-plugin-checker": "^0.7.2"
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "release": {
+    "branches": [
+      "+([0-9])?(.{+([0-9]),x}).x",
+      "main"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/changelog",
+      [
+        "@semantic-release/npm",
+        {
+          "npmPublish": true
+        }
+      ],
+      "@semantic-release/github",
+      [
+        "@semantic-release/git",
+        {
+          "assets": [
+            "CHANGELOG.md",
+            "package.json",
+            "pnpm-lock.yaml"
+          ],
+          "message": "chore(release): ${nextRelease.gitTag} [skip ci]\n\n${nextRelease.notes}"
+        }
+      ]
+    ],
+    "preset": "angular"
   }
 }

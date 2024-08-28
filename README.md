@@ -62,6 +62,8 @@ const device = uicons.device(online)
 const spawnpoint = uicons.spawnpoint(has_known_tth)
 ```
 
+See [tests](./src/uicons.test.ts) for more examples.
+
 ## Development
 
 ```bash

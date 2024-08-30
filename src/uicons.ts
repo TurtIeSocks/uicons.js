@@ -78,7 +78,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
 
     this.#path = path.endsWith('/') ? path.slice(0, -1) : path
     this.#label = label ?? this.#path
-    if (label) {
+    if (oldLabel) {
       this.#warn(
         'The label parameter is deprecated, use the options object instead'
       )

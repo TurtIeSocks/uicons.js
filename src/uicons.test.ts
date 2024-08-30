@@ -17,7 +17,7 @@ describe('webp format', () => {
   })
 })
 
-const audio = new UICONS(BASE_AUDIO_URL)
+const audio = new UICONS({ path: BASE_AUDIO_URL })
 
 describe('wav format', () => {
   test('should load locally', async () => {

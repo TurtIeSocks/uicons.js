@@ -1,3 +1,15 @@
+# [1.3.0](https://github.com/TurtIeSocks/uicons.js/compare/v1.2.1...v1.3.0) (2024-08-30)
+
+
+### Bug Fixes
+
+* deprecated label check ([243d57a](https://github.com/TurtIeSocks/uicons.js/commit/243d57a6fe7045c150f0239624f21fb83414fd01))
+
+
+### Features
+
+* add constructor options obj ([7baa96d](https://github.com/TurtIeSocks/uicons.js/commit/7baa96d94f44e1ce0f3316945edb47e917b6ba52))
+
 ## [1.2.1](https://github.com/TurtIeSocks/uicons.js/compare/v1.2.0...v1.2.1) (2024-08-28)
 
 

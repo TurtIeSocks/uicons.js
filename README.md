@@ -1,8 +1,6 @@
 # uicons.js
 
-uicons.js is a JavaScript class based on the [UICONS](https://github.com/UIcons/UIcons) specification. It can be used with any file extensions, works in the browser and on the server.
-
-View the [example](./example/) code to see implementation details for both audio and image files. See [tests](./src/uicons.test.ts) for additional examples.
+uicons.js is a JavaScript class based on the [UICONS](https://github.com/UIcons/UIcons) specification. It provides a simple way to utilize the UICONS standard in your projects and reduces the need for tedious boilerplate code.
 
 ### [Demo Page](https://turtiesocks.github.io/uicons.js/)
 
@@ -16,7 +14,17 @@ yarn add uicons.js
 pnpm add uicons.js
 ```
 
+## Features
+
+- File extension agnostic
+- Provides helpful IntelliSense in your IDE based on latest protos
+- Works in the browser and server
+- Supports both remote and local initialization of the index.json file
+
 ## Usage
+
+- View the [example](./example/) code to see implementation details for both audio and image files
+- See [tests](./src/uicons.test.ts) for additional examples.
 
 ```typescript
 import { UICONS } from 'uicons.js'
@@ -76,4 +84,7 @@ pnpm run install
 
 # Build and Run Example
 pnpm run start
+
+# Run Tests
+pnpm run test
 ```

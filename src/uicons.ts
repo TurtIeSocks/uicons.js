@@ -6,9 +6,9 @@ import type {
   ExtensionMap,
   Paths,
   EnumVal,
-  StringOrNumber,
   TrainerCounts,
   LureIDs,
+  Options,
 } from './types.js'
 
 /**
@@ -17,13 +17,24 @@ import type {
  * Can be used with any image or audio extensions, as long as they follow the UICONS guidelines
  * @see https://github.com/UIcons/UIcons
  * @example
- * // Without generic and with the optional label argument
- * const uicons = new UICONS('https://example.com/uicons', 'cagemons')
+ * import { UICONS } from 'uicons.js'
+ *
+ * // Basic usage
+ * const uicons = new UICONS('https://example.com/uicons')
+ * // With all constructor options
+ * const uicons = new UICONS({
+ *  // base URL of the UICONS repository
+ *  path: 'https://example.com/uicons',
+ *  // label for debug purposes
+ *  label: 'cagemons',
+ *  // your own index.json data if you want to load in the constructor
+ *  data: { pokemon: [...], device: [...] },
+ * })
  * // With stronger typing from index file
- * const uicons = new UICONS<UiconsIndex>('https://example.com/uicons', 'cagemons')
+ * const uicons = new UICONS<UiconsIndex>({ path: 'https://example.com/uicons' })
  * // Async initialization fetches the index.json file for you
  * await uicons.remoteInit()
- * // Sync initialization if you already have the index.json
+ * // Sync initialization if you already have the index.json and want to load it manually
  * uicons.init(indexJson)
  */
 export class UICONS<Index extends UiconsIndex = UiconsIndex> {
@@ -46,53 +57,52 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   #weather: Set<Index['weather'][number]>
 
   /**
-   * @param path The base URL of the UICONS repository
-   * @param label Optional label for debugging purposes
+   * @param options The options object for the UICONS instance
    */
-  constructor(path: string, label?: string) {
-    this.#path = path.endsWith('/') ? path.slice(0, -1) : path
-    this.#label = label || this.#path
+  constructor(options: Options<Index>)
+  /**
+   * @param path The base URL of the UICONS repository
+   */
+  constructor(path: string)
+  /**
+   * @param path The base URL of the UICONS repository
+   * @param label The optional label for the UICONS instance
+   * @deprecated Use the new constructor with an options object
+   */
+  constructor(path: string, label?: string)
+  constructor(optionsOrPath: string | Options<Index>, oldLabel?: string) {
+    const { path, label, data }: Options<Index> =
+      typeof optionsOrPath === 'string'
+        ? { path: optionsOrPath, label: oldLabel }
+        : optionsOrPath
 
-    this.#device = new Set()
-    this.#gym = new Set()
-    this.#invasion = new Set()
-    this.#misc = new Set()
-    this.#nest = new Set()
-    this.#pokemon = new Set()
-    this.#pokestop = new Set()
-    this.#raid = { egg: new Set() }
-    this.#reward = {
-      unset: new Set(),
-      experience: new Set(),
-      item: new Set(),
-      stardust: new Set(),
-      candy: new Set(),
-      avatar_clothing: new Set(),
-      quest: new Set(),
-      pokemon_encounter: new Set(),
-      pokecoin: new Set(),
-      xl_candy: new Set(),
-      level_cap: new Set(),
-      sticker: new Set(),
-      mega_resource: new Set(),
-      incident: new Set(),
-      player_attribute: new Set(),
-      event_badge: new Set(),
+    this.#path = path.endsWith('/') ? path.slice(0, -1) : path
+    this.#label = label ?? this.#path
+    if (oldLabel) {
+      this.#warn(
+        'The label parameter is deprecated, use the options object instead'
+      )
     }
-    this.#spawnpoint = new Set()
-    this.#team = new Set()
-    this.#type = new Set()
-    this.#weather = new Set()
+    if (data) this.init(data)
   }
 
-  static #buildExtensions(json: UiconsIndex): ExtensionMap {
+  #warn(...args: unknown[]) {
+    if (
+      typeof process !== 'undefined' &&
+      process.env.NODE_ENV === 'development'
+    ) {
+      console.warn(`[UICONS ${this.#label}]`, ...args)
+    }
+  }
+
+  #buildExtensions(json: Index): ExtensionMap<Index> {
     return Object.fromEntries(
       Object.entries(json)
         .map(([category, values]) => {
           if (Array.isArray(values) && values.length > 0) {
             return [category, values[0].split('.').pop()]
           } else if (typeof values === 'object') {
-            return [category, UICONS.#buildExtensions(values)]
+            return [category, this.#buildExtensions(values)]
           }
           return [category, '']
         })
@@ -131,21 +141,18 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     this.#nest = new Set(data.nest || [])
     this.#pokemon = new Set(data.pokemon || [])
     this.#pokestop = new Set(data.pokestop || [])
-    this.#raid.egg = new Set(data.raid?.egg || [])
-    Object.assign(
-      this.#reward,
-      Object.fromEntries(
-        Object.entries(data.reward || {})
-          .filter(([, v]) => Array.isArray(v))
-          .map(([k, v]) => [k, new Set(v)])
-      )
+    this.#raid = { egg: new Set(data.raid?.egg || []) }
+    this.#reward = Object.fromEntries(
+      Object.entries(data.reward || {})
+        .filter(([, v]) => Array.isArray(v))
+        .map(([k, v]) => [k, new Set(v)])
     )
     this.#spawnpoint = new Set(data.spawnpoint || [])
     this.#team = new Set(data.team || [])
     this.#type = new Set(data.type || [])
     this.#weather = new Set(data.weather || [])
 
-    this.#extensionMap = UICONS.#buildExtensions(data)
+    this.#extensionMap = this.#buildExtensions(data)
     return this
   }
 
@@ -492,38 +499,34 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     amount?: string | number
   ): string
   reward<U extends RewardTypeKeys>(
-    questRewardType?: U,
+    questRewardType: U = 'unset' as U,
     rewardId = 0,
     amount = 0
   ): string {
     this.#isReady()
-    const safeRewardType = questRewardType || 'unset'
-    const baseUrl = `${this.#path}/reward/${safeRewardType}`
-
-    if (this.#reward[safeRewardType]) {
-      const amountSafe = typeof amount === 'number' ? amount : +amount
-      const amountSuffixes =
-        Number.isInteger(amountSafe) && amountSafe > 1
-          ? [`_a${amount}`, '']
-          : ['']
-      const safeId = +rewardId || amountSafe || 0
-      for (let a = 0; a < amountSuffixes.length; a += 1) {
-        const result = `${safeId}${amountSuffixes[a]}.${
-          this.#extensionMap.reward[safeRewardType]
-        }`
-        if (this.#reward[safeRewardType].has(result)) {
-          return `${baseUrl}/${result}`
-        }
-      }
-    } else {
-      console.warn(
-        'UICONS',
-        this.#label.toUpperCase(),
-        `Missing category: ${safeRewardType}`
-      )
+    const baseUrl = `${this.#path}/reward/${questRewardType}`
+    const rewardSet = this.#reward[questRewardType]
+    if (!rewardSet) {
+      this.#warn('Invalid quest reward type,', questRewardType)
       return this.misc(0)
     }
-    return `${baseUrl}/0.${this.#extensionMap.reward[safeRewardType]}`
+
+    const amountSafe = typeof amount === 'number' ? amount : +amount
+    const amountSuffixes =
+      Number.isInteger(amountSafe) && amountSafe > 1
+        ? [`_a${amount}`, '']
+        : ['']
+    const safeId = +rewardId || amountSafe || 0
+
+    for (let a = 0; a < amountSuffixes.length; a += 1) {
+      const result = `${safeId}${amountSuffixes[a]}.${
+        this.#extensionMap.reward[questRewardType]
+      }`
+      if (rewardSet.has(result)) {
+        return `${baseUrl}/${result}`
+      }
+    }
+    return `${baseUrl}/0.${this.#extensionMap.reward[questRewardType]}`
   }
 
   /**

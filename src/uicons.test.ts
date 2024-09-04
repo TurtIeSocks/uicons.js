@@ -192,7 +192,10 @@ describe('spawnpoint', () => {
 })
 
 describe('stations', () => {
-  test('0.ext', () => {
+  test('active', () => {
+    expect(icons.station(true)).toBe(`${BASE_ICON_URL}/station/1.webp`)
+  })
+  test('inactive', () => {
     expect(icons.station()).toBe(`${BASE_ICON_URL}/station/0.webp`)
   })
 })

@@ -557,12 +557,15 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   }
 
   /**
+   * @param active if the station is active or not
    * @returns the src of the station icon
    */
-  station(): string {
+  station(active = false): string {
     if (!this.#isReady('station')) return ''
 
-    return `${this.#path}/station/0.${this.#extensionMap.station}`
+    return `${this.#path}/station/${active ? 1 : 0}.${
+      this.#extensionMap.station
+    }`
   }
 
   /**

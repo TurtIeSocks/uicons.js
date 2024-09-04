@@ -15,8 +15,8 @@ importers:
         specifier: ^19.4.1
         version: 19.4.1
       '@na-ji/pogo-protos':
-        specifier: ^2.149.0
-        version: 2.149.0
+        specifier: ^2.151.0
+        version: 2.151.0
       '@rollup/plugin-typescript':
         specifier: ^11.1.6
         version: 11.1.6(rollup@4.13.0)(tslib@2.6.2)(typescript@5.5.4)
@@ -571,8 +571,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
-  '@na-ji/pogo-protos@2.149.0':
-    resolution: {integrity: sha512-0fb2Fn7S+xlhjAe43C+L+fbNpDYgfOpmWPDHRMAGywBObqniIDeFCpdTtuA2jSsB1OuZyws0rHmOqQJp2MUqdQ==}
+  '@na-ji/pogo-protos@2.151.0':
+    resolution: {integrity: sha512-9IBw6lvFxv4sLKyNhGR+YudA45RrSiHeupZXTCrDkpo6dEE9q8x62V4zcEdm7VFGrSlJw4YjG7If/npiTvJC/w==}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -3753,7 +3753,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@na-ji/pogo-protos@2.149.0':
+  '@na-ji/pogo-protos@2.151.0':
     dependencies:
       protobufjs: 6.11.4
 

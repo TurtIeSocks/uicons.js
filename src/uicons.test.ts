@@ -89,13 +89,12 @@ describe('pokemon', () => {
     expect(icons.pokemon('1')).toBe(`${BASE_ICON_URL}/pokemon/1.webp`)
   })
   test('charmander form', () => {
-    expect(icons.pokemon(4, 896)).toBe(`${BASE_ICON_URL}/pokemon/4_f896.webp`)
+    expect(icons.pokemon(4, 0, 896)).toBe(`${BASE_ICON_URL}/pokemon/4_f896.webp`)
   })
   test('mega blastoise', () => {
     expect(
       icons.pokemon(
         Rpc.HoloPokemonId.BLASTOISE,
-        Rpc.PokemonDisplayProto.Form.FORM_UNSET,
         Rpc.HoloTemporaryEvolutionId.TEMP_EVOLUTION_MEGA
       )
     ).toBe(`${BASE_ICON_URL}/pokemon/9_e1.webp`)

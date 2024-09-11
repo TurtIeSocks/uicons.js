@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/TurtIeSocks/uicons.js/compare/v1.4.0...v1.4.1) (2024-09-11)
+
+
+### Bug Fixes
+
+* remove preinstall hook ([dd736cf](https://github.com/TurtIeSocks/uicons.js/commit/dd736cf89a43a05aacfc98042f66329db5316027))
+
 # [1.4.0](https://github.com/TurtIeSocks/uicons.js/compare/v1.3.0...v1.4.0) (2024-09-11)
 
 

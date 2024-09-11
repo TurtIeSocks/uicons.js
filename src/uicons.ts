@@ -117,6 +117,14 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     return true
   }
 
+  #evalPossiblyEmptyFlag(flag: string, value: boolean | string | number) {
+    return typeof value === 'number'
+      ? [`${flag}${value || ''}`, '']
+      : value
+      ? [flag, '']
+      : ['']
+  }
+
   /**
    * This is used to initialize the UICONS class asynchronously by automatically fetching the index.json file
    * from the remote UICONS repository provided in the constructor
@@ -353,7 +361,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     gender?: EnumVal<typeof Rpc.PokemonDisplayProto.Gender>,
     alignment?: EnumVal<typeof Rpc.PokemonDisplayProto.Alignment>,
     bread?: EnumVal<typeof Rpc.BreadModeEnum.Modifier>,
-    shiny?: boolean,
+    shiny?: boolean
   ): string
   pokemon(
     pokemonId?: string | number,
@@ -363,7 +371,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     gender?: string | number,
     alignment?: string | number,
     bread?: string | number,
-    shiny?: boolean,
+    shiny?: boolean
   ): string
   pokemon(
     pokemonId = 0,
@@ -373,7 +381,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     gender = 0,
     alignment = 0,
     bread = 0,
-    shiny = false,
+    shiny = false
   ): string {
     if (!this.#isReady('pokemon')) return ''
 
@@ -416,52 +424,47 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
 
   /**
    * @param lureId the ID of the lure at the pokestop, 0 for no lure, @see Rpc.TROY_DISK values in Rpc.Item
-   * @param power the power up level of the pokestop, 0 for no power up, @see Rpc.FortPowerUpLevel
-   * @param display the display ID of the pokestop, 0 for no display, @see Rpc.IncidentDisplayType
-   * @param invasionActive does the pokestop currently have an invasion
+   * @param displayTypeId the display ID of the pokestop, 0 for no display, @see Rpc.IncidentDisplayType
    * @param questActive does the pokestop currently have an active quest
    * @param ar is the pokestop AR eligible
+   * @param power the power up level of the pokestop, 0 for no power up, @see Rpc.FortPowerUpLevel
    * @returns
    */
   pokestop(
     lureId?: LureIDs,
-    power?: EnumVal<typeof Rpc.FortPowerUpLevel>,
-    display?: EnumVal<typeof Rpc.IncidentDisplayType>,
-    invasionActive?: boolean,
-    questActive?: boolean,
-    ar?: boolean
+    displayTypeId?: boolean | EnumVal<typeof Rpc.IncidentDisplayType>,
+    questActive?: boolean | string | number,
+    ar?: boolean,
+    power?: EnumVal<typeof Rpc.FortPowerUpLevel>
   ): string
   pokestop(
     lureId?: string | number,
-    power?: string | number,
-    display?: string | number,
-    invasionActive?: boolean,
-    questActive?: boolean,
-    ar?: boolean
+    displayTypeId?: boolean | string | number,
+    questActive?: boolean | string | number,
+    ar?: boolean,
+    power?: string | number
   ): string
   pokestop(
     lureId = 0,
-    power = 0,
-    display = 0,
-    invasionActive = false,
+    displayTypeId = false,
     questActive = false,
-    ar = false
+    ar = false,
+    power = 0
   ): string {
     if (!this.#isReady('pokestop')) return ''
 
     const baseUrl = `${this.#path}/pokestop`
 
-    const invasionSuffixes =
-      invasionActive || display ? [`_i${display || ''}`, ''] : ['']
-    const questSuffixes = questActive ? ['_q', ''] : ['']
+    const displaySuffixes = this.#evalPossiblyEmptyFlag('_i', displayTypeId)
+    const questSuffixes = this.#evalPossiblyEmptyFlag('_q', questActive)
     const arSuffixes = ar ? ['_ar', ''] : ['']
     const powerUpSuffixes = power ? [`_p${power}`, ''] : ['']
 
-    for (let i = 0; i < invasionSuffixes.length; i += 1) {
+    for (let i = 0; i < displaySuffixes.length; i += 1) {
       for (let q = 0; q < questSuffixes.length; q += 1) {
         for (let a = 0; a < arSuffixes.length; a += 1) {
           for (let p = 0; p < powerUpSuffixes.length; p += 1) {
-            const result = `${lureId}${invasionSuffixes[i]}${questSuffixes[q]}${
+            const result = `${lureId}${displaySuffixes[i]}${questSuffixes[q]}${
               arSuffixes[a]
             }${powerUpSuffixes[p]}.${this.#extensionMap.pokestop}`
             if (this.#pokestop.has(result)) {

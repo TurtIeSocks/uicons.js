@@ -107,17 +107,15 @@ describe('pokestops', () => {
     expect(icons.pokestop(501)).toBe(`${BASE_ICON_URL}/pokestop/501.webp`)
   })
   test('invasion', () => {
-    expect(icons.pokestop(0, 0, 0, true)).toBe(
-      `${BASE_ICON_URL}/pokestop/0_i.webp`
-    )
+    expect(icons.pokestop(0, 0)).toBe(`${BASE_ICON_URL}/pokestop/0_i.webp`)
   })
   test('quest', () => {
-    expect(icons.pokestop(0, 0, 0, false, true)).toBe(
+    expect(icons.pokestop(0, false, 0)).toBe(
       `${BASE_ICON_URL}/pokestop/0_q.webp`
     )
   })
   test('ar', () => {
-    expect(icons.pokestop(504, 0, 0, true, false, true)).toBe(
+    expect(icons.pokestop(504, 0, false, true)).toBe(
       `${BASE_ICON_URL}/pokestop/504_i_ar.webp`
     )
   })

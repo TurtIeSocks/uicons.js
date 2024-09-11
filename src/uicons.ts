@@ -445,21 +445,21 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     displayTypeId?: boolean | EnumVal<typeof Rpc.IncidentDisplayType>,
     questActive?: boolean | string | number,
     ar?: boolean,
-    power?: EnumVal<typeof Rpc.FortPowerUpLevel>
+    power?: boolean | EnumVal<typeof Rpc.FortPowerUpLevel>
   ): string
   pokestop(
     lureId?: string | number,
     displayTypeId?: boolean | string | number,
     questActive?: boolean | string | number,
     ar?: boolean,
-    power?: string | number
+    power?: boolean | string | number
   ): string
   pokestop(
     lureId = 0,
     displayTypeId = false,
     questActive = false,
     ar = false,
-    power = 0
+    power = false
   ): string {
     if (!this.#isReady('pokestop')) return ''
 
@@ -468,7 +468,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     const displaySuffixes = this.#evalPossiblyEmptyFlag('_i', displayTypeId)
     const questSuffixes = this.#evalPossiblyEmptyFlag('_q', questActive)
     const arSuffixes = ar ? ['_ar', ''] : ['']
-    const powerUpSuffixes = power ? [`_p${power}`, ''] : ['']
+    const powerUpSuffixes = this.#evalPossiblyEmptyFlag('_p', power)
 
     for (let i = 0; i < displaySuffixes.length; i += 1) {
       for (let q = 0; q < questSuffixes.length; q += 1) {

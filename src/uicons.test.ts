@@ -89,7 +89,9 @@ describe('pokemon', () => {
     expect(icons.pokemon('1')).toBe(`${BASE_ICON_URL}/pokemon/1.webp`)
   })
   test('charmander form', () => {
-    expect(icons.pokemon(4, 0, 896)).toBe(`${BASE_ICON_URL}/pokemon/4_f896.webp`)
+    expect(icons.pokemon(4, 0, 896)).toBe(
+      `${BASE_ICON_URL}/pokemon/4_f896.webp`
+    )
   })
   test('mega blastoise', () => {
     expect(
@@ -225,11 +227,11 @@ describe('weather', () => {
     expect(icons.weather(2)).toBe(`${BASE_ICON_URL}/weather/2.webp`)
   })
   test('with day', () => {
-    expect(icons.weather(3, 'day')).toBe(`${BASE_ICON_URL}/weather/3_d.webp`)
+    expect(icons.weather(3, 0, 'day')).toBe(`${BASE_ICON_URL}/weather/3_d.webp`)
   })
   test('with night', () => {
     expect(
-      icons.weather(Rpc.GameplayWeatherProto.WeatherCondition.CLEAR, 'night')
+      icons.weather(Rpc.GameplayWeatherProto.WeatherCondition.CLEAR, 0, 'night')
     ).toBe(`${BASE_ICON_URL}/weather/1_n.webp`)
   })
 })

@@ -618,26 +618,35 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
 
   /**
    * @param weatherId the weather ID, @see Rpc.GameplayWeatherProto.WeatherCondition
-   * @param timeOfDay the time of day, either 'day' or 'night'
+   * @param severityLevel the severity of the weather, @see Rpc.InternalWeatherAlertProto.Severity
+   * @param timeOfDay the time of day, @see TimeOfDay
    * @returns the src of the weather icon
    */
   weather(
     weatherId?: EnumVal<typeof Rpc.GameplayWeatherProto.WeatherCondition>,
+    severityLevel?: EnumVal<typeof Rpc.InternalWeatherAlertProto.Severity>,
     timeOfDay?: TimeOfDay
   ): string
-  weather(weatherId?: string | number, timeOfDay?: string): string
-  weather(weatherId = 0, timeOfDay = 'day'): string {
+  weather(
+    weatherId?: string | number,
+    severityLevel?: string | number,
+    timeOfDay?: string
+  ): string
+  weather(weatherId = 0, severityLevel = 0, timeOfDay = 'day'): string {
     if (!this.#isReady('weather')) return ''
 
     const baseUrl = `${this.#path}/weather`
 
+    const severitySuffixes = severityLevel ? [`_l${severityLevel}`, ''] : ['']
     const timeSuffixes = timeOfDay === 'night' ? ['_n', ''] : ['_d', '']
-    for (let t = 0; t < timeSuffixes.length; t += 1) {
-      const result = `${weatherId}${timeSuffixes[t]}.${
-        this.#extensionMap.weather
-      }`
-      if (this.#weather.has(result)) {
-        return `${baseUrl}/${result}`
+    for (let s = 0; s < severitySuffixes.length; s += 1) {
+      for (let t = 0; t < timeSuffixes.length; t += 1) {
+        const result = `${weatherId}${severitySuffixes[s]}${timeSuffixes[t]}.${
+          this.#extensionMap.weather
+        }`
+        if (this.#weather.has(result)) {
+          return `${baseUrl}/${result}`
+        }
       }
     }
     return `${baseUrl}/0.${this.#extensionMap.weather}`

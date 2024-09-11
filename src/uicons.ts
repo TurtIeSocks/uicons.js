@@ -536,7 +536,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   ): string
   reward<U extends RewardTypeKeys>(
     questRewardType: U = 'unset' as U,
-    rewardId = 0,
+    rewardIdOrAmount = 0,
     amount = 0
   ): string {
     if (!this.#isReady('reward')) return ''
@@ -553,7 +553,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
       Number.isInteger(amountSafe) && amountSafe > 1
         ? [`_a${amount}`, '']
         : ['']
-    const safeId = +rewardId || amountSafe || 0
+    const safeId = +rewardIdOrAmount || amountSafe || 0
 
     for (let a = 0; a < amountSuffixes.length; a += 1) {
       const result = `${safeId}${amountSuffixes[a]}.${

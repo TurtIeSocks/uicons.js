@@ -41,35 +41,36 @@ const indexJson = await fetch('https://www.uicons-repo.com/index.json').then(
 uicons.init(indexJson)
 
 // Below are some example usages with variable names for demonstration, see intellisense in your IDE for type information
+// Please note that in some cases, such as with Stardust, the `reward_id` is the `amount` of the reward
+const device = uicons.device(online)
+const gym = uicons.gym(team_id, trainer_count, in_battle, ex, ar, power_level)
+const invasion = uicons.invasion(grunt_id, confirmed)
+const misc = uicons.misc(filename_without_extension)
+const nest = uicons.nest(type_id)
 const pokemon = uicons.pokemon(
   pokemon_id,
-  form_id,
   evolution_id,
-  gender_id,
+  form_id,
   costume_id,
+  gender_id,
   alignment_id,
+  bread_id,
   shiny
 )
-const type = uicons.type(type_id)
 const pokestop = uicons.pokestop(
   lure_id,
-  power,
   display,
-  invasion_active,
   quest_active,
   ar
+  power,
 )
-// Please note that in some cases, such as with Stardust, the `reward_id` is the `amount` of the reward
+const egg = uicons.raidEgg(raid_level, hatched, ex)
 const reward = uicons.reward(reward_type_id, reward_id, amount)
-const invasion = uicons.invasion(grunt_id, confirmed)
-const gym = uicons.gym(team_id, trainer_count, in_battle, ex, ar)
-const egg = uicons.egg(raid_level, hatched, ex)
-const team = uicons.team(team_id)
-const weather = uicons.weather(weather_id)
-const nest = uicons.nest(type_id)
-const misc = uicons.misc(filename_without_extension)
-const device = uicons.device(online)
+const rewardWithOutId = uicons.reward(reward_type_id, amount)
 const spawnpoint = uicons.spawnpoint(has_known_tth)
+const team = uicons.team(team_id)
+const type = uicons.type(type_id)
+const weather = uicons.weather(weather_id, severity, 'day')
 ```
 
 ## Development

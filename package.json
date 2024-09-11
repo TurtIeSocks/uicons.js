@@ -15,7 +15,6 @@
   "types": "dist/index.d.ts",
   "module": "dist/index.mjs",
   "scripts": {
-    "preinstall": "pnpm upgrade @na-ji/pogo-protos",
     "start": "vite",
     "build": "vite build -- -r",
     "build:ts": "vite build",

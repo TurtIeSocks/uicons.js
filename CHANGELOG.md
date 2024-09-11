@@ -1,3 +1,15 @@
+# [1.4.0](https://github.com/TurtIeSocks/uicons.js/compare/v1.3.0...v1.4.0) (2024-09-11)
+
+
+### Bug Fixes
+
+* active/inactive ([d6d940b](https://github.com/TurtIeSocks/uicons.js/commit/d6d940b99ffdea99cfcde01075d7c232d0b39711))
+
+
+### Features
+
+* station support ([1447196](https://github.com/TurtIeSocks/uicons.js/commit/1447196cd6fb41048c4ebf69f33fa7a1eb4583f9))
+
 # [1.3.0](https://github.com/TurtIeSocks/uicons.js/compare/v1.2.1...v1.3.0) (2024-08-30)
 
 

@@ -234,6 +234,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
    * @param inBattle is the gym is in battle
    * @param ex is the gym an EX raid gym
    * @param ar is the gym AR eligible
+   * @param power the power up level of the gym, @see Rpc.FortPowerUpLevel
    * @returns the src of the gym icon
    */
   gym(
@@ -241,21 +242,24 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     trainerCount?: TrainerCounts,
     inBattle?: boolean,
     ex?: boolean,
-    ar?: boolean
+    ar?: boolean,
+    power?: boolean | EnumVal<typeof Rpc.FortPowerUpLevel>
   ): string
   gym(
     teamId?: string | number,
     trainerCount?: string | number,
     inBattle?: boolean,
     ex?: boolean,
-    ar?: boolean
+    ar?: boolean,
+    power?: boolean | string | number
   ): string
   gym(
     teamId = 0,
     trainerCount: string | number = 0,
     inBattle = false,
     ex = false,
-    ar = false
+    ar = false,
+    power = false
   ): string {
     if (!this.#isReady('gym')) return ''
 
@@ -265,15 +269,21 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     const inBattleSuffixes = inBattle ? ['_b', ''] : ['']
     const exSuffixes = ex ? ['_ex', ''] : ['']
     const arSuffixes = ar ? ['_ar', ''] : ['']
+    const powerUpSuffixes = this.#evalPossiblyEmptyFlag('_p', power)
+
     for (let t = 0; t < trainerSuffixes.length; t += 1) {
       for (let b = 0; b < inBattleSuffixes.length; b += 1) {
         for (let e = 0; e < exSuffixes.length; e += 1) {
           for (let a = 0; a < arSuffixes.length; a += 1) {
-            const result = `${teamId}${trainerSuffixes[t]}${
-              inBattleSuffixes[b]
-            }${exSuffixes[e]}${arSuffixes[a]}.${this.#extensionMap.gym}`
-            if (this.#gym.has(result)) {
-              return `${baseUrl}/${result}`
+            for (let p = 0; p < powerUpSuffixes.length; p += 1) {
+              const result = `${teamId}${trainerSuffixes[t]}${
+                inBattleSuffixes[b]
+              }${exSuffixes[e]}${arSuffixes[a]}${powerUpSuffixes[p]}.${
+                this.#extensionMap.gym
+              }`
+              if (this.#gym.has(result)) {
+                return `${baseUrl}/${result}`
+              }
             }
           }
         }

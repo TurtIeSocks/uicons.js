@@ -336,40 +336,44 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
 
   /**
    * @param pokemonId the pokemon ID
-   * @param form the form ID of the pokemon, @see Rpc.PokemonDisplayProto.Form
    * @param evolution the [mega] evolution ID of the pokemon, @see Rpc.HoloTemporaryEvolutionId
-   * @param gender the gender ID of the pokemon, @see Rpc.PokemonDisplayProto.PokemonGender
+   * @param form the form ID of the pokemon, @see Rpc.PokemonDisplayProto.Form
    * @param costume the costume ID of the pokemon, @see Rpc.PokemonDisplayProto.Costume
+   * @param gender the gender ID of the pokemon, @see Rpc.PokemonDisplayProto.PokemonGender
    * @param alignment the alignment ID of the pokemon, such as shadow or purified, @see Rpc.PokemonDisplayProto.Alignment
+   * @param bread the bread mode of the pokemon, @see Rpc.BreadModeEnum.Modifier
    * @param shiny if the pokemon is shiny
    * @returns the src of the pokemon icon
    */
   pokemon(
     pokemonId?: EnumVal<typeof Rpc.HoloPokemonId>,
-    form?: EnumVal<typeof Rpc.PokemonDisplayProto.Form>,
     evolution?: EnumVal<typeof Rpc.HoloTemporaryEvolutionId>,
-    gender?: EnumVal<typeof Rpc.PokemonDisplayProto.Gender>,
+    form?: EnumVal<typeof Rpc.PokemonDisplayProto.Form>,
     costume?: EnumVal<typeof Rpc.PokemonDisplayProto.Costume>,
+    gender?: EnumVal<typeof Rpc.PokemonDisplayProto.Gender>,
     alignment?: EnumVal<typeof Rpc.PokemonDisplayProto.Alignment>,
-    shiny?: boolean
+    bread?: EnumVal<typeof Rpc.BreadModeEnum.Modifier>,
+    shiny?: boolean,
   ): string
   pokemon(
     pokemonId?: string | number,
-    form?: string | number,
     evolution?: string | number,
-    gender?: string | number,
+    form?: string | number,
     costume?: string | number,
+    gender?: string | number,
     alignment?: string | number,
-    shiny?: boolean
+    bread?: string | number,
+    shiny?: boolean,
   ): string
   pokemon(
     pokemonId = 0,
-    form = 0,
     evolution = 0,
-    gender = 0,
+    form = 0,
     costume = 0,
+    gender = 0,
     alignment = 0,
-    shiny = false
+    bread = 0,
+    shiny = false,
   ): string {
     if (!this.#isReady('pokemon')) return ''
 
@@ -380,6 +384,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     const costumeSuffixes = costume ? [`_c${costume}`, ''] : ['']
     const genderSuffixes = gender ? [`_g${gender}`, ''] : ['']
     const alignmentSuffixes = alignment ? [`_a${alignment}`, ''] : ['']
+    const breadSuffixes = bread ? [`_b${bread}`, ''] : ['']
     const shinySuffixes = shiny ? ['_s', ''] : ['']
 
     for (let e = 0; e < evolutionSuffixes.length; e += 1) {
@@ -387,14 +392,18 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
         for (let c = 0; c < costumeSuffixes.length; c += 1) {
           for (let g = 0; g < genderSuffixes.length; g += 1) {
             for (let a = 0; a < alignmentSuffixes.length; a += 1) {
-              for (let s = 0; s < shinySuffixes.length; s += 1) {
-                const result = `${pokemonId}${evolutionSuffixes[e]}${
-                  formSuffixes[f]
-                }${costumeSuffixes[c]}${genderSuffixes[g]}${
-                  alignmentSuffixes[a]
-                }${shinySuffixes[s]}.${this.#extensionMap.pokemon}`
-                if (this.#pokemon.has(result)) {
-                  return `${baseUrl}/${result}`
+              for (let b = 0; b < breadSuffixes.length; b += 1) {
+                for (let s = 0; s < shinySuffixes.length; s += 1) {
+                  const result = `${pokemonId}${evolutionSuffixes[e]}${
+                    formSuffixes[f]
+                  }${costumeSuffixes[c]}${genderSuffixes[g]}${
+                    alignmentSuffixes[a]
+                  }${breadSuffixes[b]}${shinySuffixes[s]}.${
+                    this.#extensionMap.pokemon
+                  }`
+                  if (this.#pokemon.has(result)) {
+                    return `${baseUrl}/${result}`
+                  }
                 }
               }
             }

@@ -29,6 +29,7 @@ export interface UiconsIndex<T extends string[] = string[]> {
   }
   reward?: { [key in RewardTypeKeys]?: T }
   spawnpoint?: T
+  station?: T
   team?: T
   type?: T
   weather?: T

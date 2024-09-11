@@ -52,6 +52,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   #raid: { egg: Set<Index['raid']['egg'][number]> }
   #reward: { [key in RewardTypeKeys]?: Set<Index['reward'][key][number]> }
   #spawnpoint: Set<Index['spawnpoint'][number]>
+  #station: Set<Index['station'][number]>
   #team: Set<Index['team'][number]>
   #type: Set<Index['type'][number]>
   #weather: Set<Index['weather'][number]>
@@ -110,8 +111,10 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     )
   }
 
-  #isReady() {
+  #isReady(key?: keyof ExtensionMap): boolean {
     if (!this.#extensionMap) throw new Error('UICONS not initialized')
+    if (key && !this.#extensionMap[key]) return false
+    return true
   }
 
   /**
@@ -148,6 +151,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
         .map(([k, v]) => [k, new Set(v)])
     )
     this.#spawnpoint = new Set(data.spawnpoint || [])
+    this.#station = new Set(data.station || [])
     this.#team = new Set(data.team || [])
     this.#type = new Set(data.type || [])
     this.#weather = new Set(data.weather || [])
@@ -191,6 +195,8 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
         return this.#spawnpoint.has(
           `${fileName}.${this.#extensionMap.spawnpoint}`
         )
+      case 'station':
+        return this.#station.has(`${fileName}.${this.#extensionMap.station}`)
       case 'team':
         return this.#team.has(`${fileName}.${this.#extensionMap.team}`)
       case 'type':
@@ -207,7 +213,8 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
    * @returns the src of the device icon
    */
   device(online = false): string {
-    this.#isReady()
+    if (!this.#isReady('device')) return ''
+
     return online && this.#device.has(`1.${this.#extensionMap.device}`)
       ? `${this.#path}/device/1.${this.#extensionMap.device}`
       : `${this.#path}/device/0.${this.#extensionMap.device}`
@@ -242,7 +249,8 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     ex = false,
     ar = false
   ): string {
-    this.#isReady()
+    if (!this.#isReady('gym')) return ''
+
     const baseUrl = `${this.#path}/gym`
 
     const trainerSuffixes = trainerCount ? [`_t${trainerCount}`, ''] : ['']
@@ -277,7 +285,8 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   ): string
   invasion(gruntId?: string | number, confirmed?: boolean): string
   invasion(gruntId = 0, confirmed = false): string {
-    this.#isReady()
+    if (!this.#isReady('invasion')) return ''
+
     const baseUrl = `${this.#path}/invasion`
 
     const confirmedSuffixes = confirmed ? [''] : ['_u', '']
@@ -297,7 +306,8 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
    * @returns the src of the misc icon
    */
   misc(fileName?: string | number): string {
-    this.#isReady()
+    if (!this.#isReady('misc')) return ''
+
     const baseUrl = `${this.#path}/misc`
 
     if (this.#misc.has(`${fileName}.${this.#extensionMap.misc}`)) {
@@ -313,7 +323,8 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   nest(typeId?: EnumVal<typeof Rpc.HoloPokemonType>): string
   nest(typeId?: string | number): string
   nest(typeId = 0): string {
-    this.#isReady()
+    if (!this.#isReady('nest')) return ''
+
     const baseUrl = `${this.#path}/nest`
 
     const result = `${typeId}.${this.#extensionMap.nest}`
@@ -360,7 +371,8 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     alignment = 0,
     shiny = false
   ): string {
-    this.#isReady()
+    if (!this.#isReady('pokemon')) return ''
+
     const baseUrl = `${this.#path}/pokemon`
 
     const evolutionSuffixes = evolution ? [`_e${evolution}`, ''] : ['']
@@ -426,7 +438,8 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     questActive = false,
     ar = false
   ): string {
-    this.#isReady()
+    if (!this.#isReady('pokestop')) return ''
+
     const baseUrl = `${this.#path}/pokestop`
 
     const invasionSuffixes =
@@ -465,7 +478,8 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   ): string
   raidEgg(level?: string | number, hatched?: boolean, ex?: boolean): string
   raidEgg(level = 0, hatched = false, ex = false): string {
-    this.#isReady()
+    if (!this.#isReady('raid')) return ''
+
     const baseUrl = `${this.#path}/raid/egg`
 
     const hatchedSuffixes = hatched ? ['_h', ''] : ['']
@@ -503,7 +517,8 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     rewardId = 0,
     amount = 0
   ): string {
-    this.#isReady()
+    if (!this.#isReady('reward')) return ''
+
     const baseUrl = `${this.#path}/reward/${questRewardType}`
     const rewardSet = this.#reward[questRewardType]
     if (!rewardSet) {
@@ -534,10 +549,23 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
    * @returns the src of the spawnpoint icon
    */
   spawnpoint(hasTth = false): string {
-    this.#isReady()
+    if (!this.#isReady('spawnpoint')) return ''
+
     return hasTth && this.#spawnpoint.has(`1.${this.#extensionMap.spawnpoint}`)
       ? `${this.#path}/spawnpoint/1.${this.#extensionMap.spawnpoint}`
       : `${this.#path}/spawnpoint/0.${this.#extensionMap.spawnpoint}`
+  }
+
+  /**
+   * @param active if the station is active or not
+   * @returns the src of the station icon
+   */
+  station(active = false): string {
+    if (!this.#isReady('station')) return ''
+
+    return `${this.#path}/station/${active ? 1 : 0}.${
+      this.#extensionMap.station
+    }`
   }
 
   /**
@@ -547,7 +575,8 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   team(teamId?: EnumVal<typeof Rpc.Team>): string
   team(teamId?: string | number): string
   team(teamId = 0): string {
-    this.#isReady()
+    if (!this.#isReady('team')) return ''
+
     const baseUrl = `${this.#path}/team`
 
     const result = `${teamId}.${this.#extensionMap.team}`
@@ -564,7 +593,8 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   type(typeId?: EnumVal<typeof Rpc.HoloPokemonType>): string
   type(typeId?: string | number): string
   type(typeId = 0): string {
-    this.#isReady()
+    if (!this.#isReady('type')) return ''
+
     const baseUrl = `${this.#path}/type`
 
     const result = `${typeId}.${this.#extensionMap.type}`
@@ -585,7 +615,8 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   ): string
   weather(weatherId?: string | number, timeOfDay?: string): string
   weather(weatherId = 0, timeOfDay = 'day'): string {
-    this.#isReady()
+    if (!this.#isReady('weather')) return ''
+
     const baseUrl = `${this.#path}/weather`
 
     const timeSuffixes = timeOfDay === 'night' ? ['_n', ''] : ['_d', '']

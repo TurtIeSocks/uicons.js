@@ -89,13 +89,14 @@ describe('pokemon', () => {
     expect(icons.pokemon('1')).toBe(`${BASE_ICON_URL}/pokemon/1.webp`)
   })
   test('charmander form', () => {
-    expect(icons.pokemon(4, 896)).toBe(`${BASE_ICON_URL}/pokemon/4_f896.webp`)
+    expect(icons.pokemon(4, 0, 896)).toBe(
+      `${BASE_ICON_URL}/pokemon/4_f896.webp`
+    )
   })
   test('mega blastoise', () => {
     expect(
       icons.pokemon(
         Rpc.HoloPokemonId.BLASTOISE,
-        Rpc.PokemonDisplayProto.Form.FORM_UNSET,
         Rpc.HoloTemporaryEvolutionId.TEMP_EVOLUTION_MEGA
       )
     ).toBe(`${BASE_ICON_URL}/pokemon/9_e1.webp`)
@@ -107,17 +108,15 @@ describe('pokestops', () => {
     expect(icons.pokestop(501)).toBe(`${BASE_ICON_URL}/pokestop/501.webp`)
   })
   test('invasion', () => {
-    expect(icons.pokestop(0, 0, 0, true)).toBe(
-      `${BASE_ICON_URL}/pokestop/0_i.webp`
-    )
+    expect(icons.pokestop(0, 0)).toBe(`${BASE_ICON_URL}/pokestop/0_i.webp`)
   })
   test('quest', () => {
-    expect(icons.pokestop(0, 0, 0, false, true)).toBe(
+    expect(icons.pokestop(0, false, 0)).toBe(
       `${BASE_ICON_URL}/pokestop/0_q.webp`
     )
   })
   test('ar', () => {
-    expect(icons.pokestop(504, 0, 0, true, false, true)).toBe(
+    expect(icons.pokestop(504, 0, false, true)).toBe(
       `${BASE_ICON_URL}/pokestop/504_i_ar.webp`
     )
   })
@@ -228,11 +227,11 @@ describe('weather', () => {
     expect(icons.weather(2)).toBe(`${BASE_ICON_URL}/weather/2.webp`)
   })
   test('with day', () => {
-    expect(icons.weather(3, 'day')).toBe(`${BASE_ICON_URL}/weather/3_d.webp`)
+    expect(icons.weather(3, 0, 'day')).toBe(`${BASE_ICON_URL}/weather/3_d.webp`)
   })
   test('with night', () => {
     expect(
-      icons.weather(Rpc.GameplayWeatherProto.WeatherCondition.CLEAR, 'night')
+      icons.weather(Rpc.GameplayWeatherProto.WeatherCondition.CLEAR, 0, 'night')
     ).toBe(`${BASE_ICON_URL}/weather/1_n.webp`)
   })
 })

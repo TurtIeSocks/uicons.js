@@ -117,6 +117,14 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     return true
   }
 
+  #evalPossiblyEmptyFlag(flag: string, value: boolean | string | number) {
+    return typeof value === 'number'
+      ? [`${flag}${value || ''}`, '']
+      : value
+      ? [flag, '']
+      : ['']
+  }
+
   /**
    * This is used to initialize the UICONS class asynchronously by automatically fetching the index.json file
    * from the remote UICONS repository provided in the constructor
@@ -226,6 +234,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
    * @param inBattle is the gym is in battle
    * @param ex is the gym an EX raid gym
    * @param ar is the gym AR eligible
+   * @param power the power up level of the gym, @see Rpc.FortPowerUpLevel
    * @returns the src of the gym icon
    */
   gym(
@@ -233,21 +242,24 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     trainerCount?: TrainerCounts,
     inBattle?: boolean,
     ex?: boolean,
-    ar?: boolean
+    ar?: boolean,
+    power?: boolean | EnumVal<typeof Rpc.FortPowerUpLevel>
   ): string
   gym(
     teamId?: string | number,
     trainerCount?: string | number,
     inBattle?: boolean,
     ex?: boolean,
-    ar?: boolean
+    ar?: boolean,
+    power?: boolean | string | number
   ): string
   gym(
     teamId = 0,
     trainerCount: string | number = 0,
     inBattle = false,
     ex = false,
-    ar = false
+    ar = false,
+    power = false
   ): string {
     if (!this.#isReady('gym')) return ''
 
@@ -257,15 +269,21 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     const inBattleSuffixes = inBattle ? ['_b', ''] : ['']
     const exSuffixes = ex ? ['_ex', ''] : ['']
     const arSuffixes = ar ? ['_ar', ''] : ['']
+    const powerUpSuffixes = this.#evalPossiblyEmptyFlag('_p', power)
+
     for (let t = 0; t < trainerSuffixes.length; t += 1) {
       for (let b = 0; b < inBattleSuffixes.length; b += 1) {
         for (let e = 0; e < exSuffixes.length; e += 1) {
           for (let a = 0; a < arSuffixes.length; a += 1) {
-            const result = `${teamId}${trainerSuffixes[t]}${
-              inBattleSuffixes[b]
-            }${exSuffixes[e]}${arSuffixes[a]}.${this.#extensionMap.gym}`
-            if (this.#gym.has(result)) {
-              return `${baseUrl}/${result}`
+            for (let p = 0; p < powerUpSuffixes.length; p += 1) {
+              const result = `${teamId}${trainerSuffixes[t]}${
+                inBattleSuffixes[b]
+              }${exSuffixes[e]}${arSuffixes[a]}${powerUpSuffixes[p]}.${
+                this.#extensionMap.gym
+              }`
+              if (this.#gym.has(result)) {
+                return `${baseUrl}/${result}`
+              }
             }
           }
         }
@@ -336,39 +354,43 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
 
   /**
    * @param pokemonId the pokemon ID
-   * @param form the form ID of the pokemon, @see Rpc.PokemonDisplayProto.Form
    * @param evolution the [mega] evolution ID of the pokemon, @see Rpc.HoloTemporaryEvolutionId
-   * @param gender the gender ID of the pokemon, @see Rpc.PokemonDisplayProto.PokemonGender
+   * @param form the form ID of the pokemon, @see Rpc.PokemonDisplayProto.Form
    * @param costume the costume ID of the pokemon, @see Rpc.PokemonDisplayProto.Costume
+   * @param gender the gender ID of the pokemon, @see Rpc.PokemonDisplayProto.PokemonGender
    * @param alignment the alignment ID of the pokemon, such as shadow or purified, @see Rpc.PokemonDisplayProto.Alignment
+   * @param bread the bread mode of the pokemon, @see Rpc.BreadModeEnum.Modifier
    * @param shiny if the pokemon is shiny
    * @returns the src of the pokemon icon
    */
   pokemon(
     pokemonId?: EnumVal<typeof Rpc.HoloPokemonId>,
-    form?: EnumVal<typeof Rpc.PokemonDisplayProto.Form>,
     evolution?: EnumVal<typeof Rpc.HoloTemporaryEvolutionId>,
-    gender?: EnumVal<typeof Rpc.PokemonDisplayProto.Gender>,
+    form?: EnumVal<typeof Rpc.PokemonDisplayProto.Form>,
     costume?: EnumVal<typeof Rpc.PokemonDisplayProto.Costume>,
+    gender?: EnumVal<typeof Rpc.PokemonDisplayProto.Gender>,
     alignment?: EnumVal<typeof Rpc.PokemonDisplayProto.Alignment>,
+    bread?: EnumVal<typeof Rpc.BreadModeEnum.Modifier>,
     shiny?: boolean
   ): string
   pokemon(
     pokemonId?: string | number,
-    form?: string | number,
     evolution?: string | number,
-    gender?: string | number,
+    form?: string | number,
     costume?: string | number,
+    gender?: string | number,
     alignment?: string | number,
+    bread?: string | number,
     shiny?: boolean
   ): string
   pokemon(
     pokemonId = 0,
-    form = 0,
     evolution = 0,
-    gender = 0,
+    form = 0,
     costume = 0,
+    gender = 0,
     alignment = 0,
+    bread = 0,
     shiny = false
   ): string {
     if (!this.#isReady('pokemon')) return ''
@@ -380,6 +402,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     const costumeSuffixes = costume ? [`_c${costume}`, ''] : ['']
     const genderSuffixes = gender ? [`_g${gender}`, ''] : ['']
     const alignmentSuffixes = alignment ? [`_a${alignment}`, ''] : ['']
+    const breadSuffixes = bread ? [`_b${bread}`, ''] : ['']
     const shinySuffixes = shiny ? ['_s', ''] : ['']
 
     for (let e = 0; e < evolutionSuffixes.length; e += 1) {
@@ -387,14 +410,18 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
         for (let c = 0; c < costumeSuffixes.length; c += 1) {
           for (let g = 0; g < genderSuffixes.length; g += 1) {
             for (let a = 0; a < alignmentSuffixes.length; a += 1) {
-              for (let s = 0; s < shinySuffixes.length; s += 1) {
-                const result = `${pokemonId}${evolutionSuffixes[e]}${
-                  formSuffixes[f]
-                }${costumeSuffixes[c]}${genderSuffixes[g]}${
-                  alignmentSuffixes[a]
-                }${shinySuffixes[s]}.${this.#extensionMap.pokemon}`
-                if (this.#pokemon.has(result)) {
-                  return `${baseUrl}/${result}`
+              for (let b = 0; b < breadSuffixes.length; b += 1) {
+                for (let s = 0; s < shinySuffixes.length; s += 1) {
+                  const result = `${pokemonId}${evolutionSuffixes[e]}${
+                    formSuffixes[f]
+                  }${costumeSuffixes[c]}${genderSuffixes[g]}${
+                    alignmentSuffixes[a]
+                  }${breadSuffixes[b]}${shinySuffixes[s]}.${
+                    this.#extensionMap.pokemon
+                  }`
+                  if (this.#pokemon.has(result)) {
+                    return `${baseUrl}/${result}`
+                  }
                 }
               }
             }
@@ -407,52 +434,47 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
 
   /**
    * @param lureId the ID of the lure at the pokestop, 0 for no lure, @see Rpc.TROY_DISK values in Rpc.Item
-   * @param power the power up level of the pokestop, 0 for no power up, @see Rpc.FortPowerUpLevel
-   * @param display the display ID of the pokestop, 0 for no display, @see Rpc.IncidentDisplayType
-   * @param invasionActive does the pokestop currently have an invasion
+   * @param displayTypeId the display ID of the pokestop, 0 for no display, @see Rpc.IncidentDisplayType
    * @param questActive does the pokestop currently have an active quest
    * @param ar is the pokestop AR eligible
+   * @param power the power up level of the pokestop, 0 for no power up, @see Rpc.FortPowerUpLevel
    * @returns
    */
   pokestop(
     lureId?: LureIDs,
-    power?: EnumVal<typeof Rpc.FortPowerUpLevel>,
-    display?: EnumVal<typeof Rpc.IncidentDisplayType>,
-    invasionActive?: boolean,
-    questActive?: boolean,
-    ar?: boolean
+    displayTypeId?: boolean | EnumVal<typeof Rpc.IncidentDisplayType>,
+    questActive?: boolean | string | number,
+    ar?: boolean,
+    power?: boolean | EnumVal<typeof Rpc.FortPowerUpLevel>
   ): string
   pokestop(
     lureId?: string | number,
-    power?: string | number,
-    display?: string | number,
-    invasionActive?: boolean,
-    questActive?: boolean,
-    ar?: boolean
+    displayTypeId?: boolean | string | number,
+    questActive?: boolean | string | number,
+    ar?: boolean,
+    power?: boolean | string | number
   ): string
   pokestop(
     lureId = 0,
-    power = 0,
-    display = 0,
-    invasionActive = false,
+    displayTypeId = false,
     questActive = false,
-    ar = false
+    ar = false,
+    power = false
   ): string {
     if (!this.#isReady('pokestop')) return ''
 
     const baseUrl = `${this.#path}/pokestop`
 
-    const invasionSuffixes =
-      invasionActive || display ? [`_i${display || ''}`, ''] : ['']
-    const questSuffixes = questActive ? ['_q', ''] : ['']
+    const displaySuffixes = this.#evalPossiblyEmptyFlag('_i', displayTypeId)
+    const questSuffixes = this.#evalPossiblyEmptyFlag('_q', questActive)
     const arSuffixes = ar ? ['_ar', ''] : ['']
-    const powerUpSuffixes = power ? [`_p${power}`, ''] : ['']
+    const powerUpSuffixes = this.#evalPossiblyEmptyFlag('_p', power)
 
-    for (let i = 0; i < invasionSuffixes.length; i += 1) {
+    for (let i = 0; i < displaySuffixes.length; i += 1) {
       for (let q = 0; q < questSuffixes.length; q += 1) {
         for (let a = 0; a < arSuffixes.length; a += 1) {
           for (let p = 0; p < powerUpSuffixes.length; p += 1) {
-            const result = `${lureId}${invasionSuffixes[i]}${questSuffixes[q]}${
+            const result = `${lureId}${displaySuffixes[i]}${questSuffixes[q]}${
               arSuffixes[a]
             }${powerUpSuffixes[p]}.${this.#extensionMap.pokestop}`
             if (this.#pokestop.has(result)) {
@@ -514,7 +536,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   ): string
   reward<U extends RewardTypeKeys>(
     questRewardType: U = 'unset' as U,
-    rewardId = 0,
+    rewardIdOrAmount = 0,
     amount = 0
   ): string {
     if (!this.#isReady('reward')) return ''
@@ -531,7 +553,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
       Number.isInteger(amountSafe) && amountSafe > 1
         ? [`_a${amount}`, '']
         : ['']
-    const safeId = +rewardId || amountSafe || 0
+    const safeId = +rewardIdOrAmount || amountSafe || 0
 
     for (let a = 0; a < amountSuffixes.length; a += 1) {
       const result = `${safeId}${amountSuffixes[a]}.${
@@ -606,26 +628,35 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
 
   /**
    * @param weatherId the weather ID, @see Rpc.GameplayWeatherProto.WeatherCondition
-   * @param timeOfDay the time of day, either 'day' or 'night'
+   * @param severityLevel the severity of the weather, @see Rpc.InternalWeatherAlertProto.Severity
+   * @param timeOfDay the time of day, @see TimeOfDay
    * @returns the src of the weather icon
    */
   weather(
     weatherId?: EnumVal<typeof Rpc.GameplayWeatherProto.WeatherCondition>,
+    severityLevel?: EnumVal<typeof Rpc.InternalWeatherAlertProto.Severity>,
     timeOfDay?: TimeOfDay
   ): string
-  weather(weatherId?: string | number, timeOfDay?: string): string
-  weather(weatherId = 0, timeOfDay = 'day'): string {
+  weather(
+    weatherId?: string | number,
+    severityLevel?: string | number,
+    timeOfDay?: string
+  ): string
+  weather(weatherId = 0, severityLevel = 0, timeOfDay = 'day'): string {
     if (!this.#isReady('weather')) return ''
 
     const baseUrl = `${this.#path}/weather`
 
+    const severitySuffixes = severityLevel ? [`_l${severityLevel}`, ''] : ['']
     const timeSuffixes = timeOfDay === 'night' ? ['_n', ''] : ['_d', '']
-    for (let t = 0; t < timeSuffixes.length; t += 1) {
-      const result = `${weatherId}${timeSuffixes[t]}.${
-        this.#extensionMap.weather
-      }`
-      if (this.#weather.has(result)) {
-        return `${baseUrl}/${result}`
+    for (let s = 0; s < severitySuffixes.length; s += 1) {
+      for (let t = 0; t < timeSuffixes.length; t += 1) {
+        const result = `${weatherId}${severitySuffixes[s]}${timeSuffixes[t]}.${
+          this.#extensionMap.weather
+        }`
+        if (this.#weather.has(result)) {
+          return `${baseUrl}/${result}`
+        }
       }
     }
     return `${baseUrl}/0.${this.#extensionMap.weather}`

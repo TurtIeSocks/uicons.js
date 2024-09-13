@@ -1,3 +1,26 @@
+# [2.0.0](https://github.com/TurtIeSocks/uicons.js/compare/v1.4.1...v2.0.0) (2024-09-13)
+
+
+### Bug Fixes
+
+* align github pages with the new method signatures ([9ebe351](https://github.com/TurtIeSocks/uicons.js/commit/9ebe351783b2cdd6677c402ca0d272dff930a8d4))
+* pokestop order arguments ([bcf2283](https://github.com/TurtIeSocks/uicons.js/commit/bcf2283ee0b3ad3a7667ccae03c5ff4733558e1c))
+* power up suffixes signature for pokestop method ([90b56d0](https://github.com/TurtIeSocks/uicons.js/commit/90b56d03c8982cb41152b85307945fc5a92da433))
+
+
+### Features
+
+* bread flag ([6a039c6](https://github.com/TurtIeSocks/uicons.js/commit/6a039c6b6d34c7343ff26ec14b88ca7e020fc59f))
+* gym power up support ([5a8d5ce](https://github.com/TurtIeSocks/uicons.js/commit/5a8d5ce93936cf86eed5c6b15919a74aae4589f3))
+* weather severity ([13e2471](https://github.com/TurtIeSocks/uicons.js/commit/13e2471d2d43dcd0749169bea0e2704d1377e97a))
+
+
+### BREAKING CHANGES
+
+* changes order of args for weather method
+* changes order of pokestop args to better align with uicons standard
+* order of pokemon arguments has changed to align better with uicons standard
+
 ## [1.4.1](https://github.com/TurtIeSocks/uicons.js/compare/v1.4.0...v1.4.1) (2024-09-11)
 
 

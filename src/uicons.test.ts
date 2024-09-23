@@ -110,6 +110,9 @@ describe('pokestops', () => {
   test('invasion', () => {
     expect(icons.pokestop(0, 0)).toBe(`${BASE_ICON_URL}/pokestop/0_i.webp`)
   })
+  test('invasion & lure', () => {
+    expect(icons.pokestop(502, 0, false, false, 0)).toBe(`${BASE_ICON_URL}/pokestop/502_i.webp`)
+  })
   test('quest', () => {
     expect(icons.pokestop(0, false, 0)).toBe(
       `${BASE_ICON_URL}/pokestop/0_q.webp`
@@ -118,6 +121,16 @@ describe('pokestops', () => {
   test('ar', () => {
     expect(icons.pokestop(504, 0, false, true)).toBe(
       `${BASE_ICON_URL}/pokestop/504_i_ar.webp`
+    )
+  })
+  test('kecleon', () => {
+    expect(icons.pokestop(0, '8', false, false, 0)).toBe(
+      `${BASE_ICON_URL}/pokestop/0_i8.webp`
+    )
+  })
+  test('gold coin', () => {
+    expect(icons.pokestop(0, 7, false, false, 0)).toBe(
+      `${BASE_ICON_URL}/pokestop/0_i7.webp`
     )
   })
 })

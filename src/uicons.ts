@@ -118,7 +118,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   }
 
   #evalPossiblyEmptyFlag(flag: string, value: boolean | string | number) {
-    return typeof value === 'number'
+    return typeof value === 'number' || +value
       ? [`${flag}${value || ''}`, '']
       : value
       ? [flag, '']

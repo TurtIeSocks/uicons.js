@@ -114,7 +114,13 @@ describe('pokestops', () => {
     expect(icons.pokestop(502, 0, false, false, 0)).toBe(`${BASE_ICON_URL}/pokestop/502_i.webp`)
   })
   test('quest', () => {
+    expect(icons.pokestop(0, false, true)).toBe(
+      `${BASE_ICON_URL}/pokestop/0_q.webp`
+    )
     expect(icons.pokestop(0, false, 0)).toBe(
+      `${BASE_ICON_URL}/pokestop/0_q.webp`
+    )
+    expect(icons.pokestop(0, false, '1')).toBe(
       `${BASE_ICON_URL}/pokestop/0_q.webp`
     )
   })

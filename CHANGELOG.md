@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/TurtIeSocks/uicons.js/compare/v2.0.1...v2.0.2) (2024-09-23)
+
+
+### Bug Fixes
+
+* bug in previous code since `+true` actually parses to `1` ([6ac1223](https://github.com/TurtIeSocks/uicons.js/commit/6ac12237db0e24a92f114c6a6d05852563ddef60))
+
 ## [2.0.1](https://github.com/TurtIeSocks/uicons.js/compare/v2.0.0...v2.0.1) (2024-09-23)
 
 

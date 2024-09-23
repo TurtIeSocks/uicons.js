@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/TurtIeSocks/uicons.js/compare/v2.0.0...v2.0.1) (2024-09-23)
+
+
+### Bug Fixes
+
+* parsing string for display ([e6cdd88](https://github.com/TurtIeSocks/uicons.js/commit/e6cdd8833c2951bf0a8b5867f22715efbdd34ec4))
+
 # [2.0.0](https://github.com/TurtIeSocks/uicons.js/compare/v1.4.1...v2.0.0) (2024-09-13)
 
 

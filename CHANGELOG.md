@@ -1,3 +1,10 @@
+## [2.0.3](https://github.com/TurtIeSocks/uicons.js/compare/v2.0.2...v2.0.3) (2025-02-12)
+
+
+### Bug Fixes
+
+* code formatting ([70b3156](https://github.com/TurtIeSocks/uicons.js/commit/70b3156ee3f5a87ae95d239e5d565fe3cce20d87))
+
 ## [2.0.2](https://github.com/TurtIeSocks/uicons.js/compare/v2.0.1...v2.0.2) (2024-09-23)
 
 

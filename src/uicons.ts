@@ -404,22 +404,26 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     const shinySuffixes = shiny ? ['_s', ''] : ['']
 
     for (let b = 0; b < breadSuffixes.length; b += 1) {
-    for (let e = 0; e < evolutionSuffixes.length; e += 1) {
-    for (let f = 0; f < formSuffixes.length; f += 1) {
-    for (let c = 0; c < costumeSuffixes.length; c += 1) {
-    for (let g = 0; g < genderSuffixes.length; g += 1) {
-    for (let a = 0; a < alignmentSuffixes.length; a += 1) {
-    for (let s = 0; s < shinySuffixes.length; s += 1) {
-      const result = `${pokemonId}${breadSuffixes[b]}${evolutionSuffixes[e]}${formSuffixes[f]}${costumeSuffixes[c]}${genderSuffixes[g]}${alignmentSuffixes[a]}${shinySuffixes[s]}.${this.#extensionMap.pokemon}`
-      if (this.#pokemon.has(result)) {
-        return `${baseUrl}/${result}`
+      for (let e = 0; e < evolutionSuffixes.length; e += 1) {
+        for (let f = 0; f < formSuffixes.length; f += 1) {
+          for (let c = 0; c < costumeSuffixes.length; c += 1) {
+            for (let g = 0; g < genderSuffixes.length; g += 1) {
+              for (let a = 0; a < alignmentSuffixes.length; a += 1) {
+                for (let s = 0; s < shinySuffixes.length; s += 1) {
+                  const result = `${pokemonId}${breadSuffixes[b]}${
+                    evolutionSuffixes[e]
+                  }${formSuffixes[f]}${costumeSuffixes[c]}${genderSuffixes[g]}${
+                    alignmentSuffixes[a]
+                  }${shinySuffixes[s]}.${this.#extensionMap.pokemon}`
+                  if (this.#pokemon.has(result)) {
+                    return `${baseUrl}/${result}`
+                  }
+                }
+              }
+            }
+          }
+        }
       }
-    }
-    }
-    }
-    }
-    }
-    }
     }
     return `${baseUrl}/0.${this.#extensionMap.pokemon}`
   }

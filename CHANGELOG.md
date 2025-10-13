@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/TurtIeSocks/uicons.js/compare/v2.0.3...v2.1.0) (2025-10-13)
+
+
+### Features
+
+* tappable ([e4e20b9](https://github.com/TurtIeSocks/uicons.js/commit/e4e20b9de04b919e4263b76d49e3b2a0fb7b18e2))
+
 ## [2.0.3](https://github.com/TurtIeSocks/uicons.js/compare/v2.0.2...v2.0.3) (2025-02-12)
 
 

@@ -203,6 +203,47 @@ describe('reward', () => {
   })
 })
 
+describe('tappable', () => {
+  const custom = new UICONS({
+    path: BASE_ICON_URL,
+    data: {
+      tappable: [
+        'TAPPABLE_TYPE_POKEBALL.webp',
+        'TAPPABLE_TYPE_BREAKFAST.webp',
+      ],
+      reward: {
+        item: ['1.webp'],
+      },
+    },
+  })
+
+  test('matches explicit type', () => {
+    expect(custom.tappable('TAPPABLE_TYPE_BREAKFAST')).toBe(
+      `${BASE_ICON_URL}/tappable/TAPPABLE_TYPE_BREAKFAST.webp`
+    )
+  })
+
+  test('fallback to default tappable type', () => {
+    expect(custom.tappable('TAPPABLE_TYPE_UNKNOWN')).toBe(
+      `${BASE_ICON_URL}/tappable/TAPPABLE_TYPE_POKEBALL.webp`
+    )
+  })
+
+  test('fallback to reward when no tappables exist', () => {
+    const empty = new UICONS({
+      path: BASE_ICON_URL,
+      data: {
+        reward: {
+          item: ['1.webp'],
+        },
+      },
+    })
+    expect(empty.tappable('TAPPABLE_TYPE_BREAKFAST')).toBe(
+      `${BASE_ICON_URL}/reward/item/1.webp`
+    )
+  })
+})
+
 describe('spawnpoint', () => {
   test('verified', () => {
     expect(icons.spawnpoint(true)).toBe(`${BASE_ICON_URL}/spawnpoint/1.webp`)

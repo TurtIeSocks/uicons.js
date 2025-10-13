@@ -49,6 +49,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   #nest: Set<Index['nest'][number]>
   #pokemon: Set<Index['pokemon'][number]>
   #pokestop: Set<Index['pokestop'][number]>
+  #tappable: Set<Index['tappable'][number]>
   #raid: { egg: Set<Index['raid']['egg'][number]> }
   #reward: { [key in RewardTypeKeys]?: Set<Index['reward'][key][number]> }
   #spawnpoint: Set<Index['spawnpoint'][number]>
@@ -150,6 +151,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     this.#nest = new Set(data.nest || [])
     this.#pokemon = new Set(data.pokemon || [])
     this.#pokestop = new Set(data.pokestop || [])
+    this.#tappable = new Set(data.tappable || [])
     this.#raid = { egg: new Set(data.raid?.egg || []) }
     this.#reward = Object.fromEntries(
       Object.entries(data.reward || {})
@@ -189,6 +191,10 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
         return this.#pokemon.has(`${fileName}.${this.#extensionMap.pokemon}`)
       case 'pokestop':
         return this.#pokestop.has(`${fileName}.${this.#extensionMap.pokestop}`)
+      case 'tappable':
+        return this.#tappable.has(
+          `${fileName}.${this.#extensionMap.tappable}`
+        )
       case 'raid':
         return this.#raid.egg.has(`${fileName}.${this.#extensionMap.raid?.egg}`)
       case 'reward':
@@ -330,6 +336,40 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
       return `${baseUrl}/${fileName}.${this.#extensionMap.misc}`
     }
     return `${baseUrl}/0.${this.#extensionMap.misc}`
+  }
+
+  /**
+   * @param tappableType the tappable type identifier
+   * @returns the src of the tappable icon
+   */
+  tappable(tappableType?: string | number): string {
+    if (!this.#isReady('tappable')) {
+      return this.reward('item', 1)
+    }
+
+    const extension = this.#extensionMap.tappable
+    if (!extension) {
+      return this.reward('item', 1)
+    }
+
+    const baseUrl = `${this.#path}/tappable`
+    const tryCandidate = (candidate: string) => {
+      const fileName = `${candidate}.${extension}`
+      return this.#tappable.has(fileName) ? `${baseUrl}/${fileName}` : undefined
+    }
+
+    const typeKey = tappableType?.toString() ?? 'TAPPABLE_TYPE_POKEBALL'
+    const primary = tryCandidate(typeKey)
+    if (primary) {
+      return primary
+    }
+
+    const fallback = tryCandidate('TAPPABLE_TYPE_POKEBALL')
+    if (fallback) {
+      return fallback
+    }
+
+    return this.reward('item', 1)
   }
 
   /**

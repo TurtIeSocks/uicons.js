@@ -24,6 +24,7 @@ export interface UiconsIndex<T extends string[] = string[]> {
   nest?: T
   pokemon?: T
   pokestop?: T
+  tappable?: T
   raid?: {
     egg?: T
   }

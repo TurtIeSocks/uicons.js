@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/TurtIeSocks/uicons.js/compare/v2.1.0...v2.2.0) (2025-10-15)
+
+
+### Features
+
+* background ([06085f4](https://github.com/TurtIeSocks/uicons.js/commit/06085f4cdd3888b335e28152246708349b1aaf69))
+
 # [2.1.0](https://github.com/TurtIeSocks/uicons.js/compare/v2.0.3...v2.1.0) (2025-10-13)
 
 

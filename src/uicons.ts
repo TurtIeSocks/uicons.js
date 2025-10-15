@@ -42,6 +42,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   #extensionMap: ExtensionMap
   #label: string
 
+  #background: Set<Index['background'][number]>
   #device: Set<Index['device'][number]>
   #gym: Set<Index['gym'][number]>
   #invasion: Set<Index['invasion'][number]>
@@ -125,6 +126,23 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   }
 
   /**
+   * @param backgroundId the background ID
+   * @returns the src of the background icon
+   */
+  background(backgroundId?: string | number): string
+  background(backgroundId = 0): string {
+    if (!this.#isReady('background')) return ''
+
+    const baseUrl = `${this.#path}/background`
+
+    const result = `${backgroundId}.${this.#extensionMap.background}`
+    if (this.#background.has(result)) {
+      return `${baseUrl}/${result}`
+    }
+    return `${baseUrl}/0.${this.#extensionMap.background}`
+  }
+
+  /**
    * This is used to initialize the UICONS class asynchronously by automatically fetching the index.json file
    * from the remote UICONS repository provided in the constructor
    */
@@ -144,6 +162,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
    * @param data The index.json file from the UICONS repository
    */
   init(data: Index) {
+    this.#background = new Set(data.background || [])
     this.#device = new Set(data.device || [])
     this.#gym = new Set(data.gym || [])
     this.#invasion = new Set(data.invasion || [])
@@ -177,6 +196,10 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     this.#isReady()
     const [first, second] = location.split('.', 2)
     switch (first) {
+      case 'background':
+        return this.#background.has(
+          `${fileName}.${this.#extensionMap.background}`
+        )
       case 'device':
         return this.#device.has(`${fileName}.${this.#extensionMap.device}`)
       case 'gym':

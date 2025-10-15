@@ -17,6 +17,7 @@ export type LureIDs = StringOrNumber<
 >
 
 export interface UiconsIndex<T extends string[] = string[]> {
+  background?: T
   device?: T
   gym?: T
   invasion?: T

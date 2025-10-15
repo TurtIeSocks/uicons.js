@@ -7,6 +7,10 @@ const BASE_AUDIO_URL =
   'https://raw.githubusercontent.com/WatWowMap/wwm-uaudio/main'
 
 const icons = new UICONS(BASE_ICON_URL)
+const backgroundIcons = new UICONS({
+  path: BASE_ICON_URL,
+  data: { background: ['0.webp', '1.webp'] },
+})
 
 describe('webp format', () => {
   test('should fetch remotely', async () => {
@@ -72,6 +76,19 @@ describe('misc', () => {
   })
   test('has great league', () => {
     expect(icons.misc('500')).toBe(`${BASE_ICON_URL}/misc/500.webp`)
+  })
+})
+
+describe('background', () => {
+  test('fallback icon', () => {
+    expect(backgroundIcons.background(999)).toBe(
+      `${BASE_ICON_URL}/background/0.webp`
+    )
+  })
+  test('specific background', () => {
+    expect(backgroundIcons.background(1)).toBe(
+      `${BASE_ICON_URL}/background/1.webp`
+    )
   })
 })
 

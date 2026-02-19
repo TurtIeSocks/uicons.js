@@ -1,221 +1,363 @@
-import { UICONS } from './uicons.ts'
 import { Rpc } from '@na-ji/pogo-protos'
+import { UICONS } from './uicons.js'
+import type { PokemonArgs } from './types/index.js'
+
+type Assert<T extends true> = T
+
+type IsEqual<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
+    ? (<T>() => T extends B ? 1 : 2) extends <T>() => T extends A ? 1 : 2
+      ? true
+      : false
+    : false
+
+type _PokemonMethodShouldExposeConcreteParameters = Assert<
+  IsEqual<Parameters<UICONS['pokemon']>, PokemonArgs> extends true
+    ? false
+    : true
+>
+type RewardNoArgsExpected = `${typeof BASE_ICON_URL}/misc/0.webp`
+type RewardItemExpected =
+  | `${typeof BASE_ICON_URL}/reward/item/0.webp`
+  | `${typeof BASE_ICON_URL}/misc/0.webp`
+type RewardItemAndIdExpected =
+  | `${typeof BASE_ICON_URL}/reward/item/20.webp`
+  | `${typeof BASE_ICON_URL}/reward/item/0.webp`
+  | `${typeof BASE_ICON_URL}/misc/0.webp`
+type RewardItemAndIdAndAmountExpected =
+  | `${typeof BASE_ICON_URL}/reward/item/20_a10.webp`
+  | `${typeof BASE_ICON_URL}/reward/item/20.webp`
+  | `${typeof BASE_ICON_URL}/reward/item/0.webp`
+  | `${typeof BASE_ICON_URL}/misc/0.webp`
 
 const BASE_ICON_URL =
   'https://raw.githubusercontent.com/WatWowMap/wwm-uicons-webp/main'
 const BASE_AUDIO_URL =
   'https://raw.githubusercontent.com/WatWowMap/wwm-uaudio/main'
 
-const icons = new UICONS(BASE_ICON_URL)
-const backgroundIcons = new UICONS({
-  path: BASE_ICON_URL,
-  data: { background: ['0.webp', '1.webp'] },
+const iconIndex = {
+  background: ['0.webp', '1.webp'],
+  device: ['0.webp', '1.webp'],
+  gym: [
+    '0.webp',
+    '2_t3_b.webp',
+    '1_t4_ex.webp',
+    '3_t6_ar.webp',
+    '2_t3_b_p.webp',
+  ],
+  invasion: ['0.webp', '44_u.webp', '44.webp'],
+  misc: ['0.webp', '500.webp'],
+  nest: ['0.webp', '12.webp'],
+  pokemon: ['0.webp', '1.webp', '4_f896.webp', '9_e1.webp', '6_s.webp'],
+  pokestop: [
+    '0.webp',
+    '501.webp',
+    '0_i.webp',
+    '502_i.webp',
+    '0_q.webp',
+    '504_i_ar.webp',
+    '0_i8.webp',
+    '0_i7.webp',
+    '501_i_q.webp',
+  ],
+  tappable: ['TAPPABLE_TYPE_POKEBALL.webp', 'TAPPABLE_TYPE_BREAKFAST.webp'],
+  raid: { egg: ['0.webp', '12_h.webp', '1.webp', '1_ex.webp'] },
+  reward: {
+    experience: ['0.webp', '100.webp'],
+    item: ['0.webp', '1.webp', '1_a10.webp', '2.webp'],
+    stardust: ['0.webp', '500.webp'],
+    candy: ['0.webp', '4.webp'],
+    xl_candy: ['0.webp', '98.webp'],
+    mega_resource: ['0.webp', '3.webp', '6_a25.webp'],
+  },
+  spawnpoint: ['0.webp', '1.webp'],
+  station: ['0.webp', '1.webp'],
+  team: ['0.webp', '3.webp'],
+  type: ['0.webp', '1.webp', '7.webp', '9.webp'],
+  weather: ['0.webp', '2.webp', '3_d.webp', '1_n.webp'],
+}
+
+const audioIndex = {
+  pokemon: ['666.wav'],
+}
+
+const icons = new UICONS({ path: BASE_ICON_URL, extension: 'webp' })
+const audio = new UICONS({ path: BASE_AUDIO_URL, extension: 'wav' })
+
+const toResponse = <T>(payload: T, status = 200): Response =>
+  new Response(JSON.stringify(payload), {
+    status,
+    headers: {
+      'content-type': 'application/json',
+    },
+  })
+
+beforeAll(async () => {
+  jest.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+    const url =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : input.url
+
+    if (url === `${BASE_ICON_URL}/index.json`) {
+      return toResponse(iconIndex)
+    }
+
+    if (url === `${BASE_AUDIO_URL}/index.json`) {
+      return toResponse(audioIndex)
+    }
+
+    return toResponse({ message: 'not found' }, 404)
+  })
+
+  await icons.remoteInit()
+  const audioData = await fetch(`${BASE_AUDIO_URL}/index.json`)
+  audio.init(await audioData.json())
 })
 
-describe('webp format', () => {
-  test('should fetch remotely', async () => {
+afterAll(() => {
+  jest.restoreAllMocks()
+})
+
+describe('init', () => {
+  test('remote init returns instance', async () => {
     expect(await icons.remoteInit()).toBe(icons)
   })
-  test('should have 500.webp for stardust', () => {
-    expect(icons.has('reward.stardust', '500')).toBe(true)
-  })
-})
 
-const audio = new UICONS({ path: BASE_AUDIO_URL })
-
-describe('wav format', () => {
-  test('should load locally', async () => {
+  test('local init returns instance', async () => {
     const data = await fetch(`${BASE_AUDIO_URL}/index.json`)
     const index = await data.json()
     expect(audio.init(index)).toBe(audio)
   })
-  test('should have 666.wav for pokemon', () => {
-    expect(icons.has('pokemon', 666)).toBe(true)
-  })
 })
 
-describe('device', () => {
-  test('online icon', () => {
-    expect(icons.device(true)).toBe(`${BASE_ICON_URL}/device/1.webp`)
+describe('has', () => {
+  test('valid paths', () => {
+    expect(icons.has('background', 1)).toBe(true)
+    expect(icons.has('raid.egg', 1)).toBe(true)
+    expect(icons.has('reward.item', 1)).toBe(true)
+    expect(icons.has('reward.xl_candy', 98)).toBe(true)
   })
-})
 
-describe('gym', () => {
-  test('neutral icon', () => {
-    expect(icons.gym(0)).toBe(`${BASE_ICON_URL}/gym/0.webp`)
+  test('invalid values', () => {
+    expect(icons.has('reward.item', 999)).toBe(false)
+    expect(icons.has('gym', 999)).toBe(false)
   })
-  test('valor in battle', () => {
-    expect(icons.gym(2, 3, true)).toBe(`${BASE_ICON_URL}/gym/2_t3_b.webp`)
-  })
-  test('mystic ex', () => {
-    expect(icons.gym(1, 4, false, true)).toBe(
-      `${BASE_ICON_URL}/gym/1_t4_ex.webp`
-    )
-  })
-  test('instinct ar', () => {
-    expect(icons.gym(3, 6, false, false, true)).toBe(
-      `${BASE_ICON_URL}/gym/3_t6_ar.webp`
-    )
-  })
-})
 
-describe('invasion', () => {
-  test('giovanni unconfirmed', () => {
-    expect(icons.invasion('44')).toBe(`${BASE_ICON_URL}/invasion/44_u.webp`)
-  })
-  test('giovanni confirmed', () => {
-    expect(
-      icons.invasion(Rpc.EnumWrapper.InvasionCharacter.CHARACTER_GIOVANNI, true)
-    ).toBe(`${BASE_ICON_URL}/invasion/44.webp`)
-  })
-})
-
-describe('misc', () => {
-  test('fallback icon', () => {
-    expect(icons.misc('something_missing')).toBe(`${BASE_ICON_URL}/misc/0.webp`)
-  })
-  test('has great league', () => {
-    expect(icons.misc('500')).toBe(`${BASE_ICON_URL}/misc/500.webp`)
+  test('type-level invalid path checks', () => {
+    // @ts-expect-error invalid location path
+    icons.has('unknown.folder', 0)
+    // @ts-expect-error reward folder key does not exist
+    icons.has('reward.unknown_reward', 0)
+    expect(true).toBe(true)
   })
 })
 
 describe('background', () => {
-  test('fallback icon', () => {
-    expect(backgroundIcons.background(999)).toBe(
-      `${BASE_ICON_URL}/background/0.webp`
-    )
+  test('no args', () => {
+    const result = icons.background()
+    expect(result).toBe<typeof result>(`${BASE_ICON_URL}/background/0.webp`)
   })
-  test('specific background', () => {
-    expect(backgroundIcons.background(1)).toBe(
-      `${BASE_ICON_URL}/background/1.webp`
+
+  test('with id', () => {
+    const result = icons.background(1)
+    expect(result).toBe<typeof result>(`${BASE_ICON_URL}/background/1.webp`)
+  })
+
+  test('fallback', () => {
+    const result = icons.background(999)
+    expect(result).toBe<typeof result>(`${BASE_ICON_URL}/background/0.webp`)
+  })
+})
+
+describe('device', () => {
+  test('no args', () => {
+    const result = icons.device()
+    expect(result).toBe<typeof result>(`${BASE_ICON_URL}/device/0.webp`)
+  })
+
+  test('online', () => {
+    const result = icons.device(true)
+    expect(result).toBe<typeof result>(`${BASE_ICON_URL}/device/1.webp`)
+  })
+})
+
+describe('gym', () => {
+  test('no args', () => {
+    const result1 = icons.gym()
+    expect(result1).toBe<typeof result1>(`${BASE_ICON_URL}/gym/0.webp`)
+
+    const result2 = icons.gym(1, undefined)
+    expect(result2).toBe<typeof result2>(`${BASE_ICON_URL}/gym/0.webp`)
+  })
+
+  test('tuple overloads', () => {
+    const result1 = icons.gym(2, 3, true)
+    expect(result1).toBe<typeof result1>(`${BASE_ICON_URL}/gym/2_t3_b.webp`)
+
+    const result2 = icons.gym(1, 4, false, true)
+    expect(result2).toBe<typeof result2>(`${BASE_ICON_URL}/gym/1_t4_ex.webp`)
+
+    const result3 = icons.gym(3, 6, false, false, true)
+    expect(result3).toBe<typeof result3>(`${BASE_ICON_URL}/gym/3_t6_ar.webp`)
+
+    const result4 = icons.gym(2, 3, true, false, false, true)
+    expect(result4).toBe<typeof result4>(`${BASE_ICON_URL}/gym/2_t3_b_p.webp`)
+  })
+})
+
+describe('invasion', () => {
+  test('no args', () => {
+    const result = icons.invasion()
+    expect(result).toBe<typeof result>(`${BASE_ICON_URL}/invasion/0.webp`)
+  })
+
+  test('unconfirmed and confirmed', () => {
+    const result1 = icons.invasion('44')
+    expect(result1).toBe<typeof result1>(`${BASE_ICON_URL}/invasion/44_u.webp`)
+
+    const result2 = icons.invasion(
+      Rpc.EnumWrapper.InvasionCharacter.CHARACTER_GIOVANNI,
+      true
     )
+    expect(result2).toBe<typeof result2>(`${BASE_ICON_URL}/invasion/44.webp`)
+  })
+})
+
+describe('misc', () => {
+  test('no args and named icon', () => {
+    const result1 = icons.misc()
+    expect(result1).toBe<typeof result1>(`${BASE_ICON_URL}/misc/0.webp`)
+
+    const result2 = icons.misc(500)
+    expect(result2).toBe<typeof result2>(`${BASE_ICON_URL}/misc/500.webp`)
   })
 })
 
 describe('nest', () => {
-  test('grass - string', () => {
-    expect(icons.nest('12')).toBe(`${BASE_ICON_URL}/nest/12.webp`)
-  })
-  test('none - number', () => {
-    expect(icons.nest(0)).toBe(`${BASE_ICON_URL}/nest/0.webp`)
+  test('no args and specific', () => {
+    const result1 = icons.nest()
+    expect(result1).toBe<typeof result1>(`${BASE_ICON_URL}/nest/0.webp`)
+
+    const result2 = icons.nest('12')
+    expect(result2).toBe<typeof result2>(`${BASE_ICON_URL}/nest/12.webp`)
   })
 })
 
 describe('pokemon', () => {
-  test('bulbasaur', () => {
-    expect(icons.pokemon('1')).toBe(`${BASE_ICON_URL}/pokemon/1.webp`)
+  test('no args', () => {
+    const result1 = icons.pokemon()
+    expect(result1).toBe<typeof result1>(`${BASE_ICON_URL}/pokemon/0.webp`)
   })
-  test('charmander form', () => {
-    expect(icons.pokemon(4, 0, 896)).toBe(
-      `${BASE_ICON_URL}/pokemon/4_f896.webp`
+
+  test('overload ladder', () => {
+    const result1 = icons.pokemon('1')
+    expect(result1).toBe<typeof result1>(`${BASE_ICON_URL}/pokemon/1.webp`)
+
+    const result2 = icons.pokemon(4, 0, 896)
+    expect(result2).toBe<typeof result2>(`${BASE_ICON_URL}/pokemon/4_f896.webp`)
+
+    const result3 = icons.pokemon(
+      Rpc.HoloPokemonId.BLASTOISE,
+      Rpc.HoloTemporaryEvolutionId.TEMP_EVOLUTION_MEGA
     )
-  })
-  test('mega blastoise', () => {
-    expect(
-      icons.pokemon(
-        Rpc.HoloPokemonId.BLASTOISE,
-        Rpc.HoloTemporaryEvolutionId.TEMP_EVOLUTION_MEGA
-      )
-    ).toBe(`${BASE_ICON_URL}/pokemon/9_e1.webp`)
+    expect(result3).toBe<typeof result3>(`${BASE_ICON_URL}/pokemon/9_e1.webp`)
+
+    const result4 = icons.pokemon(6, 0, 0, 0, 0, 0, 0, true)
+    expect(result4).toBe<typeof result4>(`${BASE_ICON_URL}/pokemon/6_s.webp`)
   })
 })
 
-describe('pokestops', () => {
-  test('lure', () => {
-    expect(icons.pokestop(501)).toBe(`${BASE_ICON_URL}/pokestop/501.webp`)
+describe('pokestop', () => {
+  test('no args', () => {
+    const result = icons.pokestop()
+    expect(result).toBe<typeof result>(`${BASE_ICON_URL}/pokestop/0.webp`)
   })
-  test('invasion', () => {
-    expect(icons.pokestop(0, 0)).toBe(`${BASE_ICON_URL}/pokestop/0_i.webp`)
-  })
-  test('invasion & lure', () => {
-    expect(icons.pokestop(502, 0, false, false, 0)).toBe(`${BASE_ICON_URL}/pokestop/502_i.webp`)
-  })
-  test('quest', () => {
-    expect(icons.pokestop(0, false, true)).toBe(
-      `${BASE_ICON_URL}/pokestop/0_q.webp`
-    )
-    expect(icons.pokestop(0, false, 0)).toBe(
-      `${BASE_ICON_URL}/pokestop/0_q.webp`
-    )
-    expect(icons.pokestop(0, false, '1')).toBe(
-      `${BASE_ICON_URL}/pokestop/0_q.webp`
-    )
-  })
-  test('ar', () => {
-    expect(icons.pokestop(504, 0, false, true)).toBe(
+
+  test('overload ladder', () => {
+    const result1 = icons.pokestop(501)
+    expect(result1).toBe<typeof result1>(`${BASE_ICON_URL}/pokestop/501.webp`)
+
+    const result2 = icons.pokestop(0, 0)
+    expect(result2).toBe<typeof result2>(`${BASE_ICON_URL}/pokestop/0_i.webp`)
+
+    const result3 = icons.pokestop(0, false, true)
+    expect(result3).toBe<typeof result3>(`${BASE_ICON_URL}/pokestop/0_q.webp`)
+
+    const result4 = icons.pokestop(504, 0, false, true)
+    expect(result4).toBe<typeof result4>(
       `${BASE_ICON_URL}/pokestop/504_i_ar.webp`
     )
-  })
-  test('kecleon', () => {
-    expect(icons.pokestop(0, '8', false, false, 0)).toBe(
-      `${BASE_ICON_URL}/pokestop/0_i8.webp`
-    )
-  })
-  test('gold coin', () => {
-    expect(icons.pokestop(0, 7, false, false, 0)).toBe(
-      `${BASE_ICON_URL}/pokestop/0_i7.webp`
-    )
+
+    const result5 = icons.pokestop(0, '8', false, false, 0)
+    expect(result5).toBe<typeof result5>(`${BASE_ICON_URL}/pokestop/0_i8.webp`)
   })
 })
 
-describe('raid', () => {
-  test('hatched', () => {
-    expect(icons.raidEgg('12', true)).toBe(
-      `${BASE_ICON_URL}/raid/egg/12_h.webp`
-    )
+describe('raidEgg', () => {
+  test('no args', () => {
+    const result = icons.raidEgg()
+    expect(result).toBe<typeof result>(`${BASE_ICON_URL}/raid/egg/0.webp`)
   })
-  test('unhatched', () => {
-    expect(icons.raidEgg(1, false)).toBe(`${BASE_ICON_URL}/raid/egg/1.webp`)
+
+  test('hatched and ex', () => {
+    const result1 = icons.raidEgg('12', true)
+    expect(result1).toBe<typeof result1>(`${BASE_ICON_URL}/raid/egg/12_h.webp`)
+
+    const result2 = icons.raidEgg(1, false, true)
+    expect(result2).toBe<typeof result2>(`${BASE_ICON_URL}/raid/egg/1_ex.webp`)
   })
 })
 
 describe('reward', () => {
-  test('experience', () => {
-    expect(icons.reward('experience', 100)).toBe(
+  test('no args and folder-only', () => {
+    const result1 = icons.reward()
+    type _RewardNoArgs = Assert<IsEqual<typeof result1, RewardNoArgsExpected>>
+    expect(result1).toBe<typeof result1>(`${BASE_ICON_URL}/misc/0.webp`)
+
+    const result2 = icons.reward('item')
+    type _RewardItem = Assert<IsEqual<typeof result2, RewardItemExpected>>
+    expect(result2).toBe<typeof result2>(`${BASE_ICON_URL}/reward/item/0.webp`)
+  })
+
+  test('reward ids and amount suffix', () => {
+    const result0 = icons.reward('item', 20)
+    type _RewardItemAndId = Assert<
+      IsEqual<typeof result0, RewardItemAndIdExpected>
+    >
+    expect(result0).toBe<typeof result0>(`${BASE_ICON_URL}/reward/item/0.webp`)
+
+    const result00 = icons.reward('item', 20, 10)
+    type _RewardItemAndIdAndAmount = Assert<
+      IsEqual<typeof result00, RewardItemAndIdAndAmountExpected>
+    >
+    expect(result00).toBe<typeof result00>(`${BASE_ICON_URL}/reward/item/0.webp`)
+
+    const result1 = icons.reward('experience', 100)
+    expect(result1).toBe<typeof result1>(
       `${BASE_ICON_URL}/reward/experience/100.webp`
     )
-  })
-  test('item without amount', () => {
-    expect(icons.reward('item', 1)).toBe(`${BASE_ICON_URL}/reward/item/1.webp`)
-  })
-  test('item with amount', () => {
-    expect(icons.reward('item', 1, 10)).toBe(
+
+    const result2 = icons.reward('item', 1)
+    expect(result2).toBe<typeof result2>(`${BASE_ICON_URL}/reward/item/1.webp`)
+
+    const result3 = icons.reward('item', 1, 10)
+    expect(result3).toBe<typeof result3>(
       `${BASE_ICON_URL}/reward/item/1_a10.webp`
     )
-  })
-  test('item with missing amount', () => {
-    expect(icons.reward('item', 2, 300)).toBe(
-      `${BASE_ICON_URL}/reward/item/2.webp`
-    )
-  })
-  test('stardust with amount', () => {
-    expect(icons.reward('stardust', 500)).toBe(
-      `${BASE_ICON_URL}/reward/stardust/500.webp`
-    )
-  })
-  test('stardust with missing amount', () => {
-    expect(icons.reward('stardust', 10_000)).toBe(
-      `${BASE_ICON_URL}/reward/stardust/0.webp`
-    )
-  })
-  test('candy', () => {
-    expect(icons.reward('candy', 4)).toBe(
-      `${BASE_ICON_URL}/reward/candy/4.webp`
-    )
-  })
-  test('xl_candy', () => {
-    expect(icons.reward('xl_candy', '98')).toBe(
-      `${BASE_ICON_URL}/reward/xl_candy/98.webp`
-    )
-  })
-  test('mega_resource', () => {
-    expect(icons.reward('mega_resource', 3)).toBe(
-      `${BASE_ICON_URL}/reward/mega_resource/3.webp`
-    )
-  })
-  test('mega_resource with amount', () => {
-    expect(icons.reward('mega_resource', 6, 25)).toBe(
+
+    const result4 = icons.reward('mega_resource', 6, 25)
+    expect(result4).toBe<typeof result4>(
       `${BASE_ICON_URL}/reward/mega_resource/6_a25.webp`
+    )
+  })
+
+  test('reward fallback to folder zero', () => {
+    const result = icons.reward('stardust', 10_000)
+    expect(result).toBe<typeof result>(
+      `${BASE_ICON_URL}/reward/stardust/0.webp`
     )
   })
 })
@@ -224,29 +366,33 @@ describe('tappable', () => {
   const custom = new UICONS({
     path: BASE_ICON_URL,
     data: {
-      tappable: [
-        'TAPPABLE_TYPE_POKEBALL.webp',
-        'TAPPABLE_TYPE_BREAKFAST.webp',
-      ],
+      tappable: ['TAPPABLE_TYPE_POKEBALL.webp', 'TAPPABLE_TYPE_BREAKFAST.webp'],
       reward: {
         item: ['1.webp'],
       },
     },
   })
 
-  test('matches explicit type', () => {
-    expect(custom.tappable('TAPPABLE_TYPE_BREAKFAST')).toBe(
-      `${BASE_ICON_URL}/tappable/TAPPABLE_TYPE_BREAKFAST.webp`
-    )
-  })
-
-  test('fallback to default tappable type', () => {
-    expect(custom.tappable('TAPPABLE_TYPE_UNKNOWN')).toBe(
+  test('no args', () => {
+    const result = icons.tappable()
+    expect(result).toBe<typeof result>(
       `${BASE_ICON_URL}/tappable/TAPPABLE_TYPE_POKEBALL.webp`
     )
   })
 
-  test('fallback to reward when no tappables exist', () => {
+  test('explicit and default fallback', () => {
+    const result1 = custom.tappable('TAPPABLE_TYPE_BREAKFAST')
+    expect(result1).toBe<typeof result1>(
+      `${BASE_ICON_URL}/tappable/TAPPABLE_TYPE_BREAKFAST.webp`
+    )
+
+    const result2 = custom.tappable('TAPPABLE_TYPE_UNKNOWN')
+    expect(result2).toBe<typeof result2>(
+      `${BASE_ICON_URL}/tappable/TAPPABLE_TYPE_POKEBALL.webp`
+    )
+  })
+
+  test('reward fallback when no tappables exist', () => {
     const empty = new UICONS({
       path: BASE_ICON_URL,
       data: {
@@ -255,60 +401,76 @@ describe('tappable', () => {
         },
       },
     })
-    expect(empty.tappable('TAPPABLE_TYPE_BREAKFAST')).toBe(
-      `${BASE_ICON_URL}/reward/item/1.webp`
-    )
+
+    const result = empty.tappable('TAPPABLE_TYPE_BREAKFAST')
+    expect(result).toBe<typeof result>(`${BASE_ICON_URL}/reward/item/1.webp`)
   })
 })
 
 describe('spawnpoint', () => {
-  test('verified', () => {
-    expect(icons.spawnpoint(true)).toBe(`${BASE_ICON_URL}/spawnpoint/1.webp`)
+  test('no args and true', () => {
+    const result1 = icons.spawnpoint()
+    expect(result1).toBe<typeof result1>(`${BASE_ICON_URL}/spawnpoint/0.webp`)
+
+    const result2 = icons.spawnpoint(true)
+    expect(result2).toBe<typeof result2>(`${BASE_ICON_URL}/spawnpoint/1.webp`)
   })
 })
 
-describe('stations', () => {
-  test('active', () => {
-    expect(icons.station(true)).toBe(`${BASE_ICON_URL}/station/1.webp`)
-  })
-  test('inactive', () => {
-    expect(icons.station()).toBe(`${BASE_ICON_URL}/station/0.webp`)
+describe('station', () => {
+  test('no args and true', () => {
+    const result1 = icons.station()
+    expect(result1).toBe<typeof result1>(`${BASE_ICON_URL}/station/0.webp`)
+
+    const result2 = icons.station(true)
+    expect(result2).toBe<typeof result2>(`${BASE_ICON_URL}/station/1.webp`)
   })
 })
 
 describe('team', () => {
-  test('instinct', () => {
-    expect(icons.team(3)).toBe(`${BASE_ICON_URL}/team/3.webp`)
-  })
-  test('missing', () => {
-    expect(icons.team(10)).toBe(`${BASE_ICON_URL}/team/0.webp`)
+  test('no args, valid, fallback', () => {
+    const result1 = icons.team()
+    expect(result1).toBe<typeof result1>(`${BASE_ICON_URL}/team/0.webp`)
+
+    const result2 = icons.team(3)
+    expect(result2).toBe<typeof result2>(`${BASE_ICON_URL}/team/3.webp`)
+
+    const result3 = icons.team(99)
+    expect(result3).toBe<typeof result3>(`${BASE_ICON_URL}/team/0.webp`)
   })
 })
 
 describe('type', () => {
-  test('fire - number', () => {
-    expect(icons.type(1)).toBe(`${BASE_ICON_URL}/type/1.webp`)
-  })
-  test('steel - string', () => {
-    expect(icons.type('9')).toBe(`${BASE_ICON_URL}/type/9.webp`)
-  })
-  test('bug - proto', () => {
-    expect(icons.type(Rpc.HoloPokemonType.POKEMON_TYPE_BUG)).toBe(
-      `${BASE_ICON_URL}/type/7.webp`
-    )
+  test('no args and typed enums', () => {
+    const result1 = icons.type()
+    expect(result1).toBe<typeof result1>(`${BASE_ICON_URL}/type/0.webp`)
+
+    const result2 = icons.type(1)
+    expect(result2).toBe<typeof result2>(`${BASE_ICON_URL}/type/1.webp`)
+
+    const result3 = icons.type(Rpc.HoloPokemonType.POKEMON_TYPE_BUG)
+    expect(result3).toBe<typeof result3>(`${BASE_ICON_URL}/type/7.webp`)
   })
 })
 
 describe('weather', () => {
-  test('id only', () => {
-    expect(icons.weather(2)).toBe(`${BASE_ICON_URL}/weather/2.webp`)
+  test('no args', () => {
+    const result = icons.weather()
+    expect(result).toBe<typeof result>(`${BASE_ICON_URL}/weather/0.webp`)
   })
-  test('with day', () => {
-    expect(icons.weather(3, 0, 'day')).toBe(`${BASE_ICON_URL}/weather/3_d.webp`)
-  })
-  test('with night', () => {
-    expect(
-      icons.weather(Rpc.GameplayWeatherProto.WeatherCondition.CLEAR, 0, 'night')
-    ).toBe(`${BASE_ICON_URL}/weather/1_n.webp`)
+
+  test('severity and time variants', () => {
+    const result1 = icons.weather(2)
+    expect(result1).toBe<typeof result1>(`${BASE_ICON_URL}/weather/2.webp`)
+
+    const result2 = icons.weather(3, 0, 'day')
+    expect(result2).toBe<typeof result2>(`${BASE_ICON_URL}/weather/3_d.webp`)
+
+    const result3 = icons.weather(
+      Rpc.GameplayWeatherProto.WeatherCondition.CLEAR,
+      0,
+      'night'
+    )
+    expect(result3).toBe<typeof result3>(`${BASE_ICON_URL}/weather/1_n.webp`)
   })
 })

@@ -4,5 +4,5 @@ export type {
   RewardTypeKeys,
   UiconsIndex,
   LureIDs,
-} from './types.js'
+} from './types/index.js'
 export { UICONS } from './uicons.js'

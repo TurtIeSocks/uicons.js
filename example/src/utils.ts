@@ -1,4 +1,4 @@
-import { UICONS, UiconsIndex } from '../src'
+import { UICONS, UiconsIndex } from '../../src'
 import { MASTERFILE_URL } from './styles'
 import type { Asset, Pokemon, Props, RawMon } from './types'
 
@@ -34,6 +34,7 @@ export async function getMonsFromMf(
 ): Promise<Props[]> {
   const newUicons = new UICONS(icon.path)
   const newUaudio = new UICONS(audio.path)
+
   await Promise.all([newUicons.remoteInit(), newUaudio.remoteInit()])
   return rawMons.map(({ id, form, evo }) => {
     let title = id.toString()
@@ -61,6 +62,10 @@ export async function getMonsFromIndex(
   const newUaudio = new UICONS(audio.path)
   await newUaudio.remoteInit()
 
+  const x = new UICONS(
+    'https://raw.githubusercontent.com/WatWowMap/wwm-uicons-webp/main'
+  )
+  const y = x.pokemon('100')
   return (
     iconJson.pokemon
       ?.sort((a, b) => {
@@ -80,7 +85,7 @@ export async function getMonsFromIndex(
         const gender = parseArgs(rest, '_g') ?? 0
         const alignment = parseArgs(rest, '_a') ?? 0
         const bread = parseArgs(rest, '_b') ?? 0
-        const shiny = !!parseArgs(rest, '_s') ?? false
+        const shiny = !!parseArgs(rest, '_s')
         return {
           title,
           src: `${icon.path}/pokemon/${file}`,

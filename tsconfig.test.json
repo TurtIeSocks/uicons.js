@@ -1,6 +1,21 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "noEmit": true,
+    "target": "esnext",
+    "declaration": false,
+    "declarationMap": false,
     "allowImportingTsExtensions": true,
+    "types": [
+      "jest",
+      "node"
+    ]
   },
+  "include": [
+    "./src/**/*.test.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

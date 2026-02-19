@@ -81,7 +81,8 @@ git clone https://github.com/TurtIeSocks/uicons.js.git
 cd uicons.js
 
 # Install Dependencies
-pnpm run install
+pnpm install
+pnpm --dir example install
 
 # Build and Run Example
 pnpm run start

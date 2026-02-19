@@ -8,6 +8,9 @@ type InvasionFileName<
   Confirmed extends boolean = false,
 > = `${GruntId}${InvasionConfirmedSuffix<Confirmed>}`
 
+/**
+ * Type-level invasion filename candidates generated from method arguments.
+ */
 export type InvasionNameFromArgs<
   Args extends [] | [gruntId: Scalar] | [gruntId: Scalar, confirmed: boolean],
 > = Args extends []

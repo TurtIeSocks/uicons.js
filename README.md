@@ -29,16 +29,31 @@ pnpm add uicons.js
 ```typescript
 import { UICONS } from 'uicons.js'
 
+// Constructor option 1: pass a base path string
 const uicons = new UICONS('https://www.uicons-repo.com')
 
 // Async initialization fetches the index.json file for you
 await uicons.remoteInit()
+
+// Constructor option 2: pass an options object
+// specifying the extension does not change the output but it does provide better intellisense
+const fromOptions = new UICONS({
+  path: 'https://www.uicons-repo.com',
+  label: 'my-uicons',
+  extension: 'png',
+})
 
 // Sync initialization if you already have contents of the index.json
 const indexJson = await fetch('https://www.uicons-repo.com/index.json').then(
   (res) => res.json()
 )
 uicons.init(indexJson)
+
+// Option 2 can also initialize immediately when `data` is provided
+const preloaded = new UICONS({
+  path: 'https://www.uicons-repo.com',
+  data: indexJson,
+})
 
 // Below are some example usages with variable names for demonstration, see intellisense in your IDE for type information
 // Please note that in some cases, such as with Stardust, the `reward_id` is the `amount` of the reward
@@ -57,16 +72,10 @@ const pokemon = uicons.pokemon(
   bread_id,
   shiny
 )
-const pokestop = uicons.pokestop(
-  lure_id,
-  display,
-  quest_active,
-  ar
-  power,
-)
+const pokestop = uicons.pokestop(lure_id, display, quest_active, ar, power)
 const egg = uicons.raidEgg(raid_level, hatched, ex)
 const reward = uicons.reward(reward_type_id, reward_id, amount)
-const rewardWithOutId = uicons.reward(reward_type_id, amount)
+const rewardWithoutId = uicons.reward(reward_type_id, amount)
 const spawnpoint = uicons.spawnpoint(has_known_tth)
 const team = uicons.team(team_id)
 const type = uicons.type(type_id)

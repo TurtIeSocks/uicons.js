@@ -23,6 +23,9 @@ type PokemonFileName<
   '_a'
 >}${FlagSuffix<Shiny, '_s'>}`
 
+/**
+ * Supported positional argument tuples for {@link UICONS.pokemon}.
+ */
 export type PokemonArgs =
   | []
   | [pokemonId: Scalar]

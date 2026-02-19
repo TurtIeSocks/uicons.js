@@ -62,10 +62,6 @@ export async function getMonsFromIndex(
   const newUaudio = new UICONS(audio.path)
   await newUaudio.remoteInit()
 
-  const x = new UICONS(
-    'https://raw.githubusercontent.com/WatWowMap/wwm-uicons-webp/main'
-  )
-  const y = x.pokemon('100')
   return (
     iconJson.pokemon
       ?.sort((a, b) => {

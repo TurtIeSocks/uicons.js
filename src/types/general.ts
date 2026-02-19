@@ -1,5 +1,8 @@
 import type { Rpc } from '@na-ji/pogo-protos'
 
+/**
+ * Primitive value accepted by icon filename builders.
+ */
 export type Scalar = string | number
 
 /**
@@ -134,6 +137,9 @@ type Url<
   FileName extends string,
 > = `${Path}/${Folder}/${FileName}`
 
+/**
+ * Full asset URL type: `${path}/${folder}/${name}.${extension}`.
+ */
 export type FileUrl<
   Path extends string,
   Folder extends string,
@@ -141,8 +147,19 @@ export type FileUrl<
   Name extends Scalar = Scalar,
 > = Url<Path, Folder, `${Name}.${Extension}`>
 
+/**
+ * Numeric zero sentinel used across optional icon arguments.
+ */
 export type Zero = 0
+
+/**
+ * Numeric one sentinel used by binary icon variants.
+ */
 export type One = 1
+
+/**
+ * Optional numeric value shorthand (`undefined` or `0`).
+ */
 export type Optional = undefined | Zero
 
 /**
@@ -160,6 +177,9 @@ type KeysEndingWith<T, S extends string> = {
   [K in keyof T]: K extends `${S}${infer _Suffix}` ? K : never
 }[keyof T]
 
+/**
+ * Picks keys from `T` whose property value types are assignable to `U`.
+ */
 export type OnlyTypeKeys<T extends object, U> = {
   [K in keyof T]-?: T[K] extends U ? K : never
 }[keyof T]
@@ -170,6 +190,9 @@ type Join<K, P> = K extends string | number
     : never
   : never
 
+/**
+ * Dot-notation key paths for nested object types.
+ */
 export type Paths<T> = T extends object
   ? {
       [K in keyof T]-?: K extends string | number

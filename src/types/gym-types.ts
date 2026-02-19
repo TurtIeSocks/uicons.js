@@ -30,6 +30,9 @@ type GymFileName<
   '_ex'
 >}${FlagSuffix<Ar, '_ar'>}${GymPowerSuffix<Power>}`
 
+/**
+ * Supported positional argument tuples for {@link UICONS.gym}.
+ */
 export type GymArgs =
   | []
   | [teamId: Scalar]
@@ -57,6 +60,9 @@ export type GymArgs =
       power: boolean | EnumVal<typeof Rpc.FortPowerUpLevel>,
     ]
 
+/**
+ * Type-level gym filename candidates generated from {@link GymArgs}.
+ */
 export type GymNameFromArgs<Args extends GymArgs> = Args extends []
   ? Zero
   : Args extends [infer TeamId extends Scalar]

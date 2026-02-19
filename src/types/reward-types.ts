@@ -15,12 +15,18 @@ type RewardFileName<
   ? `${RewardIdOrAmount}${RewardAmountSuffix<Amount>}`
   : `${RewardIdOrAmount}`
 
+/**
+ * Supported positional argument tuples for {@link UICONS.reward}.
+ */
 export type RewardArgs =
   | []
   | [questRewardType: RewardTypeKeys]
   | [questRewardType: RewardTypeKeys, rewardIdOrAmount: Scalar]
   | [questRewardType: RewardTypeKeys, rewardIdOrAmount: Scalar, amount: Scalar]
 
+/**
+ * Type-level reward filename candidates generated from {@link RewardArgs}.
+ */
 export type RewardNameFromArgs<Args extends RewardArgs> = Args extends []
   ? Zero
   : Args extends [RewardTypeKeys]
@@ -42,6 +48,9 @@ type RewardFolderFromArgs<Args extends RewardArgs> = Args extends [
   ? `reward/${QuestRewardType}`
   : never
 
+/**
+ * Type-level reward URL candidates returned by {@link UICONS.reward}.
+ */
 export type RewardUrlFromArgs<
   Path extends string,
   Extension extends string,
@@ -79,6 +88,9 @@ type RewardCategoryUrlFromParams<
       RewardNameFromArgs<[QuestRewardType]>
     >
 
+/**
+ * Reward URL union derived from explicit reward parameters.
+ */
 export type RewardUrlFromParams<
   Path extends string,
   Extension extends string,

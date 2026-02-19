@@ -14,6 +14,7 @@ import type {
   Scalar,
   FileUrl,
   Paths,
+  OnlyTypeKeys,
 } from './types/general.js'
 import type {
   GymArgs,
@@ -33,11 +34,6 @@ import type {
 
 const ZERO: Zero = 0
 const ONE: One = 1
-type NestedExtensionCategory = 'raid' | 'reward'
-type FlatExtensionCategory = Exclude<
-  keyof ExtensionMap<UiconsIndex, string>,
-  NestedExtensionCategory
->
 
 /**
  * Universal ICONS Class for Pokémon GO asset management
@@ -58,8 +54,8 @@ type FlatExtensionCategory = Exclude<
  *  // your own index.json data if you want to load in the constructor
  *  data: { pokemon: [...], device: [...] },
  * })
- * // With stronger typing from index file
- * const uicons = new UICONS<UiconsIndex>({ path: 'https://example.com/uicons' })
+ * // With stronger extension typing
+ * const uicons = new UICONS({ path: 'https://example.com/uicons', extension: 'png' })
  * // Async initialization fetches the index.json file for you
  * await uicons.remoteInit()
  * // Sync initialization if you already have the index.json and want to load it manually
@@ -130,11 +126,11 @@ export class UICONS<TPath extends string = string, TExt extends string = Ext> {
     )
   }
 
-  #extension<T extends FlatExtensionCategory>(
+  #extension<T extends OnlyTypeKeys<UiconsIndex, string[]>>(
     category: T
   ): ExtensionMap<UiconsIndex, TExt>[T]
   #extension<
-    T extends NestedExtensionCategory,
+    T extends OnlyTypeKeys<UiconsIndex, Record<string, string[]>>,
     U extends keyof ExtensionMap<UiconsIndex, TExt>[T],
   >(category: T, key: U): ExtensionMap<UiconsIndex, TExt>[T][U]
   #extension<
@@ -318,9 +314,7 @@ export class UICONS<TPath extends string = string, TExt extends string = Ext> {
     const ext = this.#extension(folder)
     const file = online ? ONE : this.#fallback
 
-    return online && this.#device.has(`${file}.${ext}`)
-      ? `${this.#path}/${folder}/${file}.${ext}`
-      : `${this.#path}/${folder}/${file}.${ext}`
+    return `${this.#path}/${folder}/${file}.${ext}`
   }
 
   /**
@@ -778,7 +772,8 @@ export class UICONS<TPath extends string = string, TExt extends string = Ext> {
 
     const base = `${this.#path}/${folder}` as const
     const ext = this.#extension(folder)
-    const file = hasTth && this.#spawnpoint.has(`${ONE}.${ext}`) ? ONE : ZERO
+    const file =
+      hasTth && this.#spawnpoint.has(`${ONE}.${ext}`) ? ONE : this.#fallback
 
     return `${base}/${file}.${ext}` as const
   }

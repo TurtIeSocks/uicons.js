@@ -14,6 +14,9 @@ type PokestopFileName<
   '_q'
 >}${FlagSuffix<Ar, '_ar'>}${FlagOrValueSuffix<Power, '_p'>}`
 
+/**
+ * Supported positional argument tuples for {@link UICONS.pokestop}.
+ */
 export type PokestopArgs =
   | []
   | [lureId: Scalar]
@@ -37,6 +40,9 @@ export type PokestopArgs =
       power: boolean | Scalar,
     ]
 
+/**
+ * Type-level pokestop filename candidates generated from {@link PokestopArgs}.
+ */
 export type PokestopNameFromArgs<Args extends PokestopArgs> = Args extends []
   ? Zero
   : Args extends [infer LureId extends Scalar]

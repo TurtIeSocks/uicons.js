@@ -537,22 +537,25 @@ describe('has category matrix', () => {
 
   test('runtime-invalid paths still return false', () => {
     expect(
-      (icons as unknown as { has: (location: string, fileName: string) => boolean }).has(
-        'unknown',
-        '0'
-      )
+      (
+        icons as unknown as {
+          has: (location: string, fileName: string) => boolean
+        }
+      ).has('unknown', '0')
     ).toBe(false)
     expect(
-      (icons as unknown as { has: (location: string, fileName: string) => boolean }).has(
-        'raid.unknown',
-        '0'
-      )
+      (
+        icons as unknown as {
+          has: (location: string, fileName: string) => boolean
+        }
+      ).has('raid.unknown', '0')
     ).toBe(false)
     expect(
-      (icons as unknown as { has: (location: string, fileName: string) => boolean }).has(
-        'reward.unknown',
-        '0'
-      )
+      (
+        icons as unknown as {
+          has: (location: string, fileName: string) => boolean
+        }
+      ).has('reward.unknown', '0')
     ).toBe(false)
   })
 })
@@ -575,13 +578,7 @@ describe('public API argument matrices', () => {
       path: BASE_ICON_URL,
       extension: 'webp',
       data: {
-        gym: [
-          '0.webp',
-          '2_t3.webp',
-          '2_t3_b_p.webp',
-          '1_t4.webp',
-          '3_t6.webp',
-        ],
+        gym: ['0.webp', '2_t3.webp', '2_t3_b_p.webp', '1_t4.webp', '3_t6.webp'],
       },
     })
 
@@ -589,8 +586,12 @@ describe('public API argument matrices', () => {
     expect(gymIcons.gym(2, 3, true, false, false, 4)).toBe(
       `${BASE_ICON_URL}/gym/2_t3_b_p.webp`
     )
-    expect(gymIcons.gym(1, 4, false, true)).toBe(`${BASE_ICON_URL}/gym/1_t4.webp`)
-    expect(gymIcons.gym(3, 6, false, false, true)).toBe(`${BASE_ICON_URL}/gym/3_t6.webp`)
+    expect(gymIcons.gym(1, 4, false, true)).toBe(
+      `${BASE_ICON_URL}/gym/1_t4.webp`
+    )
+    expect(gymIcons.gym(3, 6, false, false, true)).toBe(
+      `${BASE_ICON_URL}/gym/3_t6.webp`
+    )
     expect(gymIcons.gym(9, 9, true, true, true, true)).toBe(
       `${BASE_ICON_URL}/gym/0.webp`
     )
@@ -612,8 +613,12 @@ describe('public API argument matrices', () => {
       },
     })
 
-    expect(invasionOnlyConfirmed.invasion(44)).toBe(`${BASE_ICON_URL}/invasion/44.webp`)
-    expect(invasionOnlyUnconfirmed.invasion(44)).toBe(`${BASE_ICON_URL}/invasion/44_u.webp`)
+    expect(invasionOnlyConfirmed.invasion(44)).toBe(
+      `${BASE_ICON_URL}/invasion/44.webp`
+    )
+    expect(invasionOnlyUnconfirmed.invasion(44)).toBe(
+      `${BASE_ICON_URL}/invasion/44_u.webp`
+    )
     expect(invasionOnlyUnconfirmed.invasion(44, true)).toBe(
       `${BASE_ICON_URL}/invasion/0.webp`
     )
@@ -641,10 +646,18 @@ describe('public API argument matrices', () => {
     })
 
     expect(pokemonIcons.pokemon(25)).toBe(`${BASE_ICON_URL}/pokemon/25.webp`)
-    expect(pokemonIcons.pokemon(25, 1)).toBe(`${BASE_ICON_URL}/pokemon/25_e1.webp`)
-    expect(pokemonIcons.pokemon(25, 0, 2)).toBe(`${BASE_ICON_URL}/pokemon/25_f2.webp`)
-    expect(pokemonIcons.pokemon(25, 0, 0, 3)).toBe(`${BASE_ICON_URL}/pokemon/25_c3.webp`)
-    expect(pokemonIcons.pokemon(25, 0, 0, 0, 1)).toBe(`${BASE_ICON_URL}/pokemon/25_g1.webp`)
+    expect(pokemonIcons.pokemon(25, 1)).toBe(
+      `${BASE_ICON_URL}/pokemon/25_e1.webp`
+    )
+    expect(pokemonIcons.pokemon(25, 0, 2)).toBe(
+      `${BASE_ICON_URL}/pokemon/25_f2.webp`
+    )
+    expect(pokemonIcons.pokemon(25, 0, 0, 3)).toBe(
+      `${BASE_ICON_URL}/pokemon/25_c3.webp`
+    )
+    expect(pokemonIcons.pokemon(25, 0, 0, 0, 1)).toBe(
+      `${BASE_ICON_URL}/pokemon/25_g1.webp`
+    )
     expect(pokemonIcons.pokemon(25, 0, 0, 0, 0, 1)).toBe(
       `${BASE_ICON_URL}/pokemon/25_a1.webp`
     )
@@ -654,13 +667,15 @@ describe('public API argument matrices', () => {
     expect(pokemonIcons.pokemon(25, 0, 0, 0, 0, 0, 0, true)).toBe(
       `${BASE_ICON_URL}/pokemon/25_s.webp`
     )
-    expect(pokemonIcons.pokemon(25, 1, 2)).toBe(`${BASE_ICON_URL}/pokemon/25_e1_f2.webp`)
+    expect(pokemonIcons.pokemon(25, 1, 2)).toBe(
+      `${BASE_ICON_URL}/pokemon/25_e1_f2.webp`
+    )
     expect(pokemonIcons.pokemon(26, 0, 0, 0, 0, 0, 0, true)).toBe(
       `${BASE_ICON_URL}/pokemon/26.webp`
     )
-    expect(pokemonIcons.pokemon('999', '1', '2', '3', '4', '5', '6', true)).toBe(
-      `${BASE_ICON_URL}/pokemon/0.webp`
-    )
+    expect(
+      pokemonIcons.pokemon('999', '1', '2', '3', '4', '5', '6', true)
+    ).toBe(`${BASE_ICON_URL}/pokemon/0.webp`)
   })
 
   test('pokestop combinations cover display, quest, ar, and power suffix rules', () => {
@@ -683,11 +698,21 @@ describe('public API argument matrices', () => {
     })
 
     expect(pokestopIcons.pokestop()).toBe(`${BASE_ICON_URL}/pokestop/0.webp`)
-    expect(pokestopIcons.pokestop(501)).toBe(`${BASE_ICON_URL}/pokestop/501.webp`)
-    expect(pokestopIcons.pokestop(0, true)).toBe(`${BASE_ICON_URL}/pokestop/0_i.webp`)
-    expect(pokestopIcons.pokestop(0, 8)).toBe(`${BASE_ICON_URL}/pokestop/0_i8.webp`)
-    expect(pokestopIcons.pokestop(0, false, true)).toBe(`${BASE_ICON_URL}/pokestop/0_q.webp`)
-    expect(pokestopIcons.pokestop(0, false, 3)).toBe(`${BASE_ICON_URL}/pokestop/0_q3.webp`)
+    expect(pokestopIcons.pokestop(501)).toBe(
+      `${BASE_ICON_URL}/pokestop/501.webp`
+    )
+    expect(pokestopIcons.pokestop(0, true)).toBe(
+      `${BASE_ICON_URL}/pokestop/0_i.webp`
+    )
+    expect(pokestopIcons.pokestop(0, 8)).toBe(
+      `${BASE_ICON_URL}/pokestop/0_i8.webp`
+    )
+    expect(pokestopIcons.pokestop(0, false, true)).toBe(
+      `${BASE_ICON_URL}/pokestop/0_q.webp`
+    )
+    expect(pokestopIcons.pokestop(0, false, 3)).toBe(
+      `${BASE_ICON_URL}/pokestop/0_q3.webp`
+    )
     expect(pokestopIcons.pokestop(0, false, false, false, true)).toBe(
       `${BASE_ICON_URL}/pokestop/0_p.webp`
     )
@@ -713,11 +738,21 @@ describe('public API argument matrices', () => {
       },
     })
 
-    expect(raidIcons.raidEgg(5, true, true)).toBe(`${BASE_ICON_URL}/raid/egg/5_h_ex.webp`)
-    expect(raidIcons.raidEgg(5, true, false)).toBe(`${BASE_ICON_URL}/raid/egg/5_h.webp`)
-    expect(raidIcons.raidEgg(6, true, true)).toBe(`${BASE_ICON_URL}/raid/egg/6_ex.webp`)
-    expect(raidIcons.raidEgg(7, true, true)).toBe(`${BASE_ICON_URL}/raid/egg/7.webp`)
-    expect(raidIcons.raidEgg(999, true, true)).toBe(`${BASE_ICON_URL}/raid/egg/0.webp`)
+    expect(raidIcons.raidEgg(5, true, true)).toBe(
+      `${BASE_ICON_URL}/raid/egg/5_h_ex.webp`
+    )
+    expect(raidIcons.raidEgg(5, true, false)).toBe(
+      `${BASE_ICON_URL}/raid/egg/5_h.webp`
+    )
+    expect(raidIcons.raidEgg(6, true, true)).toBe(
+      `${BASE_ICON_URL}/raid/egg/6_ex.webp`
+    )
+    expect(raidIcons.raidEgg(7, true, true)).toBe(
+      `${BASE_ICON_URL}/raid/egg/7.webp`
+    )
+    expect(raidIcons.raidEgg(999, true, true)).toBe(
+      `${BASE_ICON_URL}/raid/egg/0.webp`
+    )
   })
 
   test('reward combinations cover amount parsing and id derivation rules', () => {
@@ -734,13 +769,21 @@ describe('public API argument matrices', () => {
       },
     })
 
-    expect(rewardIcons.reward('item')).toBe(`${BASE_ICON_URL}/reward/item/0.webp`)
-    expect(rewardIcons.reward('item', 1, 10)).toBe(`${BASE_ICON_URL}/reward/item/1_a10.webp`)
+    expect(rewardIcons.reward('item')).toBe(
+      `${BASE_ICON_URL}/reward/item/0.webp`
+    )
+    expect(rewardIcons.reward('item', 1, 10)).toBe(
+      `${BASE_ICON_URL}/reward/item/1_a10.webp`
+    )
     expect(rewardIcons.reward('item', 1, '10')).toBe(
       `${BASE_ICON_URL}/reward/item/1_a10.webp`
     )
-    expect(rewardIcons.reward('item', 1, 2.5)).toBe(`${BASE_ICON_URL}/reward/item/1.webp`)
-    expect(rewardIcons.reward('item', 1, 99)).toBe(`${BASE_ICON_URL}/reward/item/1.webp`)
+    expect(rewardIcons.reward('item', 1, 2.5)).toBe(
+      `${BASE_ICON_URL}/reward/item/1.webp`
+    )
+    expect(rewardIcons.reward('item', 1, 99)).toBe(
+      `${BASE_ICON_URL}/reward/item/1.webp`
+    )
     expect(rewardIcons.reward('item', 'not-a-number', 500)).toBe(
       `${BASE_ICON_URL}/reward/item/500.webp`
     )
@@ -764,8 +807,12 @@ describe('public API argument matrices', () => {
       },
     })
 
-    expect(spawnpointIcons.spawnpoint()).toBe(`${BASE_ICON_URL}/spawnpoint/0.webp`)
-    expect(spawnpointIcons.spawnpoint(true)).toBe(`${BASE_ICON_URL}/spawnpoint/0.webp`)
+    expect(spawnpointIcons.spawnpoint()).toBe(
+      `${BASE_ICON_URL}/spawnpoint/0.webp`
+    )
+    expect(spawnpointIcons.spawnpoint(true)).toBe(
+      `${BASE_ICON_URL}/spawnpoint/0.webp`
+    )
   })
 
   test('station always maps boolean state to 0 or 1 filename', () => {
@@ -802,7 +849,9 @@ describe('public API argument matrices', () => {
       },
     })
 
-    expect(tappableIcons.tappable(123)).toBe(`${BASE_ICON_URL}/tappable/123.webp`)
+    expect(tappableIcons.tappable(123)).toBe(
+      `${BASE_ICON_URL}/tappable/123.webp`
+    )
     expect(tappableIcons.tappable('UNKNOWN_TYPE')).toBe(
       `${BASE_ICON_URL}/tappable/TAPPABLE_TYPE_POKEBALL.webp`
     )
@@ -820,11 +869,23 @@ describe('public API argument matrices', () => {
       },
     })
 
-    expect(weatherIcons.weather(3, 2, 'day')).toBe(`${BASE_ICON_URL}/weather/3_l2_d.webp`)
-    expect(weatherIcons.weather(3, 2, 'night')).toBe(`${BASE_ICON_URL}/weather/3_l2.webp`)
-    expect(weatherIcons.weather(3, 0, 'night')).toBe(`${BASE_ICON_URL}/weather/3.webp`)
-    expect(weatherIcons.weather(3, 2, 'dawn')).toBe(`${BASE_ICON_URL}/weather/3_l2_d.webp`)
-    expect(weatherIcons.weather(4, 0, 'night')).toBe(`${BASE_ICON_URL}/weather/4_n.webp`)
-    expect(weatherIcons.weather(99, 9, 'night')).toBe(`${BASE_ICON_URL}/weather/0.webp`)
+    expect(weatherIcons.weather(3, 2, 'day')).toBe(
+      `${BASE_ICON_URL}/weather/3_l2_d.webp`
+    )
+    expect(weatherIcons.weather(3, 2, 'night')).toBe(
+      `${BASE_ICON_URL}/weather/3_l2.webp`
+    )
+    expect(weatherIcons.weather(3, 0, 'night')).toBe(
+      `${BASE_ICON_URL}/weather/3.webp`
+    )
+    expect(weatherIcons.weather(3, 2, 'dawn')).toBe(
+      `${BASE_ICON_URL}/weather/3_l2_d.webp`
+    )
+    expect(weatherIcons.weather(4, 0, 'night')).toBe(
+      `${BASE_ICON_URL}/weather/4_n.webp`
+    )
+    expect(weatherIcons.weather(99, 9, 'night')).toBe(
+      `${BASE_ICON_URL}/weather/0.webp`
+    )
   })
 })

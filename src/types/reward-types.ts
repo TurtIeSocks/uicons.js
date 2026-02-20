@@ -58,5 +58,10 @@ export type RewardUrlFromArgs<
 > = Args extends []
   ? FileUrl<Path, 'misc', Extension, Zero>
   :
-      | FileUrl<Path, RewardFolderFromArgs<Args>, Extension, RewardNameFromArgs<Args>>
+      | FileUrl<
+          Path,
+          RewardFolderFromArgs<Args>,
+          Extension,
+          RewardNameFromArgs<Args>
+        >
       | FileUrl<Path, 'misc', Extension, Zero>

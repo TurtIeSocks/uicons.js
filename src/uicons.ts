@@ -44,9 +44,13 @@ const PNG = 'png' as const
  * Universal ICONS Class for Pokémon GO asset management
  *
  * Can be used with any image or audio extensions, as long as they follow the UICONS guidelines
+ * @typeParam TPath The typed base URL prefix that all returned URLs will start with
+ * @typeParam TExt The typed file extension used for icon files (`png`, `webp`, `svg`, etc.)
  * @see https://github.com/UIcons/UIcons
  * @example
+ * ```ts
  * import { UICONS } from 'uicons.js'
+ * import { Rpc } from '@na-ji/pogo-protos'
  *
  * // Basic usage
  * const uicons = new UICONS('https://example.com/uicons')
@@ -61,10 +65,25 @@ const PNG = 'png' as const
  * })
  * // With stronger extension typing
  * const uicons = new UICONS({ path: 'https://example.com/uicons', extension: 'png' })
+ *
+ * // With explicit generic specialization for typed return URLs
+ * const typed = new UICONS<'https://cdn.example.com/uicons', 'webp'>({
+ *   path: 'https://cdn.example.com/uicons',
+ *   extension: 'webp',
+ * })
+ *
+ * // `FileUrl<TPath, ..., TExt, ...>` now resolves with typed path and extension
+ * const teamUrl = typed.team(Rpc.Team.TEAM_BLUE)
+ * //    ^? "https://cdn.example.com/uicons/team/..."
+ * ```
+ *
+ * @example
+ * ```ts
  * // Async initialization fetches the index.json file for you
  * await uicons.remoteInit()
  * // Sync initialization if you already have the index.json and want to load it manually
  * uicons.init(indexJson)
+ * ```
  */
 export class UICONS<
   TPath extends string = string,
@@ -98,11 +117,32 @@ export class UICONS<
   #weather: Set<UiconsIndex['weather'][number]> = new Set()
 
   /**
+   * Construct a `UICONS` instance with full options.
+   *
    * @param options The options object for the UICONS instance
+   * @example
+   * ```ts
+   * const custom = new UICONS<'https://icons.acme.dev/uicons', 'webp'>({
+   *   path: 'https://icons.acme.dev/uicons',
+   *   label: 'acme-prod',
+   *   extension: 'webp',
+   *   data: {
+   *     team: ['0.webp', '1.webp', '2.webp', '3.webp'],
+   *     weather: ['0_d.webp', '1_d.webp'],
+   *   },
+   * })
+   * ```
    */
   constructor(options: Options<DeepPartial<UiconsIndex>, TPath, TExt>)
   /**
+   * Construct a `UICONS` instance from a repository base URL.
+   *
    * @param path The base URL of the UICONS repository
+   * @example
+   * ```ts
+   * const uicons = new UICONS('https://raw.githubusercontent.com/UIcons/UIcons/main')
+   * await uicons.remoteInit()
+   * ```
    */
   constructor(path: TPath)
   constructor(
@@ -123,8 +163,32 @@ export class UICONS<
 
   /**
    * Initialize this instance synchronously using a previously fetched `index.json` payload.
+   *
    * @param data The index.json file from the UICONS repository
-   * @returns The initialized UICONS instance.
+   * @returns The initialized UICONS instance (`this`) for fluent chaining.
+   * @example
+   * ```ts
+   *
+   * const uicons = new UICONS<'https://cdn.example.com/uicons', 'png'>({
+   *   path: 'https://cdn.example.com/uicons',
+   *   extension: 'png',
+   * })
+   *
+   * const indexJson = await fetch('https://cdn.example.com/uicons/index.json').then((r) => r.json())
+   *
+   * const ready = uicons.init(indexJson)
+   * // `ready` and `uicons` are the same initialized instance.
+   * const fallbackGym = ready.gym()
+   * ```
+   *
+   * @example
+   * ```ts
+   * // You can initialize with partial data for focused usage.
+   * const mini = new UICONS('https://cdn.example.com/uicons').init({
+   *   team: ['0.png', '1.png', '2.png', '3.png'],
+   * })
+   * const mystic = mini.team(1)
+   * ```
    */
   init(data: DeepPartial<UiconsIndex>): this {
     this.#background = new Set(data.background || [])
@@ -153,8 +217,22 @@ export class UICONS<
 
   /**
    * Check to see if an icon path exists in the UICONS repository
+   *
    * @param location This is the dot notation path of the folders in the UICONS repository
    * @param fileName The filename without the extension
+   * @example
+   * ```ts
+   * // Numeric and string scalar lookups are both supported.
+   * uicons.has('team', 1) // true => file like `team/1.png` exists
+   * uicons.has('team', '3') // true => file like `team/3.png` exists
+   * ```
+   *
+   * @example
+   * ```ts
+   * // Nested folders use dot notation.
+   * uicons.has('raid.egg', 5) // checks `raid/egg/5.<ext>`
+   * uicons.has('reward.item', 1) // checks `reward/item/1.<ext>`
+   * ```
    */
   has(location: Paths<UiconsIndex>, fileName: Scalar): boolean {
     this.#isReady()
@@ -211,8 +289,27 @@ export class UICONS<
   // ====================================== PRIMARY PUBLIC APIs ======================================
 
   /**
-   * @param id the background ID
-   * @returns the src of the background icon
+   * Resolve a background icon URL.
+   *
+   * @param id The background ID. Accepts RPC enum values, numeric IDs, or numeric strings.
+   * @returns A typed URL like `"{TPath}/background/{id or 0}.{TExt}"`.
+   * @example
+   * ```ts
+   * // Default background fallback: `background/0.<ext>`
+   * const fallback = uicons.background()
+   * ```
+   *
+   * @example
+   * ```ts
+   * import { Rpc } from '@na-ji/pogo-protos'
+   *
+   * // RPC proto enum input
+   * const protoUrl = uicons.background(Rpc.EncounterOutProto.Background.BACKGROUND_GRASS)
+   *
+   * // Scalar number or string input
+   * const numericUrl = uicons.background(7)
+   * const stringUrl = uicons.background('7')
+   * ```
    */
   background(): FileUrl<TPath, 'background', TExt, Zero>
   background<ID extends EnumVal<typeof Rpc.EncounterOutProto.Background>>(
@@ -237,8 +334,16 @@ export class UICONS<
   }
 
   /**
-   * @param online a boolean to determine if the device is online or offline
-   * @returns the src of the device icon
+   * Resolve a device icon URL.
+   *
+   * @param online If `true`, prefers the online variant (`1`); otherwise uses offline (`0`).
+   * @returns A typed URL like `"{TPath}/device/{0|1}.{TExt}"`.
+   * @example
+   * ```ts
+   * const offline = uicons.device() // defaults to false => `device/0.<ext>`
+   * const online = uicons.device(true) // `device/1.<ext>`
+   * const explicitOffline = uicons.device(false) // `device/0.<ext>`
+   * ```
    */
   device(online: true): FileUrl<TPath, 'device', TExt, One | Zero>
   device(online?: false): FileUrl<TPath, 'device', TExt, Zero>
@@ -254,13 +359,40 @@ export class UICONS<
   }
 
   /**
-   * @param teamId the team id of the gym, see {@link Rpc.Team}
-   * @param trainerCount the number of trainers in the gym
-   * @param inBattle is the gym is in battle
-   * @param ex is the gym an EX raid gym
-   * @param ar is the gym AR eligible
-   * @param power the power up level of the gym, see {@link Rpc.FortPowerUpLevel}
-   * @returns the src of the gym icon
+   * Resolve a gym icon URL with optional modifiers.
+   *
+   * @param teamId The team ID, see {@link Rpc.Team}
+   * @param trainerCount Number of trainers shown on the gym badge (`0-6`)
+   * @param inBattle Whether the gym is in battle
+   * @param ex Whether the gym is EX-eligible
+   * @param ar Whether the gym is AR-eligible
+   * @param power Power-up level, boolean shortcut, or {@link Rpc.FortPowerUpLevel}
+   * @returns A typed URL like `"{TPath}/gym/{computed-name}.{TExt}"`, with fallback to `0`.
+   * @example
+   * ```ts
+   * import { Rpc } from '@na-ji/pogo-protos'
+   *
+   * // All args omitted => fallback `gym/0.<ext>`
+   * const fallback = uicons.gym()
+   *
+   * // Proto enums + booleans
+   * const full = uicons.gym(
+   *   Rpc.Team.TEAM_BLUE,
+   *   6,
+   *   true,
+   *   true,
+   *   false,
+   *   Rpc.FortPowerUpLevel.FORT_POWERUP_LEVEL_3
+   * )
+   * ```
+   *
+   * @example
+   * ```ts
+   * // Scalars are accepted too (number/string/boolean)
+   * const numeric = uicons.gym(2, 3, true)
+   * const stringly = uicons.gym('2', '3', false, false, false, '1')
+   * const booleanPower = uicons.gym(1, 0, false, false, false, true) // tries `_p` fallback variants
+   * ```
    */
   gym<
     TeamId extends EnumVal<typeof Rpc.Team> | Zero = Zero,
@@ -331,9 +463,19 @@ export class UICONS<
   }
 
   /**
-   * @param gruntId the grunt id of the invasion, see {@link Rpc.EnumWrapper.InvasionCharacter}
-   * @param confirmed if the invasion is confirmed - used for giovanni/decoy images
-   * @returns the src of the invasion icon
+   * Resolve an invasion icon URL.
+   *
+   * @param gruntId The invasion character ID, see {@link Rpc.EnumWrapper.InvasionCharacter}
+   * @param confirmed If `true`, skips unconfirmed (`_u`) fallback variant.
+   * @returns A typed URL like `"{TPath}/invasion/{computed-name}.{TExt}"`.
+   * @example
+   * ```ts
+   * import { Rpc } from '@na-ji/pogo-protos'
+   *
+   * const defaultInvasion = uicons.invasion() // `invasion/0.<ext>`
+   * const protoInvasion = uicons.invasion(Rpc.EnumWrapper.InvasionCharacter.CHARACTER_ROCKET_GRUNT_FEMALE)
+   * const confirmedBoss = uicons.invasion('44', true)
+   * ```
    */
   invasion<
     GruntId extends EnumVal<typeof Rpc.EnumWrapper.InvasionCharacter> | Zero =
@@ -375,8 +517,16 @@ export class UICONS<
   }
 
   /**
-   * @param fileName the filename without the extension
-   * @returns the src of the misc icon
+   * Resolve a misc icon URL.
+   *
+   * @param fileName The filename without extension (number or string)
+   * @returns A typed URL like `"{TPath}/misc/{fileName or 0}.{TExt}"`.
+   * @example
+   * ```ts
+   * const fallbackMisc = uicons.misc()
+   * const byNumber = uicons.misc(132)
+   * const byString = uicons.misc('event-ticket')
+   * ```
    */
   misc(): FileUrl<TPath, 'misc', TExt, Zero>
   misc<FileName extends Scalar>(
@@ -397,8 +547,18 @@ export class UICONS<
   }
 
   /**
-   * @param typeId the pokemon type ID that is nesting, see {@link Rpc.HoloPokemonType}
-   * @returns the src of the nest icon
+   * Resolve a nest icon URL.
+   *
+   * @param typeId The nesting type ID, see {@link Rpc.HoloPokemonType}
+   * @returns A typed URL like `"{TPath}/nest/{typeId or 0}.{TExt}"`.
+   * @example
+   * ```ts
+   * import { Rpc } from '@na-ji/pogo-protos'
+   *
+   * const unknownNest = uicons.nest()
+   * const protoTypeNest = uicons.nest(Rpc.HoloPokemonType.POKEMON_TYPE_WATER)
+   * const scalarNest = uicons.nest('11')
+   * ```
    */
   nest(): FileUrl<TPath, 'nest', TExt, Zero>
   nest<TypeId extends Scalar>(
@@ -418,15 +578,44 @@ export class UICONS<
   }
 
   /**
-   * @param pokemonId the pokemon ID
-   * @param evolution the [mega] evolution ID of the pokemon, see {@link Rpc.HoloTemporaryEvolutionId}
-   * @param form the form ID of the pokemon, see {@link Rpc.PokemonDisplayProto.Form}
-   * @param costume the costume ID of the pokemon, see {@link Rpc.PokemonDisplayProto.Costume}
-   * @param gender the gender ID of the pokemon, see {@link Rpc.PokemonDisplayProto.Gender}
-   * @param alignment the alignment ID of the pokemon, such as shadow or purified, see {@link Rpc.PokemonDisplayProto.Alignment}
-   * @param bread the bread mode of the pokemon, see {@link Rpc.BreadModeEnum.Modifier}
-   * @param shiny if the pokemon is shiny
-   * @returns the src of the pokemon icon
+   * Resolve a Pokémon icon URL with optional visual modifiers.
+   *
+   * @param pokemonId Pokémon ID
+   * @param evolution Mega/temporary evolution ID, see {@link Rpc.HoloTemporaryEvolutionId}
+   * @param form Form ID, see {@link Rpc.PokemonDisplayProto.Form}
+   * @param costume Costume ID, see {@link Rpc.PokemonDisplayProto.Costume}
+   * @param gender Gender ID, see {@link Rpc.PokemonDisplayProto.Gender}
+   * @param alignment Alignment ID (for shadow/purified), see {@link Rpc.PokemonDisplayProto.Alignment}
+   * @param bread Bread mode modifier, see {@link Rpc.BreadModeEnum.Modifier}
+   * @param shiny Whether shiny variants should be attempted
+   * @returns A typed URL like `"{TPath}/pokemon/{computed-name}.{TExt}"`.
+   * @example
+   * ```ts
+   * import { Rpc } from '@na-ji/pogo-protos'
+   *
+   * // Plain fallback and plain Pokémon ID
+   * const fallbackMon = uicons.pokemon()
+   * const bulbasaur = uicons.pokemon(Rpc.HoloPokemonId.BULBASAUR)
+   *
+   * // Rich proto input with many optional flags
+   * const complex = uicons.pokemon(
+   *   Rpc.HoloPokemonId.MEWTWO,
+   *   Rpc.HoloTemporaryEvolutionId.TEMP_EVOLUTION_MEGA,
+   *   Rpc.PokemonDisplayProto.Form.FORM_NORMAL,
+   *   Rpc.PokemonDisplayProto.Costume.COSTUME_2020,
+   *   Rpc.PokemonDisplayProto.Gender.GENDER_MALE,
+   *   Rpc.PokemonDisplayProto.Alignment.ALIGNMENT_SHADOW,
+   *   Rpc.BreadModeEnum.Modifier.BREAD,
+   *   true
+   * )
+   * ```
+   *
+   * @example
+   * ```ts
+   * // Number/string/boolean combinations are accepted for flexibility.
+   * const scalar = uicons.pokemon(150, 1, 0, 0, 1, 0, 0, true)
+   * const stringly = uicons.pokemon('150', '1', '0', '0', '1', '0', '0', false)
+   * ```
    */
   pokemon<
     PokemonId extends EnumVal<typeof Rpc.HoloPokemonId> | Zero = Zero,
@@ -520,12 +709,35 @@ export class UICONS<
   }
 
   /**
-   * @param lureId the ID of the lure at the pokestop, 0 for no lure, see {@link Rpc.Item} `ITEM_TROY_DISK*` values
-   * @param displayTypeId the display ID of the pokestop, 0 for no display, see {@link Rpc.IncidentDisplayType}
-   * @param questActive does the pokestop currently have an active quest
-   * @param ar is the pokestop AR eligible
-   * @param power the power up level of the pokestop, 0 for no power up, see {@link Rpc.FortPowerUpLevel}
-   * @returns the src of the pokestop icon
+   * Resolve a PokéStop icon URL with optional lure/display/quest/AR/power modifiers.
+   *
+   * @param lureId Lure ID (`0` for none), see {@link Rpc.Item} `ITEM_TROY_DISK*`
+   * @param displayTypeId Display type ID (`0` or `false` for none), see {@link Rpc.IncidentDisplayType}
+   * @param questActive Whether the stop has an active quest (or scalar fallback form)
+   * @param ar Whether the stop is AR-eligible
+   * @param power Power-up level, boolean shortcut, or scalar equivalent
+   * @returns A typed URL like `"{TPath}/pokestop/{computed-name}.{TExt}"`.
+   * @example
+   * ```ts
+   * import { Rpc } from '@na-ji/pogo-protos'
+   *
+   * const plainStop = uicons.pokestop()
+   * const protoStop = uicons.pokestop(
+   *   Rpc.Item.ITEM_TROY_DISK,
+   *   Rpc.IncidentDisplayType.INCIDENT_DISPLAY_ROCKET,
+   *   true,
+   *   true,
+   *   Rpc.FortPowerUpLevel.FORT_POWERUP_LEVEL_2
+   * )
+   * ```
+   *
+   * @example
+   * ```ts
+   * // Scalars and booleans are accepted for compatibility with external payloads.
+   * const scalarStop = uicons.pokestop(501, 2, true, false, 3)
+   * const stringStop = uicons.pokestop('501', '2', '1', true, '3')
+   * const booleanFlagStop = uicons.pokestop(0, false, false, false, true) // tries `_p`
+   * ```
    */
   pokestop<
     LureId extends LureIDs = Zero,
@@ -601,10 +813,20 @@ export class UICONS<
   }
 
   /**
-   * @param level the level of the raid egg, see {@link Rpc.RaidLevel}
-   * @param hatched if the raid egg has hatched
-   * @param ex if the raid egg is an EX raid egg
-   * @returns the src of the raid egg icon
+   * Resolve a raid egg icon URL.
+   *
+   * @param level Raid level, see {@link Rpc.RaidLevel}
+   * @param hatched Whether the egg has hatched
+   * @param ex Whether this is an EX raid egg
+   * @returns A typed URL like `"{TPath}/raid/egg/{computed-name}.{TExt}"`.
+   * @example
+   * ```ts
+   * import { Rpc } from '@na-ji/pogo-protos'
+   *
+   * const defaultEgg = uicons.raidEgg()
+   * const legendaryEgg = uicons.raidEgg(Rpc.RaidLevel.LEVEL_5)
+   * const hatchedEx = uicons.raidEgg(6, true, true)
+   * ```
    */
   raidEgg<
     Level extends EnumVal<typeof Rpc.RaidLevel> | Zero = Zero,
@@ -651,10 +873,29 @@ export class UICONS<
   }
 
   /**
-   * @param questRewardType the type of quest reward, see {@link Rpc.QuestRewardProto.Type}
-   * @param rewardId the ID or the amount of the reward. This depends on the complexity of the reward type. For example, item rewards use the item ID, while stardust rewards use the amount of stardust. Best to check uicons repository to see which of them use the `_a` flag
-   * @param amount the amount of the reward
-   * @returns the src of the quest reward icon
+   * Resolve a quest reward icon URL.
+   *
+   * @param questRewardType Reward folder key (e.g. `item`, `stardust`, `pokemon`, `unset`) mapped from {@link Rpc.QuestRewardProto.Type}
+   * @param rewardId ID or amount seed depending on reward type (number/string accepted)
+   * @param amount Optional quantity. Some reward icon sets use `_a{amount}` suffixes.
+   * @returns A typed reward URL inferred from `RewardUrlFromArgs<TPath, TExt, Args>`.
+   * @example
+   * ```ts
+   * // Folder-key usage (recommended)
+   * const itemReward = uicons.reward('item', 1)
+   * const stardustReward = uicons.reward('stardust', 500, 500)
+   * const pokemonReward = uicons.reward('pokemon', 150)
+   * ```
+   *
+   * @example
+   * ```ts
+   * // Scalars and strings are accepted for IDs and amounts.
+   * const stringItem = uicons.reward('item', '1')
+   * const amountVariant = uicons.reward('candy', 150, 3)
+   *
+   * // Invalid reward types gracefully fallback to `misc/0.<ext>` in dev with warning.
+   * const fallbackReward = uicons.reward('unset')
+   * ```
    */
   reward<Args extends RewardArgs>(
     ...args: Args
@@ -692,8 +933,15 @@ export class UICONS<
   }
 
   /**
-   * @param hasTth if the spawnpoint has a confirmed timer or not
-   * @returns the src of the spawnpoint icon
+   * Resolve a spawnpoint icon URL.
+   *
+   * @param hasTth Whether the spawnpoint has confirmed TTH timer state
+   * @returns A typed URL like `"{TPath}/spawnpoint/{0|1}.{TExt}"`.
+   * @example
+   * ```ts
+   * const unknownTimer = uicons.spawnpoint() // `spawnpoint/0.<ext>`
+   * const confirmedTimer = uicons.spawnpoint(true) // prefers `1.<ext>` if present
+   * ```
    */
   spawnpoint(): FileUrl<TPath, 'spawnpoint', TExt, Zero>
   spawnpoint(hasTth: true): FileUrl<TPath, 'spawnpoint', TExt, One | Zero>
@@ -711,8 +959,15 @@ export class UICONS<
   }
 
   /**
-   * @param active if the station is active or not
-   * @returns the src of the station icon
+   * Resolve a station icon URL.
+   *
+   * @param active Whether the station is active
+   * @returns A typed URL like `"{TPath}/station/{0|1}.{TExt}"`.
+   * @example
+   * ```ts
+   * const inactive = uicons.station()
+   * const active = uicons.station(true)
+   * ```
    */
   station(): FileUrl<TPath, 'station', TExt, Zero>
   station(active: true): FileUrl<TPath, 'station', TExt, One>
@@ -729,8 +984,26 @@ export class UICONS<
   }
 
   /**
-   * @param tappableType the tappable type identifier
-   * @returns the src of the tappable icon
+   * Resolve a tappable icon URL.
+   *
+   * @param tappableType Tappable type identifier (usually enum-like string, but numbers/strings are accepted)
+   * @returns A typed tappable URL. If category/type is missing, falls back to reward item icon URL.
+   * @example
+   * ```ts
+   * // Defaults to `TAPPABLE_TYPE_POKEBALL` fallback lookup.
+   * const defaultTappable = uicons.tappable()
+   *
+   * // Typical enum-like string keys used by map payloads.
+   * const gruntBalloon = uicons.tappable('TAPPABLE_TYPE_ROCKET_BALLOON')
+   * const showcase = uicons.tappable('TAPPABLE_TYPE_SHOWCASE')
+   * ```
+   *
+   * @example
+   * ```ts
+   * // Scalar compatibility for custom pipelines.
+   * const numericTappable = uicons.tappable(7)
+   * const stringIdTappable = uicons.tappable('7')
+   * ```
    */
   tappable(): TappableUrlFromArgs<TPath, TExt, []>
   tappable<TappableType extends Scalar>(
@@ -774,8 +1047,19 @@ export class UICONS<
   }
 
   /**
-   * @param teamId the team ID, see {@link Rpc.Team}
-   * @returns the src of the team icon
+   * Resolve a team icon URL.
+   *
+   * @param teamId Team ID, see {@link Rpc.Team}
+   * @returns A typed URL like `"{TPath}/team/{teamId or 0}.{TExt}"`.
+   * @example
+   * ```ts
+   * import { Rpc } from '@na-ji/pogo-protos'
+   *
+   * const neutral = uicons.team()
+   * const mystic = uicons.team(Rpc.Team.TEAM_BLUE)
+   * const valor = uicons.team(2)
+   * const instinct = uicons.team('3')
+   * ```
    */
   team(): FileUrl<TPath, 'team', TExt, Zero>
   team<TeamId extends Scalar>(
@@ -795,8 +1079,18 @@ export class UICONS<
   }
 
   /**
-   * @param typeId the pokemon type ID, see {@link Rpc.HoloPokemonType}
-   * @returns the src of the pokemon type icon
+   * Resolve a Pokémon type icon URL.
+   *
+   * @param typeId Pokémon type ID, see {@link Rpc.HoloPokemonType}
+   * @returns A typed URL like `"{TPath}/type/{typeId or 0}.{TExt}"`.
+   * @example
+   * ```ts
+   * import { Rpc } from '@na-ji/pogo-protos'
+   *
+   * const unknownType = uicons.type()
+   * const fireType = uicons.type(Rpc.HoloPokemonType.POKEMON_TYPE_FIRE)
+   * const scalarType = uicons.type(10)
+   * ```
    */
   type(): FileUrl<TPath, 'type', TExt, Zero>
   type<TypeId extends Scalar>(
@@ -816,10 +1110,30 @@ export class UICONS<
   }
 
   /**
-   * @param weatherId the weather ID, see {@link Rpc.GameplayWeatherProto.WeatherCondition}
-   * @param severityLevel the severity of the weather, see {@link Rpc.InternalWeatherAlertProto.Severity}
-   * @param timeOfDay the time of day
-   * @returns the src of the weather icon
+   * Resolve a weather icon URL.
+   *
+   * @param weatherId Weather condition ID, see {@link Rpc.GameplayWeatherProto.WeatherCondition}
+   * @param severityLevel Alert severity level, see {@link Rpc.InternalWeatherAlertProto.Severity}
+   * @param timeOfDay `day` or `night` (`_d`/`_n` variants are attempted)
+   * @returns A typed URL like `"{TPath}/weather/{computed-name}.{TExt}"`.
+   * @example
+   * ```ts
+   * import { Rpc } from '@na-ji/pogo-protos'
+   *
+   * const defaultWeather = uicons.weather()
+   * const rainyDay = uicons.weather(
+   *   Rpc.GameplayWeatherProto.WeatherCondition.WEATHER_RAINY,
+   *   Rpc.InternalWeatherAlertProto.Severity.SEVERE,
+   *   'day'
+   * )
+   * const windyNight = uicons.weather(4, 2, 'night')
+   * ```
+   *
+   * @example
+   * ```ts
+   * // String scalar compatibility.
+   * const fogString = uicons.weather('7', '1', 'night')
+   * ```
    */
   weather<
     WeatherId extends
@@ -957,7 +1271,27 @@ export class UICONS<
   /**
    * Initialize this instance asynchronously by fetching the `index.json` file
    * from the UICONS repository path provided in the constructor.
-   * @returns The initialized UICONS instance.
+   *
+   * @returns The initialized UICONS instance (`this`) with extension map populated.
+   * @example
+   * ```ts
+   * const uicons = new UICONS<'https://cdn.example.com/uicons', 'png'>({
+   *   path: 'https://cdn.example.com/uicons',
+   *   extension: 'png',
+   * })
+   *
+   * await uicons.remoteInit()
+   * const url = uicons.team(1)
+   * //    ^? "https://cdn.example.com/uicons/team/1.png" (when available)
+   * ```
+   *
+   * @example
+   * ```ts
+   * // Works with path-only constructor too.
+   * const pathOnly = new UICONS('https://raw.githubusercontent.com/UIcons/UIcons/main')
+   * await pathOnly.remoteInit()
+   * const weather = pathOnly.weather(1, 0, 'day')
+   * ```
    */
   async remoteInit(): Promise<this> {
     const data = await fetch(`${this.#path}/index.json`)

@@ -10,44 +10,12 @@ export type Scalar = string | number
  */
 export type RewardTypeKeys = Lowercase<keyof typeof Rpc.QuestRewardProto.Type>
 
+export type RaidKeys = Lowercase<keyof UiconsIndex['raid']>
+
 /**
  * Day or night variant selector used by weather icons.
  */
 export type TimeOfDay = 'day' | 'night'
-
-/**
- * Supported lower-cased file extensions for image, audio, and video assets.
- */
-export type Ext =
-  // | 'jpg'
-  // | 'jpeg'
-  | 'png'
-  | 'gif'
-  | 'webp'
-  | 'svg'
-  // | 'avif'
-  // | 'bmp'
-  // | 'ico'
-  // | 'tif'
-  // | 'tiff'
-  // | 'apng'
-  // | 'heif'
-  // | 'heic'
-  // | 'mp3'
-  | 'wav'
-  // | 'ogg'
-  // | 'm4a'
-  // | 'flac'
-  // | 'aac'
-  // | 'opus'
-  // | 'weba'
-  // | 'mp4'
-  | 'webm'
-// | 'mov'
-// | 'avi'
-// | 'mkv'
-// | 'm4v'
-// | 'ogv'
 
 /**
  * Gym defender count values accepted by UICONS gym icons.
@@ -70,32 +38,42 @@ export type LureIDs = StringOrNumber<
 /**
  * Shape of the `index.json` payload published by the UICONS repository.
  */
-export interface UiconsIndex<T extends readonly string[] = string[]> {
-  background?: T
-  device?: T
-  gym?: T
-  invasion?: T
-  misc?: T
-  nest?: T
-  pokemon?: T
-  pokestop?: T
-  tappable?: T
-  raid?: {
-    egg?: T
+export interface UiconsIndex<T extends string[] = string[]> {
+  background: T
+  device: T
+  gym: T
+  invasion: T
+  misc: T
+  nest: T
+  pokemon: T
+  pokestop: T
+  tappable: T
+  raid: {
+    egg: T
   }
-  reward?: { [key in RewardTypeKeys]?: T }
-  spawnpoint?: T
-  station?: T
-  team?: T
-  type?: T
-  weather?: T
+  reward: { [K in RewardTypeKeys]: T }
+  spawnpoint: T
+  station: T
+  team: T
+  type: T
+  weather: T
 }
+
+export type DeepPartial<T> = T extends (...args: any[]) => any
+  ? T
+  : T extends Array<infer U>
+    ? Array<DeepPartial<U>>
+    : T extends Array<infer U>
+      ? Array<DeepPartial<U>>
+      : T extends object
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : T
 
 /**
  * Constructor options for {@link UICONS}.
  */
 export interface Options<
-  TData extends UiconsIndex,
+  TData extends DeepPartial<UiconsIndex>,
   TPath extends string,
   TExt extends string,
 > {
@@ -120,13 +98,10 @@ export interface Options<
 /**
  * Per-category extension lookup generated from a UICONS index file.
  */
-export type ExtensionMap<
-  T extends UiconsIndex = UiconsIndex,
-  U extends string = Ext,
-> = {
+export type ExtensionMap<T extends object, U extends string> = {
   [K in keyof T]: T[K] extends string[]
     ? U
-    : T[K] extends object
+    : T[K] extends NonArrayObject
       ? ExtensionMap<T[K], U>
       : never
 }
@@ -184,19 +159,10 @@ export type OnlyTypeKeys<T extends object, U> = {
   [K in keyof T]-?: T[K] extends U ? K : never
 }[keyof T]
 
-type Join<K, P> = K extends string | number
-  ? P extends string | number
-    ? `${K}${'' extends P ? '' : '.'}${P}`
-    : never
-  : never
+export type NonArrayObject = Record<PropertyKey, unknown>
 
-/**
- * Dot-notation key paths for nested object types.
- */
-export type Paths<T> = T extends object
-  ? {
-      [K in keyof T]-?: K extends string | number
-        ? `${K}` | Join<K, Paths<T[K]>>
-        : never
-    }[keyof T]
-  : ''
+export type PopNum<T> = T extends `${infer Head}.${infer Tail}`
+  ? Tail extends `${number}`
+    ? Head
+    : `${Head}.${PopNum<Tail>}`
+  : T

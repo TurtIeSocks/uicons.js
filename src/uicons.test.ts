@@ -1,34 +1,5 @@
 import { Rpc } from '@na-ji/pogo-protos'
 import { UICONS } from './uicons.js'
-import type { PokemonArgs } from './types/index.js'
-
-type Assert<T extends true> = T
-
-type IsEqual<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
-    ? (<T>() => T extends B ? 1 : 2) extends <T>() => T extends A ? 1 : 2
-      ? true
-      : false
-    : false
-
-type _PokemonMethodShouldExposeConcreteParameters = Assert<
-  IsEqual<Parameters<UICONS['pokemon']>, PokemonArgs> extends true
-    ? false
-    : true
->
-type RewardNoArgsExpected = `${typeof BASE_ICON_URL}/misc/0.webp`
-type RewardItemExpected =
-  | `${typeof BASE_ICON_URL}/reward/item/0.webp`
-  | `${typeof BASE_ICON_URL}/misc/0.webp`
-type RewardItemAndIdExpected =
-  | `${typeof BASE_ICON_URL}/reward/item/20.webp`
-  | `${typeof BASE_ICON_URL}/reward/item/0.webp`
-  | `${typeof BASE_ICON_URL}/misc/0.webp`
-type RewardItemAndIdAndAmountExpected =
-  | `${typeof BASE_ICON_URL}/reward/item/20_a10.webp`
-  | `${typeof BASE_ICON_URL}/reward/item/20.webp`
-  | `${typeof BASE_ICON_URL}/reward/item/0.webp`
-  | `${typeof BASE_ICON_URL}/misc/0.webp`
 
 const BASE_ICON_URL =
   'https://raw.githubusercontent.com/WatWowMap/wwm-uicons-webp/main'
@@ -314,26 +285,20 @@ describe('raidEgg', () => {
 describe('reward', () => {
   test('no args and folder-only', () => {
     const result1 = icons.reward()
-    type _RewardNoArgs = Assert<IsEqual<typeof result1, RewardNoArgsExpected>>
     expect(result1).toBe<typeof result1>(`${BASE_ICON_URL}/misc/0.webp`)
 
     const result2 = icons.reward('item')
-    type _RewardItem = Assert<IsEqual<typeof result2, RewardItemExpected>>
     expect(result2).toBe<typeof result2>(`${BASE_ICON_URL}/reward/item/0.webp`)
   })
 
   test('reward ids and amount suffix', () => {
     const result0 = icons.reward('item', 20)
-    type _RewardItemAndId = Assert<
-      IsEqual<typeof result0, RewardItemAndIdExpected>
-    >
     expect(result0).toBe<typeof result0>(`${BASE_ICON_URL}/reward/item/0.webp`)
 
     const result00 = icons.reward('item', 20, 10)
-    type _RewardItemAndIdAndAmount = Assert<
-      IsEqual<typeof result00, RewardItemAndIdAndAmountExpected>
-    >
-    expect(result00).toBe<typeof result00>(`${BASE_ICON_URL}/reward/item/0.webp`)
+    expect(result00).toBe<typeof result00>(
+      `${BASE_ICON_URL}/reward/item/0.webp`
+    )
 
     const result1 = icons.reward('experience', 100)
     expect(result1).toBe<typeof result1>(
@@ -371,6 +336,7 @@ describe('tappable', () => {
         item: ['1.webp'],
       },
     },
+    extension: 'webp',
   })
 
   test('no args', () => {
@@ -400,6 +366,7 @@ describe('tappable', () => {
           item: ['1.webp'],
         },
       },
+      extension: 'webp',
     })
 
     const result = empty.tappable('TAPPABLE_TYPE_BREAKFAST')

@@ -1,20 +1,22 @@
 import type { Rpc } from '@na-ji/pogo-protos'
 import type {
   UiconsIndex,
+  DeepPartial,
   EnumVal,
   RewardTypeKeys,
   TrainerCounts,
   LureIDs,
   TimeOfDay,
   Options,
-  Ext,
-  ExtensionMap,
   Zero,
   One,
   Scalar,
   FileUrl,
-  Paths,
   OnlyTypeKeys,
+  RaidKeys,
+  NonArrayObject,
+  PopNum,
+  ExtensionMap,
 } from './types/general.js'
 import type {
   GymArgs,
@@ -28,12 +30,15 @@ import type {
   RewardArgs,
   RewardUrlFromArgs,
   TappableUrlFromArgs,
+  TappableRewardFallbackUrl,
   WeatherArgs,
   WeatherNameFromArgs,
 } from './types/index.js'
+import { Split, Paths } from 'type-fest'
 
 const ZERO: Zero = 0
 const ONE: One = 1
+const PNG = 'png' as const
 
 /**
  * Universal ICONS Class for Pokémon GO asset management
@@ -61,140 +66,67 @@ const ONE: One = 1
  * // Sync initialization if you already have the index.json and want to load it manually
  * uicons.init(indexJson)
  */
-export class UICONS<TPath extends string = string, TExt extends string = Ext> {
+export class UICONS<
+  TPath extends string = string,
+  TExt extends string = typeof PNG,
+> {
   #path: TPath
-  #extensionMap: ExtensionMap<UiconsIndex, TExt>
+  #extensionMap: {
+    [K in keyof UiconsIndex]?: UiconsIndex[K] extends NonArrayObject
+      ? { [K2 in keyof UiconsIndex[K]]?: TExt }
+      : TExt
+  } = {}
   #label: string
+  #ext: TExt
   #fallback: Zero = ZERO
 
-  #background: Set<UiconsIndex['background'][number]>
-  #device: Set<UiconsIndex['device'][number]>
-  #gym: Set<UiconsIndex['gym'][number]>
-  #invasion: Set<UiconsIndex['invasion'][number]>
-  #misc: Set<UiconsIndex['misc'][number]>
-  #nest: Set<UiconsIndex['nest'][number]>
-  #pokemon: Set<UiconsIndex['pokemon'][number]>
-  #pokestop: Set<UiconsIndex['pokestop'][number]>
-  #tappable: Set<UiconsIndex['tappable'][number]>
-  #raid: { egg: Set<UiconsIndex['raid']['egg'][number]> }
-  #reward: Record<string, Set<string>>
-  #spawnpoint: Set<UiconsIndex['spawnpoint'][number]>
-  #station: Set<UiconsIndex['station'][number]>
-  #team: Set<UiconsIndex['team'][number]>
-  #type: Set<UiconsIndex['type'][number]>
-  #weather: Set<UiconsIndex['weather'][number]>
+  #background: Set<UiconsIndex['background'][number]> = new Set()
+  #device: Set<UiconsIndex['device'][number]> = new Set()
+  #gym: Set<UiconsIndex['gym'][number]> = new Set()
+  #invasion: Set<UiconsIndex['invasion'][number]> = new Set()
+  #misc: Set<UiconsIndex['misc'][number]> = new Set()
+  #nest: Set<UiconsIndex['nest'][number]> = new Set()
+  #pokemon: Set<UiconsIndex['pokemon'][number]> = new Set()
+  #pokestop: Set<UiconsIndex['pokestop'][number]> = new Set()
+  #tappable: Set<UiconsIndex['tappable'][number]> = new Set()
+  #raid: { [K in RaidKeys]: Set<string> } = { egg: new Set() }
+  #reward: { [K in RewardTypeKeys]?: Set<string> } = {}
+  #spawnpoint: Set<UiconsIndex['spawnpoint'][number]> = new Set()
+  #station: Set<UiconsIndex['station'][number]> = new Set()
+  #team: Set<UiconsIndex['team'][number]> = new Set()
+  #type: Set<UiconsIndex['type'][number]> = new Set()
+  #weather: Set<UiconsIndex['weather'][number]> = new Set()
 
   /**
    * @param options The options object for the UICONS instance
    */
-  constructor(options: Options<UiconsIndex, TPath, TExt>)
+  constructor(options: Options<DeepPartial<UiconsIndex>, TPath, TExt>)
   /**
    * @param path The base URL of the UICONS repository
    */
   constructor(path: TPath)
-  constructor(optionsOrPath: TPath | Options<UiconsIndex, TPath, TExt>) {
-    const { path, label, data } =
+  constructor(
+    optionsOrPath: TPath | Options<DeepPartial<UiconsIndex>, TPath, TExt>
+  ) {
+    const { path, label, data, extension } =
       typeof optionsOrPath === 'string'
         ? { path: optionsOrPath }
         : optionsOrPath
     this.#path = path.endsWith('/') ? (path.slice(0, -1) as TPath) : path
     this.#label = label ?? this.#path
+    this.#ext = extension || (PNG as TExt)
+
     if (data) this.init(data)
   }
 
-  #warn(...args: unknown[]) {
-    if (
-      typeof process !== 'undefined' &&
-      process.env.NODE_ENV === 'development'
-    ) {
-      console.warn(`[UICONS ${this.#label}]`, ...args)
-    }
-  }
-
-  #buildExtensions(json: UiconsIndex): ExtensionMap<UiconsIndex, TExt> {
-    return Object.fromEntries(
-      Object.entries(json)
-        .map(([category, values]) => {
-          if (Array.isArray(values) && values.length > 0) {
-            return [category, values[0].split('.').pop()]
-          } else if (typeof values === 'object') {
-            return [category, this.#buildExtensions(values)]
-          }
-          return [category, '']
-        })
-        .filter(([_, value]) => value !== '')
-    )
-  }
-
-  #extension<T extends OnlyTypeKeys<UiconsIndex, string[]>>(
-    category: T
-  ): ExtensionMap<UiconsIndex, TExt>[T]
-  #extension<
-    T extends OnlyTypeKeys<UiconsIndex, Record<string, string[]>>,
-    U extends keyof ExtensionMap<UiconsIndex, TExt>[T],
-  >(category: T, key: U): ExtensionMap<UiconsIndex, TExt>[T][U]
-  #extension<
-    T extends keyof ExtensionMap<UiconsIndex, TExt>,
-    U extends keyof ExtensionMap<UiconsIndex, TExt>[T],
-  >(category: T, key?: U) {
-    const ext = this.#extensionMap[category]
-    if (ext === undefined || typeof ext === 'string') {
-      return ext
-    }
-    if (key === undefined) {
-      throw new Error(`Sub-folder key is required for ${String(category)}`)
-    }
-    return ext[key]
-  }
-
-  #isIndexData(value: unknown): value is UiconsIndex {
-    return !!value && typeof value === 'object' && !Array.isArray(value)
-  }
-
-  #isReady(key?: keyof UiconsIndex) {
-    if (!this.#extensionMap) {
-      throw new Error('UICONS has not been initialized')
-    }
-    if (key && !this.#extensionMap[key]) {
-      throw new Error(`Folder: ${key} was not found for ${this.#path}`)
-    }
-  }
-
-  #evalPossiblyEmptyFlag(flag: string, value: boolean | string | number) {
-    if (typeof value === 'boolean') return value ? [flag, ''] : ['']
-
-    const numericValue = typeof value === 'number' ? value : Number(value)
-    if (!Number.isFinite(numericValue) || numericValue === 0) {
-      return [flag, '']
-    }
-    return [`${flag}${numericValue}`, flag, '']
-  }
-
-  /**
-   * Initialize this instance asynchronously by fetching the `index.json` file
-   * from the UICONS repository path provided in the constructor.
-   * @returns The initialized UICONS instance.
-   */
-  async remoteInit(): Promise<this> {
-    const data = await fetch(`${this.#path}/index.json`)
-    if (!data.ok) {
-      throw new Error(
-        `Failed to fetch ${this.#path} ${data.status} ${data.statusText}`
-      )
-    }
-    const indexFile = await data.json()
-    if (!this.#isIndexData(indexFile)) {
-      throw new Error(`Invalid index.json payload from ${this.#path}`)
-    }
-    return this.init(indexFile)
-  }
+  // ====================================== PUBLIC LOADERS ======================================
 
   /**
    * Initialize this instance synchronously using a previously fetched `index.json` payload.
    * @param data The index.json file from the UICONS repository
    * @returns The initialized UICONS instance.
    */
-  init(data: UiconsIndex): this {
+  init(data: DeepPartial<UiconsIndex>): this {
     this.#background = new Set(data.background || [])
     this.#device = new Set(data.device || [])
     this.#gym = new Set(data.gym || [])
@@ -206,9 +138,7 @@ export class UICONS<TPath extends string = string, TExt extends string = Ext> {
     this.#tappable = new Set(data.tappable || [])
     this.#raid = { egg: new Set(data.raid?.egg || []) }
     this.#reward = Object.fromEntries(
-      Object.entries(data.reward || {})
-        .filter(([, v]) => Array.isArray(v))
-        .map(([k, v]) => [k, new Set(v)])
+      Object.entries(data.reward || {}).map(([k, v]) => [k, new Set(v)])
     )
     this.#spawnpoint = new Set(data.spawnpoint || [])
     this.#station = new Set(data.station || [])
@@ -217,6 +147,7 @@ export class UICONS<TPath extends string = string, TExt extends string = Ext> {
     this.#weather = new Set(data.weather || [])
 
     this.#extensionMap = this.#buildExtensions(data)
+
     return this
   }
 
@@ -227,52 +158,57 @@ export class UICONS<TPath extends string = string, TExt extends string = Ext> {
    */
   has(location: Paths<UiconsIndex>, fileName: Scalar): boolean {
     this.#isReady()
-    const [first, second] = location.split('.', 2)
-    switch (first) {
+
+    type Parts = Split<PopNum<typeof location>, '.'>
+    const [one, two]: Parts = location.split('.') as Parts
+
+    switch (one) {
       case 'background':
         return this.#background.has(
-          `${fileName}.${this.#extensionMap.background}`
+          `${fileName}.${this.#extension('background')}`
         )
       case 'device':
-        return this.#device.has(`${fileName}.${this.#extensionMap.device}`)
+        return this.#device.has(`${fileName}.${this.#extension(one)}`)
       case 'gym':
-        return this.#gym.has(`${fileName}.${this.#extensionMap.gym}`)
+        return this.#gym.has(`${fileName}.${this.#extension(one)}`)
       case 'invasion':
-        return this.#invasion.has(`${fileName}.${this.#extensionMap.invasion}`)
+        return this.#invasion.has(`${fileName}.${this.#extension(one)}`)
       case 'misc':
-        return this.#misc.has(`${fileName}.${this.#extensionMap.misc}`)
+        return this.#misc.has(`${fileName}.${this.#extension(one)}`)
       case 'nest':
-        return this.#nest.has(`${fileName}.${this.#extensionMap.nest}`)
+        return this.#nest.has(`${fileName}.${this.#extension(one)}`)
       case 'pokemon':
-        return this.#pokemon.has(`${fileName}.${this.#extensionMap.pokemon}`)
+        return this.#pokemon.has(`${fileName}.${this.#extension(one)}`)
       case 'pokestop':
-        return this.#pokestop.has(`${fileName}.${this.#extensionMap.pokestop}`)
+        return this.#pokestop.has(`${fileName}.${this.#extension(one)}`)
       case 'tappable':
-        return this.#tappable.has(`${fileName}.${this.#extensionMap.tappable}`)
+        return this.#tappable.has(`${fileName}.${this.#extension(one)}`)
       case 'raid':
-        return this.#raid.egg.has(`${fileName}.${this.#extensionMap.raid?.egg}`)
-      case 'reward':
-        return second in this.#reward
-          ? !!this.#reward[second]?.has(
-              `${fileName}.${this.#extensionMap.reward[second]}`
-            )
-          : false
-      case 'spawnpoint':
-        return this.#spawnpoint.has(
-          `${fileName}.${this.#extensionMap.spawnpoint}`
+        return (
+          !!two &&
+          !!this.#raid[two]?.has(`${fileName}.${this.#extension(one, two)}`)
         )
+      case 'reward':
+        return (
+          !!two &&
+          !!this.#reward[two]?.has(`${fileName}.${this.#extension(one, two)}`)
+        )
+      case 'spawnpoint':
+        return this.#spawnpoint.has(`${fileName}.${this.#extension(one)}`)
       case 'station':
-        return this.#station.has(`${fileName}.${this.#extensionMap.station}`)
+        return this.#station.has(`${fileName}.${this.#extension(one)}`)
       case 'team':
-        return this.#team.has(`${fileName}.${this.#extensionMap.team}`)
+        return this.#team.has(`${fileName}.${this.#extension(one)}`)
       case 'type':
-        return this.#type.has(`${fileName}.${this.#extensionMap.type}`)
+        return this.#type.has(`${fileName}.${this.#extension(one)}`)
       case 'weather':
-        return this.#weather.has(`${fileName}.${this.#extensionMap.weather}`)
+        return this.#weather.has(`${fileName}.${this.#extension(one)}`)
       default:
         return false
     }
   }
+
+  // ====================================== PRIMARY PUBLIC APIs ======================================
 
   /**
    * @param id the background ID
@@ -698,7 +634,7 @@ export class UICONS<TPath extends string = string, TExt extends string = Ext> {
     if (!raidExtension) {
       throw new Error(`Folder: ${folder} was not found for ${this.#path}`)
     }
-    const ext = raidExtension as TExt
+    const ext = raidExtension
 
     const hatchedSuffixes = hatched ? ['_h', ''] : ['']
     const exSuffixes = ex ? ['_ex', ''] : ['']
@@ -724,7 +660,7 @@ export class UICONS<TPath extends string = string, TExt extends string = Ext> {
     ...args: Args
   ): RewardUrlFromArgs<TPath, TExt, Args> {
     const [questRewardType, rewardIdOrAmount, amount] = args
-    const safeQuestRewardType = questRewardType ?? ('unset' as RewardTypeKeys)
+    const safeQuestRewardType: RewardTypeKeys = questRewardType ?? 'unset'
     const safeRewardIdOrAmount = rewardIdOrAmount ?? this.#fallback
     const safeAmount = amount ?? this.#fallback
     this.#isReady()
@@ -735,9 +671,9 @@ export class UICONS<TPath extends string = string, TExt extends string = Ext> {
     const rewardExtension = this.#extension('reward', safeQuestRewardType)
     if (!rewardSet || !rewardExtension) {
       this.#warn('Invalid quest reward type,', safeQuestRewardType)
-      return this.misc() as RewardUrlFromArgs<TPath, TExt, Args>
+      return this.#toRewardUrl<Args>(this.misc())
     }
-    const ext = rewardExtension as TExt
+    const ext = rewardExtension
 
     const amountSafe = typeof safeAmount === 'number' ? safeAmount : +safeAmount
     const amountSuffixes =
@@ -749,14 +685,10 @@ export class UICONS<TPath extends string = string, TExt extends string = Ext> {
     for (let a = 0; a < amountSuffixes.length; a += 1) {
       const result = `${safeId}${amountSuffixes[a]}.${ext}` as const
       if (rewardSet.has(result)) {
-        return `${base}/${result}` as RewardUrlFromArgs<TPath, TExt, Args>
+        return this.#toRewardUrl<Args>(`${base}/${result}`)
       }
     }
-    return `${base}/${this.#fallback}.${ext}` as RewardUrlFromArgs<
-      TPath,
-      TExt,
-      Args
-    >
+    return this.#toRewardUrl<Args>(`${base}/${this.#fallback}.${ext}`)
   }
 
   /**
@@ -808,15 +740,15 @@ export class UICONS<TPath extends string = string, TExt extends string = Ext> {
     tappableType?: Scalar
   ): TappableUrlFromArgs<TPath, TExt, [] | [Scalar]> {
     this.#isReady()
+    const rewardFallback: TappableRewardFallbackUrl<TPath, TExt> = this.reward(
+      'item',
+      1
+    )
 
     const folder = 'tappable'
     const extension = this.#extension(folder)
     if (!extension) {
-      return this.reward('item', 1) as TappableUrlFromArgs<
-        TPath,
-        TExt,
-        [] | [Scalar]
-      >
+      return rewardFallback
     }
 
     const base = `${this.#path}/${folder}` as const
@@ -838,11 +770,7 @@ export class UICONS<TPath extends string = string, TExt extends string = Ext> {
       return fallback
     }
 
-    return this.reward('item', 1) as TappableUrlFromArgs<
-      TPath,
-      TExt,
-      [] | [Scalar]
-    >
+    return rewardFallback
   }
 
   /**
@@ -944,10 +872,111 @@ export class UICONS<TPath extends string = string, TExt extends string = Ext> {
         const result =
           `${weatherId}${severitySuffixes[s]}${timeSuffixes[t]}.${ext}` as const
         if (this.#weather.has(result)) {
-          return `${base}/${result}` as const
+          return `${base}/${result}`
         }
       }
     }
-    return `${base}/${this.#fallback}.${ext}` as const
+    return `${base}/${this.#fallback}.${ext}`
+  }
+
+  // ====================================== PRIVATE HELPERS ======================================
+
+  #warn(...args: unknown[]) {
+    if (
+      typeof process !== 'undefined' &&
+      process.env.NODE_ENV === 'development'
+    ) {
+      console.warn(`[UICONS ${this.#label}]`, ...args)
+    }
+  }
+
+  #buildExtensions(
+    json: Record<string, string[] | Record<string, string[]>>
+  ): ExtensionMap<UiconsIndex, TExt> {
+    return Object.fromEntries(
+      Object.entries(json)
+        .map(([category, values]) => {
+          if (Array.isArray(values) && values.length > 0) {
+            return [category, values[0].split('.').pop()]
+          }
+          if (typeof values === 'object' && !Array.isArray(values)) {
+            return [category, this.#buildExtensions(values)]
+          }
+          return [category, '']
+        })
+        .filter(([_, value]) => value !== '')
+    )
+  }
+
+  #toRewardUrl<Args extends RewardArgs>(
+    url: string
+  ): RewardUrlFromArgs<TPath, TExt, Args> {
+    return url as RewardUrlFromArgs<TPath, TExt, Args>
+  }
+
+  #extension<T extends OnlyTypeKeys<UiconsIndex, string[]>>(category: T): TExt
+  #extension<T extends OnlyTypeKeys<UiconsIndex, NonArrayObject>>(
+    category: T,
+    key: OnlyTypeKeys<UiconsIndex[T], string[]>
+  ): TExt
+  #extension<T extends keyof UiconsIndex>(...args: ExtensionArgs<T>): TExt {
+    const [category, key] = args
+
+    if (category === 'raid') {
+      return this.#extensionMap[category]?.[key] || this.#ext
+    }
+    if (category === 'reward') {
+      return this.#extensionMap[category]?.[key] || this.#ext
+    }
+    return this.#extensionMap[category] || this.#ext
+  }
+
+  #isIndexData(value: unknown): value is UiconsIndex {
+    return !!value && typeof value === 'object' && !Array.isArray(value)
+  }
+
+  #isReady(key?: keyof UiconsIndex) {
+    if (!this.#extensionMap) {
+      throw new Error('UICONS has not been initialized')
+    }
+    if (key && !this.#extensionMap[key]) {
+      throw new Error(`Folder: ${key} was not found for ${this.#path}`)
+    }
+  }
+
+  #evalPossiblyEmptyFlag(flag: string, value: boolean | string | number) {
+    if (typeof value === 'boolean') return value ? [flag, ''] : ['']
+
+    const numericValue = typeof value === 'number' ? value : Number(value)
+    if (!Number.isFinite(numericValue) || numericValue === 0) {
+      return [flag, '']
+    }
+    return [`${flag}${numericValue}`, flag, '']
+  }
+
+  /**
+   * Initialize this instance asynchronously by fetching the `index.json` file
+   * from the UICONS repository path provided in the constructor.
+   * @returns The initialized UICONS instance.
+   */
+  async remoteInit(): Promise<this> {
+    const data = await fetch(`${this.#path}/index.json`)
+    if (!data.ok) {
+      throw new Error(
+        `Failed to fetch ${this.#path} ${data.status} ${data.statusText}`
+      )
+    }
+    const indexFile = await data.json()
+    if (!this.#isIndexData(indexFile)) {
+      throw new Error(`Invalid index.json payload from ${this.#path}`)
+    }
+    return this.init(indexFile)
   }
 }
+
+type ExtensionArgs<T extends keyof UiconsIndex> =
+  T extends OnlyTypeKeys<UiconsIndex, string[]>
+    ? [category: T]
+    : T extends OnlyTypeKeys<UiconsIndex, NonArrayObject>
+      ? [category: T, key: OnlyTypeKeys<UiconsIndex[T], string[]>]
+      : never

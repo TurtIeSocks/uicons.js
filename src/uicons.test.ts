@@ -441,3 +441,390 @@ describe('weather', () => {
     expect(result3).toBe<typeof result3>(`${BASE_ICON_URL}/weather/1_n.webp`)
   })
 })
+
+describe('constructor and initialization edge cases', () => {
+  test('constructor normalizes trailing slash and keeps default png extension', () => {
+    const pngIcons = new UICONS({
+      path: 'https://example.com/uicons/',
+      data: {
+        background: ['0.png', '1.png'],
+      },
+    })
+
+    const result = pngIcons.background(1)
+    expect(result).toBe('https://example.com/uicons/background/1.png')
+  })
+
+  test('constructor data auto-initializes without calling init', () => {
+    const autoInit = new UICONS({
+      path: 'https://example.com/uicons',
+      extension: 'webp',
+      data: {
+        team: ['0.webp', '3.webp'],
+      },
+    })
+
+    const result = autoInit.team(3)
+    expect(result).toBe<typeof result>('https://example.com/uicons/team/3.webp')
+  })
+
+  test('calling folder APIs before init throws folder missing error', () => {
+    const uninitialized = new UICONS('https://example.com/missing/')
+    expect(() => uninitialized.background()).toThrow(
+      'Folder: background was not found for https://example.com/missing'
+    )
+  })
+
+  test('has before init remains safe and returns false', () => {
+    const uninitialized = new UICONS('https://example.com/missing')
+    expect(uninitialized.has('background', 0)).toBe(false)
+  })
+
+  test('remote init throws on non-2xx responses', async () => {
+    const fetchMock = globalThis.fetch as jest.MockedFunction<typeof fetch>
+    fetchMock.mockImplementationOnce(async (_input) =>
+      toResponse({ message: 'unavailable' }, 503)
+    )
+
+    const failing = new UICONS('https://example.com/failure')
+    await expect(failing.remoteInit()).rejects.toThrow(
+      'Failed to fetch https://example.com/failure'
+    )
+  })
+
+  test('remote init throws on invalid payloads', async () => {
+    const fetchMock = globalThis.fetch as jest.MockedFunction<typeof fetch>
+    fetchMock.mockImplementationOnce(async (_input) => toResponse([1, 2, 3]))
+
+    const failing = new UICONS('https://example.com/invalid')
+    await expect(failing.remoteInit()).rejects.toThrow(
+      'Invalid index.json payload from https://example.com/invalid'
+    )
+  })
+
+  test('audio instance resolves wav extension correctly', () => {
+    const result = audio.pokemon(666)
+    expect(result).toBe<typeof result>(`${BASE_AUDIO_URL}/pokemon/666.wav`)
+  })
+})
+
+describe('has category matrix', () => {
+  test.each([
+    ['background', 1],
+    ['device', 1],
+    ['gym', '2_t3_b'],
+    ['invasion', 44],
+    ['misc', 500],
+    ['nest', 12],
+    ['pokemon', '4_f896'],
+    ['pokestop', '501_i_q'],
+    ['tappable', 'TAPPABLE_TYPE_BREAKFAST'],
+    ['raid.egg', '12_h'],
+    ['reward.experience', 100],
+    ['reward.item', '1_a10'],
+    ['reward.stardust', 500],
+    ['reward.candy', 4],
+    ['reward.xl_candy', 98],
+    ['reward.mega_resource', '6_a25'],
+    ['spawnpoint', 1],
+    ['station', 1],
+    ['team', 3],
+    ['type', 9],
+    ['weather', '1_n'],
+  ] as const)('returns true for %s/%s', (location, fileName) => {
+    expect(icons.has(location, fileName)).toBe(true)
+  })
+
+  test('runtime-invalid paths still return false', () => {
+    expect(
+      (icons as unknown as { has: (location: string, fileName: string) => boolean }).has(
+        'unknown',
+        '0'
+      )
+    ).toBe(false)
+    expect(
+      (icons as unknown as { has: (location: string, fileName: string) => boolean }).has(
+        'raid.unknown',
+        '0'
+      )
+    ).toBe(false)
+    expect(
+      (icons as unknown as { has: (location: string, fileName: string) => boolean }).has(
+        'reward.unknown',
+        '0'
+      )
+    ).toBe(false)
+  })
+})
+
+describe('public API argument matrices', () => {
+  test('device explicit false still resolves to offline icon', () => {
+    const result = icons.device(false)
+    expect(result).toBe<typeof result>(`${BASE_ICON_URL}/device/0.webp`)
+  })
+
+  test('misc, nest, team, and type all fallback on unknown ids', () => {
+    expect(icons.misc(404)).toBe(`${BASE_ICON_URL}/misc/0.webp`)
+    expect(icons.nest(404)).toBe(`${BASE_ICON_URL}/nest/0.webp`)
+    expect(icons.team('404')).toBe(`${BASE_ICON_URL}/team/0.webp`)
+    expect(icons.type('404')).toBe(`${BASE_ICON_URL}/type/0.webp`)
+  })
+
+  test('gym fallback order covers battle/ex/ar/power suffix permutations', () => {
+    const gymIcons = new UICONS({
+      path: BASE_ICON_URL,
+      extension: 'webp',
+      data: {
+        gym: [
+          '0.webp',
+          '2_t3.webp',
+          '2_t3_b_p.webp',
+          '1_t4.webp',
+          '3_t6.webp',
+        ],
+      },
+    })
+
+    expect(gymIcons.gym(2, 3, true)).toBe(`${BASE_ICON_URL}/gym/2_t3.webp`)
+    expect(gymIcons.gym(2, 3, true, false, false, 4)).toBe(
+      `${BASE_ICON_URL}/gym/2_t3_b_p.webp`
+    )
+    expect(gymIcons.gym(1, 4, false, true)).toBe(`${BASE_ICON_URL}/gym/1_t4.webp`)
+    expect(gymIcons.gym(3, 6, false, false, true)).toBe(`${BASE_ICON_URL}/gym/3_t6.webp`)
+    expect(gymIcons.gym(9, 9, true, true, true, true)).toBe(
+      `${BASE_ICON_URL}/gym/0.webp`
+    )
+  })
+
+  test('invasion combinations honor confirmed and unconfirmed fallback behavior', () => {
+    const invasionOnlyConfirmed = new UICONS({
+      path: BASE_ICON_URL,
+      extension: 'webp',
+      data: {
+        invasion: ['0.webp', '44.webp'],
+      },
+    })
+    const invasionOnlyUnconfirmed = new UICONS({
+      path: BASE_ICON_URL,
+      extension: 'webp',
+      data: {
+        invasion: ['0.webp', '44_u.webp'],
+      },
+    })
+
+    expect(invasionOnlyConfirmed.invasion(44)).toBe(`${BASE_ICON_URL}/invasion/44.webp`)
+    expect(invasionOnlyUnconfirmed.invasion(44)).toBe(`${BASE_ICON_URL}/invasion/44_u.webp`)
+    expect(invasionOnlyUnconfirmed.invasion(44, true)).toBe(
+      `${BASE_ICON_URL}/invasion/0.webp`
+    )
+  })
+
+  test('pokemon supports each positional argument and shiny fallback', () => {
+    const pokemonIcons = new UICONS({
+      path: BASE_ICON_URL,
+      extension: 'webp',
+      data: {
+        pokemon: [
+          '0.webp',
+          '25.webp',
+          '25_b1.webp',
+          '25_e1.webp',
+          '25_f2.webp',
+          '25_c3.webp',
+          '25_g1.webp',
+          '25_a1.webp',
+          '25_s.webp',
+          '25_e1_f2.webp',
+          '26.webp',
+        ],
+      },
+    })
+
+    expect(pokemonIcons.pokemon(25)).toBe(`${BASE_ICON_URL}/pokemon/25.webp`)
+    expect(pokemonIcons.pokemon(25, 1)).toBe(`${BASE_ICON_URL}/pokemon/25_e1.webp`)
+    expect(pokemonIcons.pokemon(25, 0, 2)).toBe(`${BASE_ICON_URL}/pokemon/25_f2.webp`)
+    expect(pokemonIcons.pokemon(25, 0, 0, 3)).toBe(`${BASE_ICON_URL}/pokemon/25_c3.webp`)
+    expect(pokemonIcons.pokemon(25, 0, 0, 0, 1)).toBe(`${BASE_ICON_URL}/pokemon/25_g1.webp`)
+    expect(pokemonIcons.pokemon(25, 0, 0, 0, 0, 1)).toBe(
+      `${BASE_ICON_URL}/pokemon/25_a1.webp`
+    )
+    expect(pokemonIcons.pokemon(25, 0, 0, 0, 0, 0, 1)).toBe(
+      `${BASE_ICON_URL}/pokemon/25_b1.webp`
+    )
+    expect(pokemonIcons.pokemon(25, 0, 0, 0, 0, 0, 0, true)).toBe(
+      `${BASE_ICON_URL}/pokemon/25_s.webp`
+    )
+    expect(pokemonIcons.pokemon(25, 1, 2)).toBe(`${BASE_ICON_URL}/pokemon/25_e1_f2.webp`)
+    expect(pokemonIcons.pokemon(26, 0, 0, 0, 0, 0, 0, true)).toBe(
+      `${BASE_ICON_URL}/pokemon/26.webp`
+    )
+    expect(pokemonIcons.pokemon('999', '1', '2', '3', '4', '5', '6', true)).toBe(
+      `${BASE_ICON_URL}/pokemon/0.webp`
+    )
+  })
+
+  test('pokestop combinations cover display, quest, ar, and power suffix rules', () => {
+    const pokestopIcons = new UICONS({
+      path: BASE_ICON_URL,
+      extension: 'webp',
+      data: {
+        pokestop: [
+          '0.webp',
+          '501.webp',
+          '0_i.webp',
+          '0_i8.webp',
+          '0_q.webp',
+          '0_q3.webp',
+          '0_p.webp',
+          '0_p4.webp',
+          '504_i_q_ar_p.webp',
+        ],
+      },
+    })
+
+    expect(pokestopIcons.pokestop()).toBe(`${BASE_ICON_URL}/pokestop/0.webp`)
+    expect(pokestopIcons.pokestop(501)).toBe(`${BASE_ICON_URL}/pokestop/501.webp`)
+    expect(pokestopIcons.pokestop(0, true)).toBe(`${BASE_ICON_URL}/pokestop/0_i.webp`)
+    expect(pokestopIcons.pokestop(0, 8)).toBe(`${BASE_ICON_URL}/pokestop/0_i8.webp`)
+    expect(pokestopIcons.pokestop(0, false, true)).toBe(`${BASE_ICON_URL}/pokestop/0_q.webp`)
+    expect(pokestopIcons.pokestop(0, false, 3)).toBe(`${BASE_ICON_URL}/pokestop/0_q3.webp`)
+    expect(pokestopIcons.pokestop(0, false, false, false, true)).toBe(
+      `${BASE_ICON_URL}/pokestop/0_p.webp`
+    )
+    expect(pokestopIcons.pokestop(0, false, false, false, 4)).toBe(
+      `${BASE_ICON_URL}/pokestop/0_p4.webp`
+    )
+    expect(pokestopIcons.pokestop(504, true, true, true, 4)).toBe(
+      `${BASE_ICON_URL}/pokestop/504_i_q_ar_p.webp`
+    )
+    expect(pokestopIcons.pokestop(999, 9, 9, true, 9)).toBe(
+      `${BASE_ICON_URL}/pokestop/0.webp`
+    )
+  })
+
+  test('raidEgg combinations cover hatched/ex ordering and fallback', () => {
+    const raidIcons = new UICONS({
+      path: BASE_ICON_URL,
+      extension: 'webp',
+      data: {
+        raid: {
+          egg: ['0.webp', '5_h_ex.webp', '5_h.webp', '6_ex.webp', '7.webp'],
+        },
+      },
+    })
+
+    expect(raidIcons.raidEgg(5, true, true)).toBe(`${BASE_ICON_URL}/raid/egg/5_h_ex.webp`)
+    expect(raidIcons.raidEgg(5, true, false)).toBe(`${BASE_ICON_URL}/raid/egg/5_h.webp`)
+    expect(raidIcons.raidEgg(6, true, true)).toBe(`${BASE_ICON_URL}/raid/egg/6_ex.webp`)
+    expect(raidIcons.raidEgg(7, true, true)).toBe(`${BASE_ICON_URL}/raid/egg/7.webp`)
+    expect(raidIcons.raidEgg(999, true, true)).toBe(`${BASE_ICON_URL}/raid/egg/0.webp`)
+  })
+
+  test('reward combinations cover amount parsing and id derivation rules', () => {
+    const rewardIcons = new UICONS({
+      path: BASE_ICON_URL,
+      extension: 'webp',
+      data: {
+        misc: ['0.webp'],
+        reward: {
+          item: ['0.webp', '1.webp', '1_a10.webp', '500.webp'],
+          stardust: ['0.webp', '500.webp'],
+          mega_resource: ['0.webp', '6.webp', '6_a25.webp'],
+        },
+      },
+    })
+
+    expect(rewardIcons.reward('item')).toBe(`${BASE_ICON_URL}/reward/item/0.webp`)
+    expect(rewardIcons.reward('item', 1, 10)).toBe(`${BASE_ICON_URL}/reward/item/1_a10.webp`)
+    expect(rewardIcons.reward('item', 1, '10')).toBe(
+      `${BASE_ICON_URL}/reward/item/1_a10.webp`
+    )
+    expect(rewardIcons.reward('item', 1, 2.5)).toBe(`${BASE_ICON_URL}/reward/item/1.webp`)
+    expect(rewardIcons.reward('item', 1, 99)).toBe(`${BASE_ICON_URL}/reward/item/1.webp`)
+    expect(rewardIcons.reward('item', 'not-a-number', 500)).toBe(
+      `${BASE_ICON_URL}/reward/item/500.webp`
+    )
+    expect(rewardIcons.reward('stardust', '500')).toBe(
+      `${BASE_ICON_URL}/reward/stardust/500.webp`
+    )
+    expect(rewardIcons.reward('mega_resource', 6, 25)).toBe(
+      `${BASE_ICON_URL}/reward/mega_resource/6_a25.webp`
+    )
+    expect(rewardIcons.reward('invalid_reward' as never, 1)).toBe(
+      `${BASE_ICON_URL}/misc/0.webp`
+    )
+  })
+
+  test('spawnpoint honors fallback when timer icon is missing', () => {
+    const spawnpointIcons = new UICONS({
+      path: BASE_ICON_URL,
+      extension: 'webp',
+      data: {
+        spawnpoint: ['0.webp'],
+      },
+    })
+
+    expect(spawnpointIcons.spawnpoint()).toBe(`${BASE_ICON_URL}/spawnpoint/0.webp`)
+    expect(spawnpointIcons.spawnpoint(true)).toBe(`${BASE_ICON_URL}/spawnpoint/0.webp`)
+  })
+
+  test('station always maps boolean state to 0 or 1 filename', () => {
+    const stationIcons = new UICONS({
+      path: BASE_ICON_URL,
+      extension: 'webp',
+      data: {
+        station: ['0.webp'],
+      },
+    })
+
+    expect(stationIcons.station(false)).toBe(`${BASE_ICON_URL}/station/0.webp`)
+    expect(stationIcons.station(true)).toBe(`${BASE_ICON_URL}/station/1.webp`)
+  })
+
+  test('tappable combinations include scalar casting and reward fallback', () => {
+    const tappableIcons = new UICONS({
+      path: BASE_ICON_URL,
+      extension: 'webp',
+      data: {
+        tappable: ['123.webp', 'TAPPABLE_TYPE_POKEBALL.webp'],
+        reward: {
+          item: ['1.webp'],
+        },
+      },
+    })
+    const noTappableIcons = new UICONS({
+      path: BASE_ICON_URL,
+      extension: 'webp',
+      data: {
+        reward: {
+          item: ['1.webp'],
+        },
+      },
+    })
+
+    expect(tappableIcons.tappable(123)).toBe(`${BASE_ICON_URL}/tappable/123.webp`)
+    expect(tappableIcons.tappable('UNKNOWN_TYPE')).toBe(
+      `${BASE_ICON_URL}/tappable/TAPPABLE_TYPE_POKEBALL.webp`
+    )
+    expect(noTappableIcons.tappable('UNKNOWN_TYPE')).toBe(
+      `${BASE_ICON_URL}/reward/item/1.webp`
+    )
+  })
+
+  test('weather combinations cover severity and time fallback ordering', () => {
+    const weatherIcons = new UICONS({
+      path: BASE_ICON_URL,
+      extension: 'webp',
+      data: {
+        weather: ['0.webp', '3.webp', '3_l2.webp', '3_l2_d.webp', '4_n.webp'],
+      },
+    })
+
+    expect(weatherIcons.weather(3, 2, 'day')).toBe(`${BASE_ICON_URL}/weather/3_l2_d.webp`)
+    expect(weatherIcons.weather(3, 2, 'night')).toBe(`${BASE_ICON_URL}/weather/3_l2.webp`)
+    expect(weatherIcons.weather(3, 0, 'night')).toBe(`${BASE_ICON_URL}/weather/3.webp`)
+    expect(weatherIcons.weather(3, 2, 'dawn')).toBe(`${BASE_ICON_URL}/weather/3_l2_d.webp`)
+    expect(weatherIcons.weather(4, 0, 'night')).toBe(`${BASE_ICON_URL}/weather/4_n.webp`)
+    expect(weatherIcons.weather(99, 9, 'night')).toBe(`${BASE_ICON_URL}/weather/0.webp`)
+  })
+})

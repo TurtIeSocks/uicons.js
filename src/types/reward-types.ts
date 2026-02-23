@@ -65,3 +65,26 @@ export type RewardUrlFromArgs<
           RewardNameFromArgs<Args>
         >
       | FileUrl<Path, 'misc', Extension, Zero>
+
+export type RewardObjectArgs = {
+  questRewardType?: RewardTypeKeys
+  rewardIdOrAmount?: Scalar
+  amount?: Scalar
+}
+
+export type RewardArgsFromObject<Args extends RewardObjectArgs> = Args extends {
+  questRewardType: infer QuestRewardType extends RewardTypeKeys
+  rewardIdOrAmount: infer RewardIdOrAmount extends Scalar
+  amount: infer Amount extends Scalar
+}
+  ? [QuestRewardType, RewardIdOrAmount, Amount]
+  : Args extends {
+        questRewardType: infer QuestRewardType extends RewardTypeKeys
+        rewardIdOrAmount: infer RewardIdOrAmount extends Scalar
+      }
+    ? [QuestRewardType, RewardIdOrAmount]
+    : Args extends {
+          questRewardType: infer QuestRewardType extends RewardTypeKeys
+        }
+      ? [QuestRewardType]
+      : []

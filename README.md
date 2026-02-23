@@ -25,6 +25,7 @@ pnpm add uicons.js
 
 - View the [example](./example/) code to see implementation details for both audio and image files
 - See [tests](./src/uicons.test.ts) for additional examples.
+- Upgrading from positional calls? See [V1 -> V2 Migration Guide](./MIGRATION_V1_TO_V2.md).
 
 ```typescript
 import { UICONS } from 'uicons.js'
@@ -55,32 +56,80 @@ const preloaded = new UICONS({
   data: indexJson,
 })
 
-// Below are some example usages with variable names for demonstration, see intellisense in your IDE for type information
-// Please note that in some cases, such as with Stardust, the `reward_id` is the `amount` of the reward
-const device = uicons.device(online)
-const gym = uicons.gym(team_id, trainer_count, in_battle, ex, ar, power_level)
-const invasion = uicons.invasion(grunt_id, confirmed)
-const misc = uicons.misc(filename_without_extension)
-const nest = uicons.nest(type_id)
-const pokemon = uicons.pokemon(
-  pokemon_id,
-  evolution_id,
-  form_id,
-  costume_id,
-  gender_id,
-  alignment_id,
-  bread_id,
-  shiny
-)
-const pokestop = uicons.pokestop(lure_id, display, quest_active, ar, power)
-const egg = uicons.raidEgg(raid_level, hatched, ex)
-const reward = uicons.reward(reward_type_id, reward_id, amount)
-const rewardWithoutId = uicons.reward(reward_type_id, amount)
-const spawnpoint = uicons.spawnpoint(has_known_tth)
-const team = uicons.team(team_id)
-const type = uicons.type(type_id)
-const weather = uicons.weather(weather_id, severity, 'day')
+// V2: all public methods use one optional object argument (except `has`)
+const background = uicons.background({ id: 1 })
+const device = uicons.device({ online: true })
+const gym = uicons.gym({
+  teamId: team_id,
+  trainerCount: trainer_count,
+  inBattle: in_battle,
+  ex,
+  ar,
+  power: power_level,
+})
+const invasion = uicons.invasion({ gruntId: grunt_id, confirmed })
+const misc = uicons.misc({ fileName: filename_without_extension })
+const nest = uicons.nest({ typeId: type_id })
+const pokemon = uicons.pokemon({
+  pokemonId: pokemon_id,
+  evolution: evolution_id,
+  form: form_id,
+  costume: costume_id,
+  gender: gender_id,
+  alignment: alignment_id,
+  bread: bread_id,
+  shiny,
+})
+const pokestop = uicons.pokestop({
+  lureId: lure_id,
+  displayTypeId: display,
+  questActive: quest_active,
+  ar,
+  power,
+})
+const egg = uicons.raidEgg({ level: raid_level, hatched, ex })
+const reward = uicons.reward({
+  questRewardType: reward_type_id,
+  rewardIdOrAmount: reward_id,
+  amount,
+})
+const rewardWithoutId = uicons.reward({ questRewardType: reward_type_id })
+const defaultTappable = uicons.tappable()
+const spawnpoint = uicons.spawnpoint({ hasTth: has_known_tth })
+const station = uicons.station({ active: is_active })
+const team = uicons.team({ teamId: team_id })
+const type = uicons.type({ typeId: type_id })
+const weather = uicons.weather({
+  weatherId: weather_id,
+  severityLevel: severity,
+  timeOfDay: 'day',
+})
+
+// `has` remains positional
+const exists = uicons.has('reward.item', 1)
 ```
+
+## API Summary (V2)
+
+- `init(data)`
+- `remoteInit()`
+- `background(args?)`
+- `device(args?)`
+- `gym(args?)`
+- `invasion(args?)`
+- `misc(args?)`
+- `nest(args?)`
+- `pokemon(args?)`
+- `pokestop(args?)`
+- `raidEgg(args?)`
+- `reward(args?)`
+- `spawnpoint(args?)`
+- `station(args?)`
+- `tappable(args?)`
+- `team(args?)`
+- `type(args?)`
+- `weather(args?)`
+- `has(location, fileName)` (unchanged)
 
 ## Development
 

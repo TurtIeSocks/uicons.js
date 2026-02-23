@@ -19,20 +19,17 @@ import type {
   ExtensionMap,
 } from './types/general.js'
 import type {
-  GymArgs,
   GymNameFromArgs,
   InvasionNameFromArgs,
-  PokemonArgs,
-  PokestopArgs,
   PokestopNameFromArgs,
-  RaidEggArgs,
   RaidEggNameFromArgs,
   RewardArgs,
   RewardUrlFromArgs,
   TappableUrlFromArgs,
   TappableRewardFallbackUrl,
-  WeatherArgs,
   WeatherNameFromArgs,
+  RewardArgsFromObject,
+  RewardObjectArgs,
 } from './types/index.js'
 import { Split, Paths } from 'type-fest'
 
@@ -73,7 +70,7 @@ const PNG = 'png' as const
  * })
  *
  * // `FileUrl<TPath, ..., TExt, ...>` now resolves with typed path and extension
- * const teamUrl = typed.team(Rpc.Team.TEAM_BLUE)
+ * const teamUrl = typed.team({ teamId: Rpc.Team.TEAM_BLUE })
  * //    ^? "https://cdn.example.com/uicons/team/..."
  * ```
  *
@@ -164,7 +161,8 @@ export class UICONS<
   /**
    * Initialize this instance synchronously using a previously fetched `index.json` payload.
    *
-   * @param data The index.json file from the UICONS repository
+   * @param args Initialization options
+   * @param args.data The index.json file from the UICONS repository
    * @returns The initialized UICONS instance (`this`) for fluent chaining.
    * @example
    * ```ts
@@ -185,9 +183,9 @@ export class UICONS<
    * ```ts
    * // You can initialize with partial data for focused usage.
    * const mini = new UICONS('https://cdn.example.com/uicons').init({
-   *   team: ['0.png', '1.png', '2.png', '3.png'],
+   *   data: { team: ['0.png', '1.png', '2.png', '3.png'] },
    * })
-   * const mystic = mini.team(1)
+   * const mystic = mini.team({ teamId: 1 })
    * ```
    */
   init(data: DeepPartial<UiconsIndex>): this {
@@ -213,6 +211,46 @@ export class UICONS<
     this.#extensionMap = this.#buildExtensions(data)
 
     return this
+  }
+
+  /**
+   * Initialize this instance asynchronously by fetching the `index.json` file
+   * from the UICONS repository path provided in the constructor.
+   *
+   * @param _args Reserved object argument for V2 API consistency.
+   * @returns The initialized UICONS instance (`this`) with extension map populated.
+   * @example
+   * ```ts
+   * const uicons = new UICONS<'https://cdn.example.com/uicons', 'png'>({
+   *   path: 'https://cdn.example.com/uicons',
+   *   extension: 'png',
+   * })
+   *
+   * await uicons.remoteInit()
+   * const url = uicons.team({ teamId: 1 })
+   * //    ^? "https://cdn.example.com/uicons/team/1.png" (when available)
+   * ```
+   *
+   * @example
+   * ```ts
+   * // Works with path-only constructor too.
+   * const pathOnly = new UICONS('https://raw.githubusercontent.com/UIcons/UIcons/main')
+   * await pathOnly.remoteInit()
+   * const weather = pathOnly.weather({ weatherId: 1, severityLevel: 0, timeOfDay: 'day' })
+   * ```
+   */
+  async remoteInit(): Promise<this> {
+    const data = await fetch(`${this.#path}/index.json`)
+    if (!data.ok) {
+      throw new Error(
+        `Failed to fetch ${this.#path} ${data.status} ${data.statusText}`
+      )
+    }
+    const indexFile = await data.json()
+    if (!this.#isIndexData(indexFile)) {
+      throw new Error(`Invalid index.json payload from ${this.#path}`)
+    }
+    return this.init(indexFile)
   }
 
   /**
@@ -291,35 +329,28 @@ export class UICONS<
   /**
    * Resolve a background icon URL.
    *
-   * @param id The background ID. Accepts RPC enum values, numeric IDs, or numeric strings.
+   * @param args Background lookup args.
+   * @param args.id Optional background ID. Accepts RPC enum values {@link Rpc.EncounterOutProto.Background}, numeric IDs, or numeric strings.
    * @returns A typed URL like `"{TPath}/background/{id or 0}.{TExt}"`.
    * @example
    * ```ts
-   * // Default background fallback: `background/0.<ext>`
    * const fallback = uicons.background()
-   * ```
-   *
-   * @example
-   * ```ts
-   * import { Rpc } from '@na-ji/pogo-protos'
-   *
-   * // RPC proto enum input
-   * const protoUrl = uicons.background(Rpc.EncounterOutProto.Background.BACKGROUND_GRASS)
-   *
-   * // Scalar number or string input
-   * const numericUrl = uicons.background(7)
-   * const stringUrl = uicons.background('7')
+   * const protoUrl = uicons.background({
+   *   id: Rpc.EncounterOutProto.Background.BACKGROUND_GRASS,
+   * })
+   * const byScalar = uicons.background({ id: '7' })
    * ```
    */
   background(): FileUrl<TPath, 'background', TExt, Zero>
-  background<ID extends EnumVal<typeof Rpc.EncounterOutProto.Background>>(
+  background<
+    ID extends EnumVal<typeof Rpc.EncounterOutProto.Background>,
+  >(args: { id: ID }): FileUrl<TPath, 'background', TExt, ID | Zero>
+  background<ID extends Scalar>(args: {
     id: ID
-  ): FileUrl<TPath, 'background', TExt, ID | Zero>
-  background<ID extends Scalar>(
-    id: ID
-  ): FileUrl<TPath, 'background', TExt, ID | Zero>
-  background(id = this.#fallback): FileUrl<TPath, 'background', TExt> {
+  }): FileUrl<TPath, 'background', TExt, ID | Zero>
+  background(args: { id?: Scalar } = {}): FileUrl<TPath, 'background', TExt> {
     const folder = 'background'
+    const id = args?.id ?? this.#fallback
 
     this.#isReady(folder)
 
@@ -336,19 +367,24 @@ export class UICONS<
   /**
    * Resolve a device icon URL.
    *
-   * @param online If `true`, prefers the online variant (`1`); otherwise uses offline (`0`).
+   * @param args Device lookup args.
+   * @param args.online If `true`, returns online (`1`) icon; otherwise offline (`0`).
    * @returns A typed URL like `"{TPath}/device/{0|1}.{TExt}"`.
    * @example
    * ```ts
-   * const offline = uicons.device() // defaults to false => `device/0.<ext>`
-   * const online = uicons.device(true) // `device/1.<ext>`
-   * const explicitOffline = uicons.device(false) // `device/0.<ext>`
+   * const offline = uicons.device()
+   * const online = uicons.device({ online: true })
    * ```
    */
-  device(online: true): FileUrl<TPath, 'device', TExt, One | Zero>
-  device(online?: false): FileUrl<TPath, 'device', TExt, Zero>
-  device(online = false) {
+  device(args: { online: true }): FileUrl<TPath, 'device', TExt, One | Zero>
+  device(args?: { online?: false }): FileUrl<TPath, 'device', TExt, Zero>
+  device(
+    args: {
+      online?: boolean
+    } = {}
+  ): FileUrl<TPath, 'device', TExt, Zero | One> {
     const folder = 'device'
+    const online = args.online ?? false
 
     this.#isReady(folder)
 
@@ -361,37 +397,25 @@ export class UICONS<
   /**
    * Resolve a gym icon URL with optional modifiers.
    *
-   * @param teamId The team ID, see {@link Rpc.Team}
-   * @param trainerCount Number of trainers shown on the gym badge (`0-6`)
-   * @param inBattle Whether the gym is in battle
-   * @param ex Whether the gym is EX-eligible
-   * @param ar Whether the gym is AR-eligible
-   * @param power Power-up level, boolean shortcut, or {@link Rpc.FortPowerUpLevel}
+   * @param args Gym lookup args.
+   * @param args.teamId Team ID, see {@link Rpc.Team}.
+   * @param args.trainerCount Number of trainers (`0-6`).
+   * @param args.inBattle Whether the gym is in battle.
+   * @param args.ex Whether the gym is EX-eligible.
+   * @param args.ar Whether the gym is AR-eligible.
+   * @param args.power Power-up level or boolean shorthand.
    * @returns A typed URL like `"{TPath}/gym/{computed-name}.{TExt}"`, with fallback to `0`.
    * @example
    * ```ts
-   * import { Rpc } from '@na-ji/pogo-protos'
-   *
-   * // All args omitted => fallback `gym/0.<ext>`
    * const fallback = uicons.gym()
-   *
-   * // Proto enums + booleans
-   * const full = uicons.gym(
-   *   Rpc.Team.TEAM_BLUE,
-   *   6,
-   *   true,
-   *   true,
-   *   false,
-   *   Rpc.FortPowerUpLevel.FORT_POWERUP_LEVEL_3
-   * )
-   * ```
-   *
-   * @example
-   * ```ts
-   * // Scalars are accepted too (number/string/boolean)
-   * const numeric = uicons.gym(2, 3, true)
-   * const stringly = uicons.gym('2', '3', false, false, false, '1')
-   * const booleanPower = uicons.gym(1, 0, false, false, false, true) // tries `_p` fallback variants
+   * const full = uicons.gym({
+   *   teamId: Rpc.Team.TEAM_BLUE,
+   *   trainerCount: 6,
+   *   inBattle: true,
+   *   ex: true,
+   *   ar: false,
+   *   power: Rpc.FortPowerUpLevel.FORT_POWERUP_LEVEL_3,
+   * })
    * ```
    */
   gym<
@@ -401,36 +425,45 @@ export class UICONS<
     Ex extends boolean = false,
     Ar extends boolean = false,
     Power extends boolean | EnumVal<typeof Rpc.FortPowerUpLevel> = false,
-  >(
-    teamId?: TeamId,
-    trainerCount?: TC,
-    inBattle?: Battle,
-    ex?: Ex,
-    ar?: Ar,
+  >(args?: {
+    teamId?: TeamId
+    trainerCount?: TC
+    inBattle?: Battle
+    ex?: Ex
+    ar?: Ar
     power?: Power
-  ): FileUrl<
+  }): FileUrl<
     TPath,
     'gym',
     TExt,
     GymNameFromArgs<[TeamId, TC, Battle, Ex, Ar, Power]>
   >
-  gym(
-    teamId?: Scalar,
-    trainerCount?: Scalar,
-    inBattle?: boolean,
-    ex?: boolean,
-    ar?: boolean,
+  gym(args?: {
+    teamId?: Scalar
+    trainerCount?: Scalar
+    inBattle?: boolean
+    ex?: boolean
+    ar?: boolean
     power?: boolean | Scalar
-  ): FileUrl<TPath, 'gym', TExt>
-  gym(...args: GymArgs): FileUrl<TPath, 'gym', TExt> {
-    const [
+  }): FileUrl<TPath, 'gym', TExt>
+  gym(
+    args: {
+      teamId?: Scalar
+      trainerCount?: Scalar
+      inBattle?: boolean
+      ex?: boolean
+      ar?: boolean
+      power?: boolean | Scalar
+    } = {}
+  ): FileUrl<TPath, 'gym', TExt> {
+    const {
       teamId = this.#fallback,
       trainerCount = this.#fallback,
       inBattle = false,
       ex = false,
       ar = false,
       power = false,
-    ] = args
+    } = args
     const folder = 'gym'
     this.#isReady(folder)
 
@@ -465,39 +498,43 @@ export class UICONS<
   /**
    * Resolve an invasion icon URL.
    *
-   * @param gruntId The invasion character ID, see {@link Rpc.EnumWrapper.InvasionCharacter}
-   * @param confirmed If `true`, skips unconfirmed (`_u`) fallback variant.
+   * @param args Invasion lookup args.
+   * @param args.gruntId The invasion character ID, see {@link Rpc.EnumWrapper.InvasionCharacter}
+   * @param args.confirmed If `true`, skips unconfirmed (`_u`) fallback variant.
    * @returns A typed URL like `"{TPath}/invasion/{computed-name}.{TExt}"`.
    * @example
    * ```ts
-   * import { Rpc } from '@na-ji/pogo-protos'
-   *
-   * const defaultInvasion = uicons.invasion() // `invasion/0.<ext>`
+   * const fallback = uicons.invasion()
+   * const unconfirmed = uicons.invasion({ gruntId: '44' })
    * const protoInvasion = uicons.invasion(Rpc.EnumWrapper.InvasionCharacter.CHARACTER_ROCKET_GRUNT_FEMALE)
-   * const confirmedBoss = uicons.invasion('44', true)
+   * const confirmed = uicons.invasion({ gruntId: '44', confirmed: true })
    * ```
    */
   invasion<
     GruntId extends EnumVal<typeof Rpc.EnumWrapper.InvasionCharacter> | Zero =
       Zero,
     Confirmed extends boolean = false,
-  >(
-    gruntId?: GruntId,
+  >(args?: {
+    gruntId?: GruntId
     confirmed?: Confirmed
-  ): FileUrl<
+  }): FileUrl<
     TPath,
     'invasion',
     TExt,
     InvasionNameFromArgs<[GruntId, Confirmed]>
   >
-  invasion(
-    gruntId?: Scalar,
+  invasion(args?: {
+    gruntId?: Scalar
     confirmed?: boolean
-  ): FileUrl<TPath, 'invasion', TExt>
+  }): FileUrl<TPath, 'invasion', TExt>
   invasion(
-    gruntId: Scalar = this.#fallback,
-    confirmed = false
+    args: {
+      gruntId?: Scalar
+      confirmed?: boolean
+    } = {}
   ): FileUrl<TPath, 'invasion', TExt> {
+    const gruntId = args.gruntId ?? this.#fallback
+    const confirmed = args.confirmed ?? false
     const folder = 'invasion'
     this.#isReady(folder)
 
@@ -519,20 +556,21 @@ export class UICONS<
   /**
    * Resolve a misc icon URL.
    *
-   * @param fileName The filename without extension (number or string)
+   * @param args Misc lookup args.
+   * @param args.fileName Filename without extension.
    * @returns A typed URL like `"{TPath}/misc/{fileName or 0}.{TExt}"`.
    * @example
    * ```ts
-   * const fallbackMisc = uicons.misc()
-   * const byNumber = uicons.misc(132)
-   * const byString = uicons.misc('event-ticket')
+   * const fallback = uicons.misc()
+   * const byId = uicons.misc({ fileName: 500 })
    * ```
    */
   misc(): FileUrl<TPath, 'misc', TExt, Zero>
-  misc<FileName extends Scalar>(
+  misc<FileName extends Scalar>(args: {
     fileName: FileName
-  ): FileUrl<TPath, 'misc', TExt, FileName | Zero>
-  misc(fileName: Scalar = this.#fallback): FileUrl<TPath, 'misc', TExt> {
+  }): FileUrl<TPath, 'misc', TExt, FileName | Zero>
+  misc(args?: { fileName?: Scalar }): FileUrl<TPath, 'misc', TExt> {
+    const fileName = args?.fileName ?? this.#fallback
     const folder = 'misc'
     this.#isReady(folder)
 
@@ -549,22 +587,21 @@ export class UICONS<
   /**
    * Resolve a nest icon URL.
    *
-   * @param typeId The nesting type ID, see {@link Rpc.HoloPokemonType}
+   * @param args Nest lookup args.
+   * @param args.typeId Nesting type ID, see {@link Rpc.HoloPokemonType}.
    * @returns A typed URL like `"{TPath}/nest/{typeId or 0}.{TExt}"`.
    * @example
    * ```ts
-   * import { Rpc } from '@na-ji/pogo-protos'
-   *
-   * const unknownNest = uicons.nest()
-   * const protoTypeNest = uicons.nest(Rpc.HoloPokemonType.POKEMON_TYPE_WATER)
-   * const scalarNest = uicons.nest('11')
+   * const fallback = uicons.nest()
+   * const water = uicons.nest({ typeId: Rpc.HoloPokemonType.POKEMON_TYPE_WATER })
    * ```
    */
   nest(): FileUrl<TPath, 'nest', TExt, Zero>
-  nest<TypeId extends Scalar>(
+  nest<TypeId extends Scalar>(args: {
     typeId: TypeId
-  ): FileUrl<TPath, 'nest', TExt, TypeId | Zero>
-  nest(typeId: Scalar = this.#fallback): FileUrl<TPath, 'nest', TExt> {
+  }): FileUrl<TPath, 'nest', TExt, TypeId | Zero>
+  nest(args?: { typeId?: Scalar }): FileUrl<TPath, 'nest', TExt> {
+    const typeId = args?.typeId ?? this.#fallback
     const folder = 'nest'
     this.#isReady(folder)
 
@@ -578,43 +615,22 @@ export class UICONS<
   }
 
   /**
-   * Resolve a Pokémon icon URL with optional visual modifiers.
+   * Resolve a Pokemon icon URL with optional visual modifiers.
    *
-   * @param pokemonId Pokémon ID
-   * @param evolution Mega/temporary evolution ID, see {@link Rpc.HoloTemporaryEvolutionId}
-   * @param form Form ID, see {@link Rpc.PokemonDisplayProto.Form}
-   * @param costume Costume ID, see {@link Rpc.PokemonDisplayProto.Costume}
-   * @param gender Gender ID, see {@link Rpc.PokemonDisplayProto.Gender}
-   * @param alignment Alignment ID (for shadow/purified), see {@link Rpc.PokemonDisplayProto.Alignment}
-   * @param bread Bread mode modifier, see {@link Rpc.BreadModeEnum.Modifier}
-   * @param shiny Whether shiny variants should be attempted
+   * @param args Pokemon lookup args.
+   * @param args.pokemonId Pokemon ID. See {@link Rpc.HoloPokemonId}
+   * @param args.evolution Mega/temporary evolution ID. See {@link Rpc.HoloTemporaryEvolutionId}
+   * @param args.form Form ID. See {@link Rpc.PokemonDisplayProto.Form}
+   * @param args.costume Costume ID. {@link Rpc.PokemonDisplayProto.Costume}
+   * @param args.gender Gender ID. {@link Rpc.PokemonDisplayProto.Gender}
+   * @param args.alignment Alignment ID (shadow/purified). {@link Rpc.PokemonDisplayProto.Alignment}
+   * @param args.bread Bread mode modifier. {@link Rpc.BreadModeEnum.Modifier}
+   * @param args.shiny Whether shiny variants should be attempted.
    * @returns A typed URL like `"{TPath}/pokemon/{computed-name}.{TExt}"`.
    * @example
    * ```ts
-   * import { Rpc } from '@na-ji/pogo-protos'
-   *
-   * // Plain fallback and plain Pokémon ID
-   * const fallbackMon = uicons.pokemon()
-   * const bulbasaur = uicons.pokemon(Rpc.HoloPokemonId.BULBASAUR)
-   *
-   * // Rich proto input with many optional flags
-   * const complex = uicons.pokemon(
-   *   Rpc.HoloPokemonId.MEWTWO,
-   *   Rpc.HoloTemporaryEvolutionId.TEMP_EVOLUTION_MEGA,
-   *   Rpc.PokemonDisplayProto.Form.FORM_NORMAL,
-   *   Rpc.PokemonDisplayProto.Costume.COSTUME_2020,
-   *   Rpc.PokemonDisplayProto.Gender.GENDER_MALE,
-   *   Rpc.PokemonDisplayProto.Alignment.ALIGNMENT_SHADOW,
-   *   Rpc.BreadModeEnum.Modifier.BREAD,
-   *   true
-   * )
-   * ```
-   *
-   * @example
-   * ```ts
-   * // Number/string/boolean combinations are accepted for flexibility.
-   * const scalar = uicons.pokemon(150, 1, 0, 0, 1, 0, 0, true)
-   * const stringly = uicons.pokemon('150', '1', '0', '0', '1', '0', '0', false)
+   * const fallback = uicons.pokemon()
+   * const shinyCharizard = uicons.pokemon({ pokemonId: 6, shiny: true })
    * ```
    */
   pokemon<
@@ -629,16 +645,16 @@ export class UICONS<
       Zero,
     Bread extends EnumVal<typeof Rpc.BreadModeEnum.Modifier> | Zero = Zero,
     Shiny extends boolean = false,
-  >(
-    pokemonId?: PokemonId,
-    evolution?: Evolution,
-    form?: Form,
-    costume?: Costume,
-    gender?: Gender,
-    alignment?: Alignment,
-    bread?: Bread,
+  >(args?: {
+    pokemonId?: PokemonId
+    evolution?: Evolution
+    form?: Form
+    costume?: Costume
+    gender?: Gender
+    alignment?: Alignment
+    bread?: Bread
     shiny?: Shiny
-  ): FileUrl<TPath, 'pokemon', TExt>
+  }): FileUrl<TPath, 'pokemon', TExt>
   pokemon<
     PokemonId extends Scalar = Zero,
     Evolution extends Scalar = Zero,
@@ -648,40 +664,59 @@ export class UICONS<
     Alignment extends Scalar = Zero,
     Bread extends Scalar = Zero,
     Shiny extends boolean = false,
-  >(
-    pokemonId?: PokemonId,
-    evolution?: Evolution,
-    form?: Form,
-    costume?: Costume,
-    gender?: Gender,
-    alignment?: Alignment,
-    bread?: Bread,
+  >(args?: {
+    pokemonId?: PokemonId
+    evolution?: Evolution
+    form?: Form
+    costume?: Costume
+    gender?: Gender
+    alignment?: Alignment
+    bread?: Bread
     shiny?: Shiny
-  ): FileUrl<TPath, 'pokemon', TExt>
-  pokemon(...args: PokemonArgs): FileUrl<TPath, 'pokemon', TExt> {
-    const [
-      pokemonId = this.#fallback,
-      evolution = this.#fallback,
-      form = this.#fallback,
-      costume = this.#fallback,
-      gender = this.#fallback,
-      alignment = this.#fallback,
-      bread = this.#fallback,
-      shiny = false,
-    ] = args
+  }): FileUrl<TPath, 'pokemon', TExt>
+  pokemon(
+    args: {
+      pokemonId?: Scalar
+      evolution?: Scalar
+      form?: Scalar
+      costume?: Scalar
+      gender?: Scalar
+      alignment?: Scalar
+      bread?: Scalar
+      shiny?: boolean
+    } = {}
+  ): FileUrl<TPath, 'pokemon', TExt> {
+    const {
+      pokemonId,
+      evolution,
+      form,
+      costume,
+      gender,
+      alignment,
+      bread,
+      shiny,
+    } = args
+    const safePokemonId = pokemonId ?? this.#fallback
+    const safeEvolution = evolution ?? this.#fallback
+    const safeForm = form ?? this.#fallback
+    const safeCostume = costume ?? this.#fallback
+    const safeGender = gender ?? this.#fallback
+    const safeAlignment = alignment ?? this.#fallback
+    const safeBread = bread ?? this.#fallback
+    const safeShiny = shiny ?? false
     const folder = 'pokemon'
     this.#isReady(folder)
 
     const base = `${this.#path}/${folder}` as const
     const ext = this.#extension(folder)
 
-    const breadSuffixes = bread ? [`_b${bread}`, ''] : ['']
-    const evolutionSuffixes = evolution ? [`_e${evolution}`, ''] : ['']
-    const formSuffixes = form ? [`_f${form}`, ''] : ['']
-    const costumeSuffixes = costume ? [`_c${costume}`, ''] : ['']
-    const genderSuffixes = gender ? [`_g${gender}`, ''] : ['']
-    const alignmentSuffixes = alignment ? [`_a${alignment}`, ''] : ['']
-    const shinySuffixes = shiny ? ['_s', ''] : ['']
+    const breadSuffixes = safeBread ? [`_b${safeBread}`, ''] : ['']
+    const evolutionSuffixes = safeEvolution ? [`_e${safeEvolution}`, ''] : ['']
+    const formSuffixes = safeForm ? [`_f${safeForm}`, ''] : ['']
+    const costumeSuffixes = safeCostume ? [`_c${safeCostume}`, ''] : ['']
+    const genderSuffixes = safeGender ? [`_g${safeGender}`, ''] : ['']
+    const alignmentSuffixes = safeAlignment ? [`_a${safeAlignment}`, ''] : ['']
+    const shinySuffixes = safeShiny ? ['_s', ''] : ['']
 
     for (let b = 0; b < breadSuffixes.length; b += 1) {
       for (let e = 0; e < evolutionSuffixes.length; e += 1) {
@@ -690,7 +725,7 @@ export class UICONS<
             for (let g = 0; g < genderSuffixes.length; g += 1) {
               for (let a = 0; a < alignmentSuffixes.length; a += 1) {
                 for (let s = 0; s < shinySuffixes.length; s += 1) {
-                  const result = `${pokemonId}${breadSuffixes[b]}${
+                  const result = `${safePokemonId}${breadSuffixes[b]}${
                     evolutionSuffixes[e]
                   }${formSuffixes[f]}${costumeSuffixes[c]}${genderSuffixes[g]}${
                     alignmentSuffixes[a]
@@ -709,34 +744,19 @@ export class UICONS<
   }
 
   /**
-   * Resolve a PokéStop icon URL with optional lure/display/quest/AR/power modifiers.
+   * Resolve a PokeStop icon URL with lure/display/quest/AR/power modifiers.
    *
-   * @param lureId Lure ID (`0` for none), see {@link Rpc.Item} `ITEM_TROY_DISK*`
-   * @param displayTypeId Display type ID (`0` or `false` for none), see {@link Rpc.IncidentDisplayType}
-   * @param questActive Whether the stop has an active quest (or scalar fallback form)
-   * @param ar Whether the stop is AR-eligible
-   * @param power Power-up level, boolean shortcut, or scalar equivalent
+   * @param args Pokestop lookup args.
+   * @param args.lureId Lure ID (`0` for none). See {@link Rpc.Item} `ITEM_TROY_DISK*`
+   * @param args.displayTypeId Display type ID (`0`/`false` for none). see {@link Rpc.IncidentDisplayType}
+   * @param args.questActive Whether the stop has an active quest.
+   * @param args.ar Whether the stop is AR-eligible.
+   * @param args.power Power-up level or boolean shorthand.
    * @returns A typed URL like `"{TPath}/pokestop/{computed-name}.{TExt}"`.
    * @example
    * ```ts
-   * import { Rpc } from '@na-ji/pogo-protos'
-   *
-   * const plainStop = uicons.pokestop()
-   * const protoStop = uicons.pokestop(
-   *   Rpc.Item.ITEM_TROY_DISK,
-   *   Rpc.IncidentDisplayType.INCIDENT_DISPLAY_ROCKET,
-   *   true,
-   *   true,
-   *   Rpc.FortPowerUpLevel.FORT_POWERUP_LEVEL_2
-   * )
-   * ```
-   *
-   * @example
-   * ```ts
-   * // Scalars and booleans are accepted for compatibility with external payloads.
-   * const scalarStop = uicons.pokestop(501, 2, true, false, 3)
-   * const stringStop = uicons.pokestop('501', '2', '1', true, '3')
-   * const booleanFlagStop = uicons.pokestop(0, false, false, false, true) // tries `_p`
+   * const fallback = uicons.pokestop()
+   * const arStop = uicons.pokestop({ lureId: 504, displayTypeId: 0, ar: true })
    * ```
    */
   pokestop<
@@ -746,13 +766,13 @@ export class UICONS<
     QuestActive extends boolean = false,
     Ar extends boolean = false,
     Power extends boolean | EnumVal<typeof Rpc.FortPowerUpLevel> = false,
-  >(
-    lureId?: LureId,
-    displayTypeId?: DisplayTypeId,
-    questActive?: QuestActive,
-    ar?: Ar,
+  >(args?: {
+    lureId?: LureId
+    displayTypeId?: DisplayTypeId
+    questActive?: QuestActive
+    ar?: Ar
     power?: Power
-  ): FileUrl<
+  }): FileUrl<
     TPath,
     'pokestop',
     TExt,
@@ -764,26 +784,34 @@ export class UICONS<
     QuestActive extends boolean | Scalar = false,
     Ar extends boolean = false,
     Power extends boolean | Scalar = false,
-  >(
-    lureId?: LureId,
-    displayTypeId?: DisplayTypeId,
-    questActive?: QuestActive,
-    ar?: Ar,
+  >(args?: {
+    lureId?: LureId
+    displayTypeId?: DisplayTypeId
+    questActive?: QuestActive
+    ar?: Ar
     power?: Power
-  ): FileUrl<
+  }): FileUrl<
     TPath,
     'pokestop',
     TExt,
     PokestopNameFromArgs<[LureId, DisplayTypeId, QuestActive, Ar, Power]>
   >
-  pokestop(...args: PokestopArgs): FileUrl<TPath, 'pokestop', TExt> {
-    const [
+  pokestop(
+    args: {
+      lureId?: Scalar
+      displayTypeId?: boolean | Scalar
+      questActive?: boolean | Scalar
+      ar?: boolean
+      power?: boolean | Scalar
+    } = {}
+  ): FileUrl<TPath, 'pokestop', TExt> {
+    const {
       lureId = this.#fallback,
       displayTypeId = false,
       questActive = false,
       ar = false,
       power = false,
-    ] = args
+    } = args
     const folder = 'pokestop'
     this.#isReady(folder)
 
@@ -815,39 +843,55 @@ export class UICONS<
   /**
    * Resolve a raid egg icon URL.
    *
-   * @param level Raid level, see {@link Rpc.RaidLevel}
-   * @param hatched Whether the egg has hatched
-   * @param ex Whether this is an EX raid egg
+   * @param args Raid egg lookup args.
+   * @param args.level Raid level, see {@link Rpc.RaidLevel}.
+   * @param args.hatched Whether the egg has hatched.
+   * @param args.ex Whether this is an EX raid egg.
    * @returns A typed URL like `"{TPath}/raid/egg/{computed-name}.{TExt}"`.
    * @example
    * ```ts
-   * import { Rpc } from '@na-ji/pogo-protos'
-   *
-   * const defaultEgg = uicons.raidEgg()
-   * const legendaryEgg = uicons.raidEgg(Rpc.RaidLevel.LEVEL_5)
-   * const hatchedEx = uicons.raidEgg(6, true, true)
+   * const fallback = uicons.raidEgg()
+   * const exEgg = uicons.raidEgg({ level: 1, ex: true })
    * ```
    */
   raidEgg<
     Level extends EnumVal<typeof Rpc.RaidLevel> | Zero = Zero,
     Hatched extends boolean = false,
     Ex extends boolean = false,
-  >(
-    level?: Level,
-    hatched?: Hatched,
+  >(args?: {
+    level?: Level
+    hatched?: Hatched
     ex?: Ex
-  ): FileUrl<TPath, 'raid/egg', TExt, RaidEggNameFromArgs<[Level, Hatched, Ex]>>
+  }): FileUrl<
+    TPath,
+    'raid/egg',
+    TExt,
+    RaidEggNameFromArgs<[Level, Hatched, Ex]>
+  >
   raidEgg<
     Level extends Scalar = Zero,
     Hatched extends boolean = false,
     Ex extends boolean = false,
-  >(
-    level?: Level,
-    hatched?: Hatched,
+  >(args?: {
+    level?: Level
+    hatched?: Hatched
     ex?: Ex
-  ): FileUrl<TPath, 'raid/egg', TExt, RaidEggNameFromArgs<[Level, Hatched, Ex]>>
-  raidEgg(...args: RaidEggArgs): FileUrl<TPath, 'raid/egg', TExt> {
-    const [level = this.#fallback, hatched = false, ex = false] = args
+  }): FileUrl<
+    TPath,
+    'raid/egg',
+    TExt,
+    RaidEggNameFromArgs<[Level, Hatched, Ex]>
+  >
+  raidEgg(
+    args: {
+      level?: Scalar
+      hatched?: boolean
+      ex?: boolean
+    } = {}
+  ): FileUrl<TPath, 'raid/egg', TExt> {
+    const level = args.level ?? this.#fallback
+    const hatched = args.hatched ?? false
+    const ex = args.ex ?? false
     this.#isReady('raid')
 
     const folder = 'raid/egg'
@@ -875,32 +919,28 @@ export class UICONS<
   /**
    * Resolve a quest reward icon URL.
    *
-   * @param questRewardType Reward folder key (e.g. `item`, `stardust`, `pokemon`, `unset`) mapped from {@link Rpc.QuestRewardProto.Type}
-   * @param rewardId ID or amount seed depending on reward type (number/string accepted)
-   * @param amount Optional quantity. Some reward icon sets use `_a{amount}` suffixes.
+   * @param args Reward lookup args.
+   * @param args.questRewardType Reward folder key mapped from {@link Rpc.QuestRewardProto.Type}
+   * @param args.rewardIdOrAmount Reward ID, or amount seed depending on reward type.
+   * @param args.amount Optional quantity; `_a{amount}` variants are attempted when supported.
    * @returns A typed reward URL inferred from `RewardUrlFromArgs<TPath, TExt, Args>`.
    * @example
    * ```ts
-   * // Folder-key usage (recommended)
-   * const itemReward = uicons.reward('item', 1)
-   * const stardustReward = uicons.reward('stardust', 500, 500)
-   * const pokemonReward = uicons.reward('pokemon', 150)
-   * ```
-   *
-   * @example
-   * ```ts
-   * // Scalars and strings are accepted for IDs and amounts.
-   * const stringItem = uicons.reward('item', '1')
-   * const amountVariant = uicons.reward('candy', 150, 3)
-   *
-   * // Invalid reward types gracefully fallback to `misc/0.<ext>` in dev with warning.
-   * const fallbackReward = uicons.reward('unset')
+   * const fallback = uicons.reward()
+   * const item = uicons.reward({ questRewardType: 'item', rewardIdOrAmount: 1 })
+   * const stardust = uicons.reward({
+   *   questRewardType: 'stardust',
+   *   rewardIdOrAmount: 500,
+   *   amount: 500,
+   * })
    * ```
    */
-  reward<Args extends RewardArgs>(
-    ...args: Args
-  ): RewardUrlFromArgs<TPath, TExt, Args> {
-    const [questRewardType, rewardIdOrAmount, amount] = args
+  reward<Args extends RewardObjectArgs = {}>(
+    args?: Args
+  ): RewardUrlFromArgs<TPath, TExt, RewardArgsFromObject<Args>> {
+    const { questRewardType, rewardIdOrAmount, amount } = (args ??
+      {}) as RewardObjectArgs
+
     const safeQuestRewardType: RewardTypeKeys = questRewardType ?? 'unset'
     const safeRewardIdOrAmount = rewardIdOrAmount ?? this.#fallback
     const safeAmount = amount ?? this.#fallback
@@ -912,7 +952,7 @@ export class UICONS<
     const rewardExtension = this.#extension('reward', safeQuestRewardType)
     if (!rewardSet || !rewardExtension) {
       this.#warn('Invalid quest reward type,', safeQuestRewardType)
-      return this.#toRewardUrl<Args>(this.misc())
+      return this.#toRewardUrl<RewardArgsFromObject<Args>>(this.misc())
     }
     const ext = rewardExtension
 
@@ -926,28 +966,40 @@ export class UICONS<
     for (let a = 0; a < amountSuffixes.length; a += 1) {
       const result = `${safeId}${amountSuffixes[a]}.${ext}` as const
       if (rewardSet.has(result)) {
-        return this.#toRewardUrl<Args>(`${base}/${result}`)
+        return this.#toRewardUrl<RewardArgsFromObject<Args>>(
+          `${base}/${result}`
+        )
       }
     }
-    return this.#toRewardUrl<Args>(`${base}/${this.#fallback}.${ext}`)
+    return this.#toRewardUrl<RewardArgsFromObject<Args>>(
+      `${base}/${this.#fallback}.${ext}`
+    )
   }
 
   /**
    * Resolve a spawnpoint icon URL.
    *
-   * @param hasTth Whether the spawnpoint has confirmed TTH timer state
+   * @param args Spawnpoint lookup args.
+   * @param args.hasTth Whether the spawnpoint has confirmed TTH timer state.
    * @returns A typed URL like `"{TPath}/spawnpoint/{0|1}.{TExt}"`.
    * @example
    * ```ts
-   * const unknownTimer = uicons.spawnpoint() // `spawnpoint/0.<ext>`
-   * const confirmedTimer = uicons.spawnpoint(true) // prefers `1.<ext>` if present
+   * const unknown = uicons.spawnpoint()
+   * const confirmed = uicons.spawnpoint({ hasTth: true })
    * ```
    */
   spawnpoint(): FileUrl<TPath, 'spawnpoint', TExt, Zero>
-  spawnpoint(hasTth: true): FileUrl<TPath, 'spawnpoint', TExt, One | Zero>
-  spawnpoint(hasTth?: false): FileUrl<TPath, 'spawnpoint', TExt, Zero>
-  spawnpoint(hasTth = false): FileUrl<TPath, 'spawnpoint', TExt, Zero | One> {
+  spawnpoint(args: {
+    hasTth: true
+  }): FileUrl<TPath, 'spawnpoint', TExt, One | Zero>
+  spawnpoint(args?: {
+    hasTth?: false
+  }): FileUrl<TPath, 'spawnpoint', TExt, Zero>
+  spawnpoint(args?: {
+    hasTth?: boolean
+  }): FileUrl<TPath, 'spawnpoint', TExt, Zero | One> {
     const folder = 'spawnpoint'
+    const hasTth = args?.hasTth ?? false
     this.#isReady(folder)
 
     const base = `${this.#path}/${folder}` as const
@@ -961,19 +1013,23 @@ export class UICONS<
   /**
    * Resolve a station icon URL.
    *
-   * @param active Whether the station is active
+   * @param args Station lookup args.
+   * @param args.active Whether the station is active.
    * @returns A typed URL like `"{TPath}/station/{0|1}.{TExt}"`.
    * @example
    * ```ts
    * const inactive = uicons.station()
-   * const active = uicons.station(true)
+   * const active = uicons.station({ active: true })
    * ```
    */
   station(): FileUrl<TPath, 'station', TExt, Zero>
-  station(active: true): FileUrl<TPath, 'station', TExt, One>
-  station(active?: false): FileUrl<TPath, 'station', TExt, Zero>
-  station(active = false): FileUrl<TPath, 'station', TExt, Zero | One> {
+  station(args: { active: true }): FileUrl<TPath, 'station', TExt, One>
+  station(args?: { active?: false }): FileUrl<TPath, 'station', TExt, Zero>
+  station(args?: {
+    active?: boolean
+  }): FileUrl<TPath, 'station', TExt, Zero | One> {
     const folder = 'station'
+    const active = args?.active ?? false
     this.#isReady(folder)
 
     const base = `${this.#path}/${folder}` as const
@@ -986,37 +1042,28 @@ export class UICONS<
   /**
    * Resolve a tappable icon URL.
    *
-   * @param tappableType Tappable type identifier (usually enum-like string, but numbers/strings are accepted)
-   * @returns A typed tappable URL. If category/type is missing, falls back to reward item icon URL.
+   * @param args Tappable lookup args.
+   * @param args.tappableType Tappable type identifier.
+   * @returns A typed tappable URL. Falls back to reward item icon URL when tappable assets are unavailable.
    * @example
    * ```ts
-   * // Defaults to `TAPPABLE_TYPE_POKEBALL` fallback lookup.
-   * const defaultTappable = uicons.tappable()
-   *
-   * // Typical enum-like string keys used by map payloads.
-   * const gruntBalloon = uicons.tappable('TAPPABLE_TYPE_ROCKET_BALLOON')
-   * const showcase = uicons.tappable('TAPPABLE_TYPE_SHOWCASE')
-   * ```
-   *
-   * @example
-   * ```ts
-   * // Scalar compatibility for custom pipelines.
-   * const numericTappable = uicons.tappable(7)
-   * const stringIdTappable = uicons.tappable('7')
+   * const fallback = uicons.tappable()
+   * const balloon = uicons.tappable({ tappableType: 'TAPPABLE_TYPE_ROCKET_BALLOON' })
    * ```
    */
   tappable(): TappableUrlFromArgs<TPath, TExt, []>
-  tappable<TappableType extends Scalar>(
+  tappable<TappableType extends Scalar>(args: {
     tappableType: TappableType
-  ): TappableUrlFromArgs<TPath, TExt, [TappableType]>
-  tappable(
+  }): TappableUrlFromArgs<TPath, TExt, [TappableType]>
+  tappable(args?: {
     tappableType?: Scalar
-  ): TappableUrlFromArgs<TPath, TExt, [] | [Scalar]> {
+  }): TappableUrlFromArgs<TPath, TExt, [] | [Scalar]> {
+    const { tappableType } = args ?? {}
     this.#isReady()
-    const rewardFallback: TappableRewardFallbackUrl<TPath, TExt> = this.reward(
-      'item',
-      1
-    )
+    const rewardFallback = this.reward({
+      questRewardType: 'item',
+      rewardIdOrAmount: ONE,
+    }) as TappableRewardFallbackUrl<TPath, TExt>
 
     const folder = 'tappable'
     const extension = this.#extension(folder)
@@ -1049,23 +1096,21 @@ export class UICONS<
   /**
    * Resolve a team icon URL.
    *
-   * @param teamId Team ID, see {@link Rpc.Team}
+   * @param args Team lookup args.
+   * @param args.teamId Team ID, see {@link Rpc.Team}.
    * @returns A typed URL like `"{TPath}/team/{teamId or 0}.{TExt}"`.
    * @example
    * ```ts
-   * import { Rpc } from '@na-ji/pogo-protos'
-   *
    * const neutral = uicons.team()
-   * const mystic = uicons.team(Rpc.Team.TEAM_BLUE)
-   * const valor = uicons.team(2)
-   * const instinct = uicons.team('3')
+   * const mystic = uicons.team({ teamId: Rpc.Team.TEAM_BLUE })
    * ```
    */
   team(): FileUrl<TPath, 'team', TExt, Zero>
-  team<TeamId extends Scalar>(
+  team<TeamId extends Scalar>(args: {
     teamId: TeamId
-  ): FileUrl<TPath, 'team', TExt, TeamId | Zero>
-  team(teamId: Scalar = this.#fallback): FileUrl<TPath, 'team', TExt> {
+  }): FileUrl<TPath, 'team', TExt, TeamId | Zero>
+  team(args?: { teamId?: Scalar }): FileUrl<TPath, 'team', TExt> {
+    const teamId = args?.teamId ?? this.#fallback
     const folder = 'team'
     this.#isReady(folder)
 
@@ -1079,24 +1124,23 @@ export class UICONS<
   }
 
   /**
-   * Resolve a Pokémon type icon URL.
+   * Resolve a Pokemon type icon URL.
    *
-   * @param typeId Pokémon type ID, see {@link Rpc.HoloPokemonType}
+   * @param args Type lookup args.
+   * @param args.typeId Pokemon type ID, see {@link Rpc.HoloPokemonType}.
    * @returns A typed URL like `"{TPath}/type/{typeId or 0}.{TExt}"`.
    * @example
    * ```ts
-   * import { Rpc } from '@na-ji/pogo-protos'
-   *
-   * const unknownType = uicons.type()
-   * const fireType = uicons.type(Rpc.HoloPokemonType.POKEMON_TYPE_FIRE)
-   * const scalarType = uicons.type(10)
+   * const unknown = uicons.type()
+   * const fire = uicons.type({ typeId: Rpc.HoloPokemonType.POKEMON_TYPE_FIRE })
    * ```
    */
   type(): FileUrl<TPath, 'type', TExt, Zero>
-  type<TypeId extends Scalar>(
+  type<TypeId extends Scalar>(args: {
     typeId: TypeId
-  ): FileUrl<TPath, 'type', TExt, TypeId | Zero>
-  type(typeId: Scalar = this.#fallback): FileUrl<TPath, 'type', TExt> {
+  }): FileUrl<TPath, 'type', TExt, TypeId | Zero>
+  type(args?: { typeId?: Scalar }): FileUrl<TPath, 'type', TExt> {
+    const typeId = args?.typeId ?? this.#fallback
     const folder = 'type'
     this.#isReady(folder)
 
@@ -1112,27 +1156,16 @@ export class UICONS<
   /**
    * Resolve a weather icon URL.
    *
-   * @param weatherId Weather condition ID, see {@link Rpc.GameplayWeatherProto.WeatherCondition}
-   * @param severityLevel Alert severity level, see {@link Rpc.InternalWeatherAlertProto.Severity}
-   * @param timeOfDay `day` or `night` (`_d`/`_n` variants are attempted)
+   * @param args Weather lookup args.
+   * @param args.weatherId Weather condition ID.
+   * @param args.severityLevel Alert severity level.
+   * @param args.timeOfDay `day` or `night`.
    * @returns A typed URL like `"{TPath}/weather/{computed-name}.{TExt}"`.
    * @example
    * ```ts
-   * import { Rpc } from '@na-ji/pogo-protos'
-   *
-   * const defaultWeather = uicons.weather()
-   * const rainyDay = uicons.weather(
-   *   Rpc.GameplayWeatherProto.WeatherCondition.WEATHER_RAINY,
-   *   Rpc.InternalWeatherAlertProto.Severity.SEVERE,
-   *   'day'
-   * )
-   * const windyNight = uicons.weather(4, 2, 'night')
-   * ```
-   *
-   * @example
-   * ```ts
-   * // String scalar compatibility.
-   * const fogString = uicons.weather('7', '1', 'night')
+   * const fallback = uicons.weather()
+   * const rainyDay = uicons.weather({ weatherId: 3, severityLevel: 0, timeOfDay: 'day' })
+   * const windyNight = uicons.weather({ weatherId: 4, severityLevel: 2, timeOfDay: 'night' })
    * ```
    */
   weather<
@@ -1143,11 +1176,11 @@ export class UICONS<
       | EnumVal<typeof Rpc.InternalWeatherAlertProto.Severity>
       | Zero = Zero,
     Time extends TimeOfDay = 'day',
-  >(
-    weatherId?: WeatherId,
-    severityLevel?: Severity,
+  >(args?: {
+    weatherId?: WeatherId
+    severityLevel?: Severity
     timeOfDay?: Time
-  ): FileUrl<
+  }): FileUrl<
     TPath,
     'weather',
     TExt,
@@ -1157,22 +1190,24 @@ export class UICONS<
     WeatherId extends Scalar = Zero,
     Severity extends Scalar = Zero,
     Time extends string = 'day',
-  >(
-    weatherId?: WeatherId,
-    severityLevel?: Severity,
+  >(args?: {
+    weatherId?: WeatherId
+    severityLevel?: Severity
     timeOfDay?: Time
-  ): FileUrl<
+  }): FileUrl<
     TPath,
     'weather',
     TExt,
     WeatherNameFromArgs<[WeatherId, Severity, Time]>
   >
-  weather(...args: WeatherArgs): FileUrl<TPath, 'weather', TExt> {
-    const [
-      weatherId = this.#fallback,
-      severityLevel = this.#fallback,
-      timeOfDay = 'day',
-    ] = args
+  weather(args?: {
+    weatherId?: Scalar
+    severityLevel?: Scalar
+    timeOfDay?: string
+  }): FileUrl<TPath, 'weather', TExt> {
+    const weatherId = args?.weatherId ?? this.#fallback
+    const severityLevel = args?.severityLevel ?? this.#fallback
+    const timeOfDay = args?.timeOfDay ?? 'day'
     const folder = 'weather'
     this.#isReady(folder)
 
@@ -1266,45 +1301,6 @@ export class UICONS<
       return [flag, '']
     }
     return [`${flag}${numericValue}`, flag, '']
-  }
-
-  /**
-   * Initialize this instance asynchronously by fetching the `index.json` file
-   * from the UICONS repository path provided in the constructor.
-   *
-   * @returns The initialized UICONS instance (`this`) with extension map populated.
-   * @example
-   * ```ts
-   * const uicons = new UICONS<'https://cdn.example.com/uicons', 'png'>({
-   *   path: 'https://cdn.example.com/uicons',
-   *   extension: 'png',
-   * })
-   *
-   * await uicons.remoteInit()
-   * const url = uicons.team(1)
-   * //    ^? "https://cdn.example.com/uicons/team/1.png" (when available)
-   * ```
-   *
-   * @example
-   * ```ts
-   * // Works with path-only constructor too.
-   * const pathOnly = new UICONS('https://raw.githubusercontent.com/UIcons/UIcons/main')
-   * await pathOnly.remoteInit()
-   * const weather = pathOnly.weather(1, 0, 'day')
-   * ```
-   */
-  async remoteInit(): Promise<this> {
-    const data = await fetch(`${this.#path}/index.json`)
-    if (!data.ok) {
-      throw new Error(
-        `Failed to fetch ${this.#path} ${data.status} ${data.statusText}`
-      )
-    }
-    const indexFile = await data.json()
-    if (!this.#isIndexData(indexFile)) {
-      throw new Error(`Invalid index.json payload from ${this.#path}`)
-    }
-    return this.init(indexFile)
   }
 }
 

@@ -49,7 +49,7 @@ export default defineConfig(({ mode }) => {
               external: [],
             }
           : {
-              plugins: [typescript({ tsconfig: './tsconfig.json' })],
+              plugins: [typescript({ tsconfig: './tsconfig.build.json' })],
             },
       assetsDir: '',
       emptyOutDir: true,

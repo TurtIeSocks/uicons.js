@@ -605,7 +605,7 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
     questRewardType: U = 'unset' as U,
     rewardIdOrAmount = 0,
     amount = 0,
-    evolution: string | number = 0
+    evolution = 0
   ): string {
     if (!this.#isReady('reward')) return ''
 

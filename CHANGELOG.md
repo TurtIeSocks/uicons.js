@@ -1,3 +1,10 @@
+# [2.3.0](https://github.com/TurtIeSocks/uicons.js/compare/v2.2.0...v2.3.0) (2026-07-21)
+
+
+### Features
+
+* mega branch resource ([78142bf](https://github.com/TurtIeSocks/uicons.js/commit/78142bf1e007259bc39c925abb2b7ed65ea3f367))
+
 # [2.2.0](https://github.com/TurtIeSocks/uicons.js/compare/v2.1.0...v2.2.0) (2025-10-15)
 
 

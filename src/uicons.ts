@@ -582,12 +582,20 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
    * @param questRewardType the type of quest reward, @see Rpc.QuestRewardProto.Type
    * @param rewardId the ID or the amount of the reward. This depends on the complexity of the reward type. For example, item rewards use the item ID, while stardust rewards use the amount of stardust. Best to check uicons repository to see which of them use the `_a` flag
    * @param amount the amount of the reward
+   * @param evolution the temporary evolution ID of the reward Pokemon, @see Rpc.HoloTemporaryEvolutionId
    * @returns the src of the quest reward icon
    */
   reward<U extends RewardTypeKeys>(
     questRewardType?: U,
     rewardId?: string | number,
-    amount?: string | number
+    amount?: string | number,
+    evolution?: EnumVal<typeof Rpc.HoloTemporaryEvolutionId>
+  ): string
+  reward<U extends RewardTypeKeys>(
+    questRewardType?: U,
+    rewardId?: string | number,
+    amount?: string | number,
+    evolution?: string | number
   ): string
   reward<U extends RewardTypeKeys>(
     questRewardType?: U,
@@ -596,7 +604,8 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
   reward<U extends RewardTypeKeys>(
     questRewardType: U = 'unset' as U,
     rewardIdOrAmount = 0,
-    amount = 0
+    amount = 0,
+    evolution = 0
   ): string {
     if (!this.#isReady('reward')) return ''
 
@@ -612,14 +621,17 @@ export class UICONS<Index extends UiconsIndex = UiconsIndex> {
       Number.isInteger(amountSafe) && amountSafe > 1
         ? [`_a${amount}`, '']
         : ['']
+    const evolutionSuffixes = evolution ? [`_e${evolution}`, ''] : ['']
     const safeId = +rewardIdOrAmount || amountSafe || 0
 
-    for (let a = 0; a < amountSuffixes.length; a += 1) {
-      const result = `${safeId}${amountSuffixes[a]}.${
-        this.#extensionMap.reward[questRewardType]
-      }`
-      if (rewardSet.has(result)) {
-        return `${baseUrl}/${result}`
+    for (let e = 0; e < evolutionSuffixes.length; e += 1) {
+      for (let a = 0; a < amountSuffixes.length; a += 1) {
+        const result = `${safeId}${evolutionSuffixes[e]}${amountSuffixes[a]}.${
+          this.#extensionMap.reward[questRewardType]
+        }`
+        if (rewardSet.has(result)) {
+          return `${baseUrl}/${result}`
+        }
       }
     }
     return `${baseUrl}/0.${this.#extensionMap.reward[questRewardType]}`

@@ -11,6 +11,24 @@ const backgroundIcons = new UICONS({
   path: BASE_ICON_URL,
   data: { background: ['0.webp', '1.webp'] },
 })
+const branchRewardIcons = new UICONS({
+  path: BASE_ICON_URL,
+  data: {
+    reward: {
+      mega_resource: [
+        '0.webp',
+        '3.webp',
+        '6.webp',
+        '6_e2.webp',
+        '6_e2_a25.webp',
+        '26.webp',
+        '26_e3.webp',
+        '150.webp',
+        '150_a25.webp',
+      ],
+    },
+  },
+})
 
 describe('webp format', () => {
   test('should fetch remotely', async () => {
@@ -216,6 +234,31 @@ describe('reward', () => {
   test('mega_resource with amount', () => {
     expect(icons.reward('mega_resource', 6, 25)).toBe(
       `${BASE_ICON_URL}/reward/mega_resource/6_a25.webp`
+    )
+  })
+  test('mega_resource with evolution and amount', () => {
+    expect(
+      branchRewardIcons.reward(
+        'mega_resource',
+        6,
+        25,
+        Rpc.HoloTemporaryEvolutionId.TEMP_EVOLUTION_MEGA_X
+      )
+    ).toBe(`${BASE_ICON_URL}/reward/mega_resource/6_e2_a25.webp`)
+  })
+  test('mega_resource evolution falls back without amount', () => {
+    expect(branchRewardIcons.reward('mega_resource', 26, 25, 3)).toBe(
+      `${BASE_ICON_URL}/reward/mega_resource/26_e3.webp`
+    )
+  })
+  test('mega_resource falls back to generic amount', () => {
+    expect(branchRewardIcons.reward('mega_resource', 150, 25, 2)).toBe(
+      `${BASE_ICON_URL}/reward/mega_resource/150_a25.webp`
+    )
+  })
+  test('mega_resource falls back to generic Pokemon', () => {
+    expect(branchRewardIcons.reward('mega_resource', 3, 25, 2)).toBe(
+      `${BASE_ICON_URL}/reward/mega_resource/3.webp`
     )
   })
 })

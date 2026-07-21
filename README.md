@@ -66,6 +66,12 @@ const pokestop = uicons.pokestop(
 )
 const egg = uicons.raidEgg(raid_level, hatched, ex)
 const reward = uicons.reward(reward_type_id, reward_id, amount)
+const evolutionReward = uicons.reward(
+  reward_type_id,
+  reward_id,
+  amount,
+  evolution_id,
+)
 const rewardWithOutId = uicons.reward(reward_type_id, amount)
 const spawnpoint = uicons.spawnpoint(has_known_tth)
 const team = uicons.team(team_id)

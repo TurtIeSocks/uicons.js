@@ -1,3 +1,8 @@
+# Reject dependency versions published less than a day ago, matching the
+# supply-chain policy the CI runner enforces (pnpm 11 defaults this to 1440).
+# Keeping it here makes local installs resolve the same age-compliant versions.
+minimumReleaseAge: 1440
+
 allowBuilds:
   '@swc/core': true
   esbuild: true

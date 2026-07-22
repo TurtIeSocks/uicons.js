@@ -1,3 +1,10 @@
+# [3.1.0](https://github.com/TurtIeSocks/uicons.js/compare/v3.0.1...v3.1.0) (2026-07-22)
+
+
+### Features
+
+* **types:** surface argument value suggestions in IntelliSense ([5fe56d6](https://github.com/TurtIeSocks/uicons.js/commit/5fe56d607961b973ba35ef458e9b96ac544bdbe1))
+
 ## [3.0.1](https://github.com/TurtIeSocks/uicons.js/compare/v3.0.0...v3.0.1) (2026-07-22)
 
 

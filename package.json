@@ -1,6 +1,6 @@
 {
   "name": "uicons.js",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "description": "Type-safe UICONS client for Pokémon GO — resolves icon & audio URLs to exact template-literal types, with no runtime dependencies.",
   "keywords": [
     "uicons",

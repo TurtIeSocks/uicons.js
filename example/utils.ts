@@ -80,7 +80,7 @@ export async function getMonsFromIndex(
         const gender = parseArgs(rest, '_g') ?? 0
         const alignment = parseArgs(rest, '_a') ?? 0
         const bread = parseArgs(rest, '_b') ?? 0
-        const shiny = !!parseArgs(rest, '_s') ?? false
+        const shiny = !!parseArgs(rest, '_s')
         return {
           title,
           src: `${icon.path}/pokemon/${file}`,

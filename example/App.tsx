@@ -5,6 +5,7 @@ import { ICON_STYLES, AUDIO_STYLES } from './styles'
 import { Nav } from './Nav'
 import { Hero } from './Hero'
 import { Features } from './Features'
+import { TypeInspector } from './TypeInspector'
 import { Gallery } from './Gallery'
 import { Footer } from './Footer'
 import type { Props, RawMon } from './types'
@@ -37,6 +38,7 @@ export default function App() {
       <main>
         <Hero />
         <Features />
+        <TypeInspector />
         <Gallery
           mons={mons}
           icon={icon}

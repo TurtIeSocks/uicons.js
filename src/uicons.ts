@@ -29,6 +29,31 @@ import type {
   WeatherUrl,
 } from './types.js'
 
+const CATEGORIES = [
+  'background',
+  'device',
+  'gym',
+  'invasion',
+  'misc',
+  'nest',
+  'pokemon',
+  'pokestop',
+  'tappable',
+  'spawnpoint',
+  'station',
+  'team',
+  'type',
+  'weather',
+] as const
+
+/** Categories whose files live in a folder named after the category itself. */
+type FlatCategory = (typeof CATEGORIES)[number]
+
+const buildFiles = (data: UiconsIndex<readonly string[]> = {}) =>
+  Object.fromEntries(
+    CATEGORIES.map((category) => [category, new Set(data[category] || [])])
+  ) as Record<FlatCategory, Set<string>>
+
 /**
  * Universal ICONS Class for Pokémon GO asset management
  *
@@ -81,22 +106,9 @@ export class UICONS<
   #extensionMap!: ExtensionMap
   #label: string
 
-  #background: Set<string> = new Set()
-  #device: Set<string> = new Set()
-  #gym: Set<string> = new Set()
-  #invasion: Set<string> = new Set()
-  #misc: Set<string> = new Set()
-  #nest: Set<string> = new Set()
-  #pokemon: Set<string> = new Set()
-  #pokestop: Set<string> = new Set()
-  #tappable: Set<string> = new Set()
+  #files: Record<FlatCategory, Set<string>> = buildFiles()
   #raid: { egg: Set<string> } = { egg: new Set() }
   #reward: { [key in RewardTypeKeys]?: Set<string> } = {}
-  #spawnpoint: Set<string> = new Set()
-  #station: Set<string> = new Set()
-  #team: Set<string> = new Set()
-  #type: Set<string> = new Set()
-  #weather: Set<string> = new Set()
 
   /**
    * @param options The options object for the UICONS instance
@@ -163,6 +175,52 @@ export class UICONS<
   }
 
   /**
+   * Probe the cross product of suffix options against a category's file list,
+   * most specific candidate first (the first dimension is the outermost
+   * "loop"), returning the first file present, else the `0.{ext}` fallback.
+   * This is the runtime twin of the type-level `CrossAll`/`FirstMatch` search.
+   */
+  #search(
+    files: Set<string>,
+    baseUrl: string,
+    id: Scalar,
+    suffixDims: string[][],
+    ext: string | undefined
+  ): string {
+    const names = suffixDims.reduce<string[]>(
+      (acc, dim) => acc.flatMap((prefix) => dim.map((suffix) => prefix + suffix)),
+      [`${id}`]
+    )
+    for (const name of names) {
+      const file = `${name}.${ext}`
+      if (files.has(file)) {
+        return `${baseUrl}/${file}`
+      }
+    }
+    return `${baseUrl}/0.${ext}`
+  }
+
+  /**
+   * `#search` for the categories whose file set, folder name, and extension
+   * all derive from the category key. `raid/egg` and `reward/{type}` have
+   * nested folders and use `#search` directly.
+   */
+  #resolve(
+    category: FlatCategory,
+    id: Scalar,
+    suffixDims: string[][] = []
+  ): string {
+    if (!this.#isReady(category)) return ''
+    return this.#search(
+      this.#files[category],
+      `${this.#path}/${category}`,
+      id,
+      suffixDims,
+      this.#extensionMap[category]
+    )
+  }
+
+  /**
    * This is used to initialize the UICONS class asynchronously by automatically fetching the index.json file
    * from the remote UICONS repository provided in the constructor
    * @returns the initialized UICONS instance, typed with unknown index data
@@ -186,27 +244,13 @@ export class UICONS<
   init<const D extends UiconsIndex<readonly string[]>>(
     data: D
   ): UICONS<Path, Ext, D> {
-    this.#background = new Set(data.background || [])
-    this.#device = new Set(data.device || [])
-    this.#gym = new Set(data.gym || [])
-    this.#invasion = new Set(data.invasion || [])
-    this.#misc = new Set(data.misc || [])
-    this.#nest = new Set(data.nest || [])
-    this.#pokemon = new Set(data.pokemon || [])
-    this.#pokestop = new Set(data.pokestop || [])
-    this.#tappable = new Set(data.tappable || [])
+    this.#files = buildFiles(data)
     this.#raid = { egg: new Set(data.raid?.egg || []) }
     this.#reward = Object.fromEntries(
       Object.entries(data.reward || {})
         .filter(([, v]) => Array.isArray(v) && v.length > 0)
         .map(([k, v]) => [k, new Set(v)])
     )
-    this.#spawnpoint = new Set(data.spawnpoint || [])
-    this.#station = new Set(data.station || [])
-    this.#team = new Set(data.team || [])
-    this.#type = new Set(data.type || [])
-    this.#weather = new Set(data.weather || [])
-
     this.#extensionMap = this.#buildExtensions(data)
     return this as unknown as UICONS<Path, Ext, D>
   }
@@ -224,26 +268,6 @@ export class UICONS<
     this.#isReady()
     const [first, second] = location.split('.', 2)
     switch (first) {
-      case 'background':
-        return this.#background.has(
-          `${fileName}.${this.#extensionMap.background}`
-        )
-      case 'device':
-        return this.#device.has(`${fileName}.${this.#extensionMap.device}`)
-      case 'gym':
-        return this.#gym.has(`${fileName}.${this.#extensionMap.gym}`)
-      case 'invasion':
-        return this.#invasion.has(`${fileName}.${this.#extensionMap.invasion}`)
-      case 'misc':
-        return this.#misc.has(`${fileName}.${this.#extensionMap.misc}`)
-      case 'nest':
-        return this.#nest.has(`${fileName}.${this.#extensionMap.nest}`)
-      case 'pokemon':
-        return this.#pokemon.has(`${fileName}.${this.#extensionMap.pokemon}`)
-      case 'pokestop':
-        return this.#pokestop.has(`${fileName}.${this.#extensionMap.pokestop}`)
-      case 'tappable':
-        return this.#tappable.has(`${fileName}.${this.#extensionMap.tappable}`)
       case 'raid':
         return this.#raid.egg.has(`${fileName}.${this.#extensionMap.raid?.egg}`)
       case 'reward':
@@ -252,20 +276,12 @@ export class UICONS<
               `${fileName}.${this.#extensionMap.reward?.[second as RewardTypeKeys]}`
             )
           : false
-      case 'spawnpoint':
-        return this.#spawnpoint.has(
-          `${fileName}.${this.#extensionMap.spawnpoint}`
-        )
-      case 'station':
-        return this.#station.has(`${fileName}.${this.#extensionMap.station}`)
-      case 'team':
-        return this.#team.has(`${fileName}.${this.#extensionMap.team}`)
-      case 'type':
-        return this.#type.has(`${fileName}.${this.#extensionMap.type}`)
-      case 'weather':
-        return this.#weather.has(`${fileName}.${this.#extensionMap.weather}`)
       default:
-        return false
+        return first in this.#files
+          ? this.#files[first as FlatCategory].has(
+              `${fileName}.${this.#extensionMap[first as FlatCategory]}`
+            )
+          : false
     }
   }
 
@@ -278,15 +294,7 @@ export class UICONS<
   }): BackgroundUrl<Index, Path, Ext, Id>
   background(args: { id?: Scalar } = {}): string {
     const { id = 0 } = args
-    if (!this.#isReady('background')) return ''
-
-    const baseUrl = `${this.#path}/background`
-
-    const result = `${id}.${this.#extensionMap.background}`
-    if (this.#background.has(result)) {
-      return `${baseUrl}/${result}`
-    }
-    return `${baseUrl}/0.${this.#extensionMap.background}`
+    return this.#resolve('background', id)
   }
 
   /**
@@ -300,7 +308,7 @@ export class UICONS<
     const { online = false } = args
     if (!this.#isReady('device')) return ''
 
-    return online && this.#device.has(`1.${this.#extensionMap.device}`)
+    return online && this.#files.device.has(`1.${this.#extensionMap.device}`)
       ? `${this.#path}/device/1.${this.#extensionMap.device}`
       : `${this.#path}/device/0.${this.#extensionMap.device}`
   }
@@ -362,35 +370,13 @@ export class UICONS<
       ar = false,
       power = false,
     } = args
-    if (!this.#isReady('gym')) return ''
-
-    const baseUrl = `${this.#path}/gym`
-
-    const trainerSuffixes = trainerCount ? [`_t${trainerCount}`, ''] : ['']
-    const inBattleSuffixes = inBattle ? ['_b', ''] : ['']
-    const exSuffixes = ex ? ['_ex', ''] : ['']
-    const arSuffixes = ar ? ['_ar', ''] : ['']
-    const powerUpSuffixes = this.#evalPossiblyEmptyFlag('_p', power)
-
-    for (let t = 0; t < trainerSuffixes.length; t += 1) {
-      for (let b = 0; b < inBattleSuffixes.length; b += 1) {
-        for (let e = 0; e < exSuffixes.length; e += 1) {
-          for (let a = 0; a < arSuffixes.length; a += 1) {
-            for (let p = 0; p < powerUpSuffixes.length; p += 1) {
-              const result = `${teamId}${trainerSuffixes[t]}${
-                inBattleSuffixes[b]
-              }${exSuffixes[e]}${arSuffixes[a]}${powerUpSuffixes[p]}.${
-                this.#extensionMap.gym
-              }`
-              if (this.#gym.has(result)) {
-                return `${baseUrl}/${result}`
-              }
-            }
-          }
-        }
-      }
-    }
-    return `${baseUrl}/0.${this.#extensionMap.gym}`
+    return this.#resolve('gym', teamId, [
+      trainerCount ? [`_t${trainerCount}`, ''] : [''],
+      inBattle ? ['_b', ''] : [''],
+      ex ? ['_ex', ''] : [''],
+      ar ? ['_ar', ''] : [''],
+      this.#evalPossiblyEmptyFlag('_p', power),
+    ])
   }
 
   /**
@@ -414,20 +400,9 @@ export class UICONS<
   }): InvasionUrl<Index, Path, Ext, GruntId, Confirmed>
   invasion(args: { gruntId?: Scalar; confirmed?: boolean } = {}): string {
     const { gruntId = 0, confirmed = false } = args
-    if (!this.#isReady('invasion')) return ''
-
-    const baseUrl = `${this.#path}/invasion`
-
-    const confirmedSuffixes = confirmed ? [''] : ['_u', '']
-    for (let c = 0; c < confirmedSuffixes.length; c += 1) {
-      const result = `${gruntId}${confirmedSuffixes[c]}.${
-        this.#extensionMap.invasion
-      }`
-      if (this.#invasion.has(result)) {
-        return `${baseUrl}/${result}`
-      }
-    }
-    return `${baseUrl}/0.${this.#extensionMap.invasion}`
+    return this.#resolve('invasion', gruntId, [
+      confirmed ? [''] : ['_u', ''],
+    ])
   }
 
   /**
@@ -439,14 +414,7 @@ export class UICONS<
   }): MiscUrl<Index, Path, Ext, FileName>
   misc(args: { fileName?: Scalar } = {}): string {
     const { fileName = 0 } = args
-    if (!this.#isReady('misc')) return ''
-
-    const baseUrl = `${this.#path}/misc`
-
-    if (this.#misc.has(`${fileName}.${this.#extensionMap.misc}`)) {
-      return `${baseUrl}/${fileName}.${this.#extensionMap.misc}`
-    }
-    return `${baseUrl}/0.${this.#extensionMap.misc}`
+    return this.#resolve('misc', fileName)
   }
 
   /**
@@ -461,15 +429,7 @@ export class UICONS<
   }): NestUrl<Index, Path, Ext, TypeId>
   nest(args: { typeId?: Scalar } = {}): string {
     const { typeId = 0 } = args
-    if (!this.#isReady('nest')) return ''
-
-    const baseUrl = `${this.#path}/nest`
-
-    const result = `${typeId}.${this.#extensionMap.nest}`
-    if (this.#nest.has(result)) {
-      return `${baseUrl}/${result}`
-    }
-    return `${baseUrl}/0.${this.#extensionMap.nest}`
+    return this.#resolve('nest', typeId)
   }
 
   /**
@@ -567,41 +527,15 @@ export class UICONS<
       bread = 0,
       shiny = false,
     } = args
-    if (!this.#isReady('pokemon')) return ''
-
-    const baseUrl = `${this.#path}/pokemon`
-
-    const breadSuffixes = bread ? [`_b${bread}`, ''] : ['']
-    const evolutionSuffixes = evolution ? [`_e${evolution}`, ''] : ['']
-    const formSuffixes = form ? [`_f${form}`, ''] : ['']
-    const costumeSuffixes = costume ? [`_c${costume}`, ''] : ['']
-    const genderSuffixes = gender ? [`_g${gender}`, ''] : ['']
-    const alignmentSuffixes = alignment ? [`_a${alignment}`, ''] : ['']
-    const shinySuffixes = shiny ? ['_s', ''] : ['']
-
-    for (let b = 0; b < breadSuffixes.length; b += 1) {
-      for (let e = 0; e < evolutionSuffixes.length; e += 1) {
-        for (let f = 0; f < formSuffixes.length; f += 1) {
-          for (let c = 0; c < costumeSuffixes.length; c += 1) {
-            for (let g = 0; g < genderSuffixes.length; g += 1) {
-              for (let a = 0; a < alignmentSuffixes.length; a += 1) {
-                for (let s = 0; s < shinySuffixes.length; s += 1) {
-                  const result = `${pokemonId}${breadSuffixes[b]}${
-                    evolutionSuffixes[e]
-                  }${formSuffixes[f]}${costumeSuffixes[c]}${genderSuffixes[g]}${
-                    alignmentSuffixes[a]
-                  }${shinySuffixes[s]}.${this.#extensionMap.pokemon}`
-                  if (this.#pokemon.has(result)) {
-                    return `${baseUrl}/${result}`
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    return `${baseUrl}/0.${this.#extensionMap.pokemon}`
+    return this.#resolve('pokemon', pokemonId, [
+      bread ? [`_b${bread}`, ''] : [''],
+      evolution ? [`_e${evolution}`, ''] : [''],
+      form ? [`_f${form}`, ''] : [''],
+      costume ? [`_c${costume}`, ''] : [''],
+      gender ? [`_g${gender}`, ''] : [''],
+      alignment ? [`_a${alignment}`, ''] : [''],
+      shiny ? ['_s', ''] : [''],
+    ])
   }
 
   /**
@@ -656,30 +590,12 @@ export class UICONS<
       ar = false,
       power = false,
     } = args
-    if (!this.#isReady('pokestop')) return ''
-
-    const baseUrl = `${this.#path}/pokestop`
-
-    const displaySuffixes = this.#evalPossiblyEmptyFlag('_i', displayTypeId)
-    const questSuffixes = this.#evalPossiblyEmptyFlag('_q', questActive)
-    const arSuffixes = ar ? ['_ar', ''] : ['']
-    const powerUpSuffixes = this.#evalPossiblyEmptyFlag('_p', power)
-
-    for (let i = 0; i < displaySuffixes.length; i += 1) {
-      for (let q = 0; q < questSuffixes.length; q += 1) {
-        for (let a = 0; a < arSuffixes.length; a += 1) {
-          for (let p = 0; p < powerUpSuffixes.length; p += 1) {
-            const result = `${lureId}${displaySuffixes[i]}${questSuffixes[q]}${
-              arSuffixes[a]
-            }${powerUpSuffixes[p]}.${this.#extensionMap.pokestop}`
-            if (this.#pokestop.has(result)) {
-              return `${baseUrl}/${result}`
-            }
-          }
-        }
-      }
-    }
-    return `${baseUrl}/0.${this.#extensionMap.pokestop}`
+    return this.#resolve('pokestop', lureId, [
+      this.#evalPossiblyEmptyFlag('_i', displayTypeId),
+      this.#evalPossiblyEmptyFlag('_q', questActive),
+      ar ? ['_ar', ''] : [''],
+      this.#evalPossiblyEmptyFlag('_p', power),
+    ])
   }
 
   /**
@@ -712,21 +628,13 @@ export class UICONS<
     const { level = 0, hatched = false, ex = false } = args
     if (!this.#isReady('raid')) return ''
 
-    const baseUrl = `${this.#path}/raid/egg`
-
-    const hatchedSuffixes = hatched ? ['_h', ''] : ['']
-    const exSuffixes = ex ? ['_ex', ''] : ['']
-    for (let h = 0; h < hatchedSuffixes.length; h += 1) {
-      for (let e = 0; e < exSuffixes.length; e += 1) {
-        const result = `${level}${hatchedSuffixes[h]}${exSuffixes[e]}.${
-          this.#extensionMap.raid?.egg
-        }`
-        if (this.#raid.egg.has(result)) {
-          return `${baseUrl}/${result}`
-        }
-      }
-    }
-    return `${baseUrl}/0.${this.#extensionMap.raid?.egg}`
+    return this.#search(
+      this.#raid.egg,
+      `${this.#path}/raid/egg`,
+      level,
+      [hatched ? ['_h', ''] : [''], ex ? ['_ex', ''] : ['']],
+      this.#extensionMap.raid?.egg
+    )
   }
 
   /**
@@ -782,24 +690,20 @@ export class UICONS<
     }
 
     const amountSafe = typeof amount === 'number' ? amount : +amount
-    const amountSuffixes =
-      Number.isInteger(amountSafe) && amountSafe > 1
-        ? [`_a${amount}`, '']
-        : ['']
-    const evolutionSuffixes = evolution ? [`_e${evolution}`, ''] : ['']
     const safeId = +rewardId || amountSafe || 0
 
-    for (let e = 0; e < evolutionSuffixes.length; e += 1) {
-      for (let a = 0; a < amountSuffixes.length; a += 1) {
-        const result = `${safeId}${evolutionSuffixes[e]}${amountSuffixes[a]}.${
-          this.#extensionMap.reward?.[questRewardType]
-        }`
-        if (rewardSet.has(result)) {
-          return `${baseUrl}/${result}`
-        }
-      }
-    }
-    return `${baseUrl}/0.${this.#extensionMap.reward?.[questRewardType]}`
+    return this.#search(
+      rewardSet,
+      baseUrl,
+      safeId,
+      [
+        evolution ? [`_e${evolution}`, ''] : [''],
+        Number.isInteger(amountSafe) && amountSafe > 1
+          ? [`_a${amount}`, '']
+          : [''],
+      ],
+      this.#extensionMap.reward?.[questRewardType]
+    )
   }
 
   /**
@@ -813,7 +717,7 @@ export class UICONS<
     const { hasTth = false } = args
     if (!this.#isReady('spawnpoint')) return ''
 
-    return hasTth && this.#spawnpoint.has(`1.${this.#extensionMap.spawnpoint}`)
+    return hasTth && this.#files.spawnpoint.has(`1.${this.#extensionMap.spawnpoint}`)
       ? `${this.#path}/spawnpoint/1.${this.#extensionMap.spawnpoint}`
       : `${this.#path}/spawnpoint/0.${this.#extensionMap.spawnpoint}`
   }
@@ -855,7 +759,9 @@ export class UICONS<
     const baseUrl = `${this.#path}/tappable`
     const tryCandidate = (candidate: string) => {
       const fileName = `${candidate}.${extension}`
-      return this.#tappable.has(fileName) ? `${baseUrl}/${fileName}` : undefined
+      return this.#files.tappable.has(fileName)
+        ? `${baseUrl}/${fileName}`
+        : undefined
     }
 
     const typeKey = tappableType?.toString() ?? 'TAPPABLE_TYPE_POKEBALL'
@@ -884,15 +790,7 @@ export class UICONS<
   }): TeamUrl<Index, Path, Ext, TeamId>
   team(args: { teamId?: Scalar } = {}): string {
     const { teamId = 0 } = args
-    if (!this.#isReady('team')) return ''
-
-    const baseUrl = `${this.#path}/team`
-
-    const result = `${teamId}.${this.#extensionMap.team}`
-    if (this.#team.has(result)) {
-      return `${baseUrl}/${result}`
-    }
-    return `${baseUrl}/0.${this.#extensionMap.team}`
+    return this.#resolve('team', teamId)
   }
 
   /**
@@ -907,15 +805,7 @@ export class UICONS<
   }): TypeUrl<Index, Path, Ext, TypeId>
   type(args: { typeId?: Scalar } = {}): string {
     const { typeId = 0 } = args
-    if (!this.#isReady('type')) return ''
-
-    const baseUrl = `${this.#path}/type`
-
-    const result = `${typeId}.${this.#extensionMap.type}`
-    if (this.#type.has(result)) {
-      return `${baseUrl}/${result}`
-    }
-    return `${baseUrl}/0.${this.#extensionMap.type}`
+    return this.#resolve('type', typeId)
   }
 
   /**
@@ -950,22 +840,9 @@ export class UICONS<
     args: { weatherId?: Scalar; severityLevel?: Scalar; timeOfDay?: string } = {}
   ): string {
     const { weatherId = 0, severityLevel = 0, timeOfDay = 'day' } = args
-    if (!this.#isReady('weather')) return ''
-
-    const baseUrl = `${this.#path}/weather`
-
-    const severitySuffixes = severityLevel ? [`_l${severityLevel}`, ''] : ['']
-    const timeSuffixes = timeOfDay === 'night' ? ['_n', ''] : ['_d', '']
-    for (let s = 0; s < severitySuffixes.length; s += 1) {
-      for (let t = 0; t < timeSuffixes.length; t += 1) {
-        const result = `${weatherId}${severitySuffixes[s]}${timeSuffixes[t]}.${
-          this.#extensionMap.weather
-        }`
-        if (this.#weather.has(result)) {
-          return `${baseUrl}/${result}`
-        }
-      }
-    }
-    return `${baseUrl}/0.${this.#extensionMap.weather}`
+    return this.#resolve('weather', weatherId, [
+      severityLevel ? [`_l${severityLevel}`, ''] : [''],
+      timeOfDay === 'night' ? ['_n', ''] : ['_d', ''],
+    ])
   }
 }

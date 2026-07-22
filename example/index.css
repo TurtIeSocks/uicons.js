@@ -293,7 +293,6 @@ h3 {
 .brand {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -302,6 +301,7 @@ h3 {
   font-size: 1.02rem;
 }
 .brand .ver {
+  margin-left: 0.6rem;
   font-size: 0.6rem;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -641,18 +641,35 @@ pre.code .hint {
   align-items: center;
   gap: 0.6rem;
   cursor: pointer;
-  color: var(--ink-dim);
-  font-size: 0.85rem;
-  font-weight: 600;
   user-select: none;
+  color: var(--ink-dim);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.32rem 0.95rem 0.32rem 0.42rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--hair);
+  transition: border-color 0.4s var(--spring), background 0.4s var(--spring),
+    color 0.4s var(--spring);
+}
+.toggle:hover {
+  color: var(--ink);
+  border-color: var(--hair-strong);
+  background: rgba(255, 255, 255, 0.05);
+}
+.toggle.on {
+  color: var(--ink);
 }
 .toggle .track {
-  width: 42px;
-  height: 24px;
+  width: 40px;
+  height: 23px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.09);
   border: 1px solid var(--hair);
+  box-shadow: var(--inset-hi);
   position: relative;
+  flex: none;
   transition: background 0.4s var(--spring);
 }
 .toggle .track::after {
@@ -674,6 +691,11 @@ pre.code .hint {
   background: #04120c;
 }
 
+/* pad the panel core, not the list — Virtuoso forces the list's inline
+   padding-top/bottom to 0 / the virtual scroll height, so those never take. */
+.gallery-core {
+  padding: 1rem;
+}
 .gallery-grid {
   height: 70vh;
   min-height: 460px;
@@ -682,7 +704,6 @@ pre.code .hint {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  padding: 1.1rem;
 }
 .tile-cell {
   width: calc((100% - 0.75rem * 7) / 8);

@@ -85,7 +85,7 @@ export function Gallery({ mons, icon, setIcon, full, setFull }: GalleryProps) {
       </div>
 
       <div className="shell reveal" ref={panel}>
-        <div className="core">
+        <div className="core gallery-core">
           <VirtuosoGrid
             className="gallery-grid"
             totalCount={mons.length}

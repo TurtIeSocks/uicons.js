@@ -78,7 +78,7 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="code-card shell reveal" ref={code}>
+        <div className="code-card shell reveal" id="types" ref={code}>
           <div className="core">
             <div className="code-top">
               <span className="tl" />

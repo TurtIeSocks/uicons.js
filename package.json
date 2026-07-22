@@ -21,10 +21,12 @@
     "test": "jest",
     "prepare": "husky"
   },
+  "dependencies": {
+    "@na-ji/pogo-protos": "^2.153.0"
+  },
   "devDependencies": {
     "@commitlint/cli": "^21.2.1",
     "@commitlint/config-conventional": "^21.2.0",
-    "@na-ji/pogo-protos": "^2.153.0",
     "@rollup/plugin-typescript": "^12.3.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",

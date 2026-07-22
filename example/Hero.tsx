@@ -35,7 +35,7 @@ export function Hero() {
         <div className="reveal" ref={ref}>
           <span className="eyebrow">
             <span className="dot" />
-            Type-safe · Zero dependencies
+            Type-safe · No runtime deps
           </span>
           <h1 className="display">
             Icons that know

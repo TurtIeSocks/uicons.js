@@ -1,12 +1,18 @@
 # uicons.js
 
-uicons.js is a JavaScript class based on the [UICONS](https://github.com/UIcons/UIcons) specification. It provides a simple way to utilize the UICONS standard in your projects and reduces the need for tedious boilerplate code.
+**Type-safe UICONS client for Pokémon GO — resolves icon & audio URLs to exact template-literal types, with no runtime dependencies.**
+
+[![npm version](https://img.shields.io/npm/v/uicons.js.svg?logo=npm&color=cb3837)](https://www.npmjs.com/package/uicons.js)
+[![npm downloads](https://img.shields.io/npm/dm/uicons.js.svg?color=cb3837)](https://www.npmjs.com/package/uicons.js)
+[![minzipped size](https://img.shields.io/bundlejs/size/uicons.js?color=44cc11)](https://bundlejs.com/?q=uicons.js)
+[![types included](https://img.shields.io/npm/types/uicons.js.svg?color=3178c6)](https://www.npmjs.com/package/uicons.js)
+[![license](https://img.shields.io/npm/l/uicons.js.svg?color=3178c6)](./LICENSE)
+
+uicons.js is a JavaScript/TypeScript class based on the [UICONS](https://github.com/UIcons/UIcons) specification. It provides a simple way to utilize the UICONS standard in your projects and reduces the need for tedious boilerplate code.
 
 ### [Demo Page](https://turtiesocks.github.io/uicons.js/)
 
 ## Installation
-
-[![npm version](https://badge.fury.io/js/uicons.js.svg)](https://badge.fury.io/js/uicons.js)
 
 ```bash
 npm install uicons.js

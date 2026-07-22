@@ -33,7 +33,7 @@
     "start": "vite",
     "build": "vite build -- -r",
     "build:ts": "vite build",
-    "test": "jest",
+    "test": "jest && node scripts/check-intellisense.mjs",
     "prepare": "husky"
   },
   "dependencies": {

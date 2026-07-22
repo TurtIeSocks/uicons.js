@@ -324,6 +324,14 @@ describe('fallback typing without literal index data', () => {
     expect<object>(ready).toBe(blank)
   })
 
+  test('hinted args accept arbitrary scalars and keep literal inference', () => {
+    // the Hint<> vocabulary must not swallow inference: a literal outside the
+    // vocab still resolves exactly, and arbitrary scalars stay accepted
+    const loose = u.team({ teamId: 'not-a-team' })
+    type _1 = Expect<Equal<typeof loose, `${typeof BASE}/team/0.webp`>>
+    expect(loose).toBe(`${BASE}/team/0.webp`)
+  })
+
   test('trailing slashes are stripped at the type level too', () => {
     const slashed = new UICONS({
       path: 'https://example.com/uicons/',

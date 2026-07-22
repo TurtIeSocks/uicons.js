@@ -100,6 +100,17 @@ export type EnumVal<T extends Record<number | string, number | string>> =
 
 export type StringOrNumber<T extends number | string> = `${T}` | T
 
+/**
+ * Accepts any `T` while keeping `Vocab`'s literals visible to IntelliSense.
+ *
+ * Editors resolve completions from the instantiated argument type, and an
+ * unresolved type parameter instantiates to its default — which hides the
+ * constraint's vocabulary. Putting the vocabulary in the property type fixes
+ * that, and the `& {}` keeps its constituents from being taken as the
+ * inference result for `T`, so literal arguments still infer exactly.
+ */
+export type Hint<T, Vocab extends Scalar | boolean> = T | (Vocab & {})
+
 type KeysEndingWith<T, S extends string> = {
   [K in keyof T]: K extends `${S}${infer _Suffix}` ? K : never
 }[keyof T]

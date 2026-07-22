@@ -10,6 +10,7 @@ import type {
   LureIDs,
   Options,
   Scalar,
+  Hint,
   BackgroundUrl,
   DeviceUrl,
   GymUrl,
@@ -290,7 +291,7 @@ export class UICONS<
    * @returns the src of the background icon
    */
   background<Id extends Scalar = 0>(args?: {
-    id?: Id
+    id?: Hint<Id, EnumVal<typeof Rpc.EncounterOutProto.Background>>
   }): BackgroundUrl<Index, Path, Ext, Id>
   background(args: { id?: Scalar } = {}): string {
     const { id = 0 } = args
@@ -302,7 +303,7 @@ export class UICONS<
    * @returns the src of the device icon
    */
   device<Online extends boolean = false>(args?: {
-    online?: Online
+    online?: Hint<Online, boolean>
   }): DeviceUrl<Index, Path, Ext, Online>
   device(args: { online?: boolean } = {}): string {
     const { online = false } = args
@@ -323,21 +324,6 @@ export class UICONS<
    * @returns the src of the gym icon
    */
   gym<
-    TeamId extends EnumVal<typeof Rpc.Team> | 0 = 0,
-    TC extends TrainerCounts = 0,
-    Battle extends boolean = false,
-    Ex extends boolean = false,
-    Ar extends boolean = false,
-    Power extends boolean | EnumVal<typeof Rpc.FortPowerUpLevel> = false,
-  >(args?: {
-    teamId?: TeamId
-    trainerCount?: TC
-    inBattle?: Battle
-    ex?: Ex
-    ar?: Ar
-    power?: Power
-  }): GymUrl<Index, Path, Ext, TeamId, TC, Battle, Ex, Ar, Power>
-  gym<
     TeamId extends Scalar = 0,
     TC extends Scalar = 0,
     Battle extends boolean = false,
@@ -345,12 +331,12 @@ export class UICONS<
     Ar extends boolean = false,
     Power extends boolean | Scalar = false,
   >(args?: {
-    teamId?: TeamId
-    trainerCount?: TC
-    inBattle?: Battle
-    ex?: Ex
-    ar?: Ar
-    power?: Power
+    teamId?: Hint<TeamId, EnumVal<typeof Rpc.Team>>
+    trainerCount?: Hint<TC, TrainerCounts>
+    inBattle?: Hint<Battle, boolean>
+    ex?: Hint<Ex, boolean>
+    ar?: Hint<Ar, boolean>
+    power?: Hint<Power, boolean | EnumVal<typeof Rpc.FortPowerUpLevel>>
   }): GymUrl<Index, Path, Ext, TeamId, TC, Battle, Ex, Ar, Power>
   gym(
     args: {
@@ -385,18 +371,11 @@ export class UICONS<
    * @returns the src of the invasion icon
    */
   invasion<
-    GruntId extends EnumVal<typeof Rpc.EnumWrapper.InvasionCharacter> | 0 = 0,
-    Confirmed extends boolean = false,
-  >(args?: {
-    gruntId?: GruntId
-    confirmed?: Confirmed
-  }): InvasionUrl<Index, Path, Ext, GruntId, Confirmed>
-  invasion<
     GruntId extends Scalar = 0,
     Confirmed extends boolean = false,
   >(args?: {
-    gruntId?: GruntId
-    confirmed?: Confirmed
+    gruntId?: Hint<GruntId, EnumVal<typeof Rpc.EnumWrapper.InvasionCharacter>>
+    confirmed?: Hint<Confirmed, boolean>
   }): InvasionUrl<Index, Path, Ext, GruntId, Confirmed>
   invasion(args: { gruntId?: Scalar; confirmed?: boolean } = {}): string {
     const { gruntId = 0, confirmed = false } = args
@@ -421,11 +400,8 @@ export class UICONS<
    * @param args.typeId the pokemon type ID that is nesting, @see Rpc.HoloPokemonType
    * @returns the src of the nest icon
    */
-  nest<TypeId extends EnumVal<typeof Rpc.HoloPokemonType> | 0 = 0>(args?: {
-    typeId?: TypeId
-  }): NestUrl<Index, Path, Ext, TypeId>
   nest<TypeId extends Scalar = 0>(args?: {
-    typeId?: TypeId
+    typeId?: Hint<TypeId, EnumVal<typeof Rpc.HoloPokemonType>>
   }): NestUrl<Index, Path, Ext, TypeId>
   nest(args: { typeId?: Scalar } = {}): string {
     const { typeId = 0 } = args
@@ -444,37 +420,6 @@ export class UICONS<
    * @returns the src of the pokemon icon
    */
   pokemon<
-    Id extends EnumVal<typeof Rpc.HoloPokemonId> | 0 = 0,
-    Evolution extends EnumVal<typeof Rpc.HoloTemporaryEvolutionId> | 0 = 0,
-    Form extends EnumVal<typeof Rpc.PokemonDisplayProto.Form> | 0 = 0,
-    Costume extends EnumVal<typeof Rpc.PokemonDisplayProto.Costume> | 0 = 0,
-    Gender extends EnumVal<typeof Rpc.PokemonDisplayProto.Gender> | 0 = 0,
-    Alignment extends EnumVal<typeof Rpc.PokemonDisplayProto.Alignment> | 0 = 0,
-    Bread extends EnumVal<typeof Rpc.BreadModeEnum.Modifier> | 0 = 0,
-    Shiny extends boolean = false,
-  >(args?: {
-    pokemonId?: Id
-    evolution?: Evolution
-    form?: Form
-    costume?: Costume
-    gender?: Gender
-    alignment?: Alignment
-    bread?: Bread
-    shiny?: Shiny
-  }): PokemonUrl<
-    Index,
-    Path,
-    Ext,
-    Id,
-    Evolution,
-    Form,
-    Costume,
-    Gender,
-    Alignment,
-    Bread,
-    Shiny
-  >
-  pokemon<
     Id extends Scalar = 0,
     Evolution extends Scalar = 0,
     Form extends Scalar = 0,
@@ -484,14 +429,14 @@ export class UICONS<
     Bread extends Scalar = 0,
     Shiny extends boolean = false,
   >(args?: {
-    pokemonId?: Id
-    evolution?: Evolution
-    form?: Form
-    costume?: Costume
-    gender?: Gender
-    alignment?: Alignment
-    bread?: Bread
-    shiny?: Shiny
+    pokemonId?: Hint<Id, EnumVal<typeof Rpc.HoloPokemonId>>
+    evolution?: Hint<Evolution, EnumVal<typeof Rpc.HoloTemporaryEvolutionId>>
+    form?: Hint<Form, EnumVal<typeof Rpc.PokemonDisplayProto.Form>>
+    costume?: Hint<Costume, EnumVal<typeof Rpc.PokemonDisplayProto.Costume>>
+    gender?: Hint<Gender, EnumVal<typeof Rpc.PokemonDisplayProto.Gender>>
+    alignment?: Hint<Alignment, EnumVal<typeof Rpc.PokemonDisplayProto.Alignment>>
+    bread?: Hint<Bread, EnumVal<typeof Rpc.BreadModeEnum.Modifier>>
+    shiny?: Hint<Shiny, boolean>
   }): PokemonUrl<
     Index,
     Path,
@@ -547,32 +492,20 @@ export class UICONS<
    * @returns the src of the pokestop icon
    */
   pokestop<
-    LureId extends LureIDs = 0,
-    DisplayTypeId extends
-      | boolean
-      | EnumVal<typeof Rpc.IncidentDisplayType> = false,
-    QuestActive extends boolean | Scalar = false,
-    Ar extends boolean = false,
-    Power extends boolean | EnumVal<typeof Rpc.FortPowerUpLevel> = false,
-  >(args?: {
-    lureId?: LureId
-    displayTypeId?: DisplayTypeId
-    questActive?: QuestActive
-    ar?: Ar
-    power?: Power
-  }): PokestopUrl<Index, Path, Ext, LureId, DisplayTypeId, QuestActive, Ar, Power>
-  pokestop<
     LureId extends Scalar = 0,
     DisplayTypeId extends boolean | Scalar = false,
     QuestActive extends boolean | Scalar = false,
     Ar extends boolean = false,
     Power extends boolean | Scalar = false,
   >(args?: {
-    lureId?: LureId
-    displayTypeId?: DisplayTypeId
-    questActive?: QuestActive
-    ar?: Ar
-    power?: Power
+    lureId?: Hint<LureId, LureIDs>
+    displayTypeId?: Hint<
+      DisplayTypeId,
+      boolean | EnumVal<typeof Rpc.IncidentDisplayType>
+    >
+    questActive?: Hint<QuestActive, boolean>
+    ar?: Hint<Ar, boolean>
+    power?: Hint<Power, boolean | EnumVal<typeof Rpc.FortPowerUpLevel>>
   }): PokestopUrl<Index, Path, Ext, LureId, DisplayTypeId, QuestActive, Ar, Power>
   pokestop(
     args: {
@@ -605,22 +538,13 @@ export class UICONS<
    * @returns the src of the raid egg icon
    */
   raidEgg<
-    Level extends EnumVal<typeof Rpc.RaidLevel> | 0 = 0,
-    Hatched extends boolean = false,
-    Ex extends boolean = false,
-  >(args?: {
-    level?: Level
-    hatched?: Hatched
-    ex?: Ex
-  }): RaidEggUrl<Index, Path, Ext, Level, Hatched, Ex>
-  raidEgg<
     Level extends Scalar = 0,
     Hatched extends boolean = false,
     Ex extends boolean = false,
   >(args?: {
-    level?: Level
-    hatched?: Hatched
-    ex?: Ex
+    level?: Hint<Level, EnumVal<typeof Rpc.RaidLevel>>
+    hatched?: Hint<Hatched, boolean>
+    ex?: Hint<Ex, boolean>
   }): RaidEggUrl<Index, Path, Ext, Level, Hatched, Ex>
   raidEgg(
     args: { level?: Scalar; hatched?: boolean; ex?: boolean } = {}
@@ -648,23 +572,12 @@ export class UICONS<
     QT extends RewardTypeKeys = 'unset',
     Id extends Scalar = 0,
     Amount extends Scalar = 0,
-    Evolution extends EnumVal<typeof Rpc.HoloTemporaryEvolutionId> | 0 = 0,
-  >(args?: {
-    questRewardType?: QT
-    rewardId?: Id
-    amount?: Amount
-    evolution?: Evolution
-  }): RewardUrl<Index, Path, Ext, QT, Id, Amount, Evolution>
-  reward<
-    QT extends RewardTypeKeys = 'unset',
-    Id extends Scalar = 0,
-    Amount extends Scalar = 0,
     Evolution extends Scalar = 0,
   >(args?: {
-    questRewardType?: QT
+    questRewardType?: Hint<QT, RewardTypeKeys>
     rewardId?: Id
     amount?: Amount
-    evolution?: Evolution
+    evolution?: Hint<Evolution, EnumVal<typeof Rpc.HoloTemporaryEvolutionId>>
   }): RewardUrl<Index, Path, Ext, QT, Id, Amount, Evolution>
   reward(
     args: {
@@ -711,7 +624,7 @@ export class UICONS<
    * @returns the src of the spawnpoint icon
    */
   spawnpoint<HasTth extends boolean = false>(args?: {
-    hasTth?: HasTth
+    hasTth?: Hint<HasTth, boolean>
   }): SpawnpointUrl<Index, Path, Ext, HasTth>
   spawnpoint(args: { hasTth?: boolean } = {}): string {
     const { hasTth = false } = args
@@ -727,7 +640,7 @@ export class UICONS<
    * @returns the src of the station icon
    */
   station<Active extends boolean = false>(args?: {
-    active?: Active
+    active?: Hint<Active, boolean>
   }): StationUrl<Index, Path, Ext, Active>
   station(args: { active?: boolean } = {}): string {
     const { active = false } = args
@@ -743,7 +656,10 @@ export class UICONS<
    * @returns the src of the tappable icon, falling back to the reward item icon when tappable assets are unavailable
    */
   tappable<T extends Scalar = 'TAPPABLE_TYPE_POKEBALL'>(args?: {
-    tappableType?: T
+    tappableType?: Hint<
+      T,
+      'TAPPABLE_TYPE_POKEBALL' | (keyof typeof Rpc.Tappable.TappableType & string)
+    >
   }): TappableUrl<Index, Path, Ext, T>
   tappable(args: { tappableType?: Scalar } = {}): string {
     const { tappableType } = args
@@ -782,11 +698,8 @@ export class UICONS<
    * @param args.teamId the team ID, @see Rpc.Team
    * @returns the src of the team icon
    */
-  team<TeamId extends EnumVal<typeof Rpc.Team> | 0 = 0>(args?: {
-    teamId?: TeamId
-  }): TeamUrl<Index, Path, Ext, TeamId>
   team<TeamId extends Scalar = 0>(args?: {
-    teamId?: TeamId
+    teamId?: Hint<TeamId, EnumVal<typeof Rpc.Team>>
   }): TeamUrl<Index, Path, Ext, TeamId>
   team(args: { teamId?: Scalar } = {}): string {
     const { teamId = 0 } = args
@@ -797,11 +710,8 @@ export class UICONS<
    * @param args.typeId the pokemon type ID, @see Rpc.HoloPokemonType
    * @returns the src of the pokemon type icon
    */
-  type<TypeId extends EnumVal<typeof Rpc.HoloPokemonType> | 0 = 0>(args?: {
-    typeId?: TypeId
-  }): TypeUrl<Index, Path, Ext, TypeId>
   type<TypeId extends Scalar = 0>(args?: {
-    typeId?: TypeId
+    typeId?: Hint<TypeId, EnumVal<typeof Rpc.HoloPokemonType>>
   }): TypeUrl<Index, Path, Ext, TypeId>
   type(args: { typeId?: Scalar } = {}): string {
     const { typeId = 0 } = args
@@ -815,26 +725,19 @@ export class UICONS<
    * @returns the src of the weather icon
    */
   weather<
-    WeatherId extends
-      | EnumVal<typeof Rpc.GameplayWeatherProto.WeatherCondition>
-      | 0 = 0,
-    Severity extends
-      | EnumVal<typeof Rpc.InternalWeatherAlertProto.Severity>
-      | 0 = 0,
-    Time extends TimeOfDay = 'day',
-  >(args?: {
-    weatherId?: WeatherId
-    severityLevel?: Severity
-    timeOfDay?: Time
-  }): WeatherUrl<Index, Path, Ext, WeatherId, Severity, Time>
-  weather<
     WeatherId extends Scalar = 0,
     Severity extends Scalar = 0,
     Time extends string = 'day',
   >(args?: {
-    weatherId?: WeatherId
-    severityLevel?: Severity
-    timeOfDay?: Time
+    weatherId?: Hint<
+      WeatherId,
+      EnumVal<typeof Rpc.GameplayWeatherProto.WeatherCondition>
+    >
+    severityLevel?: Hint<
+      Severity,
+      EnumVal<typeof Rpc.InternalWeatherAlertProto.Severity>
+    >
+    timeOfDay?: Hint<Time, TimeOfDay>
   }): WeatherUrl<Index, Path, Ext, WeatherId, Severity, Time>
   weather(
     args: { weatherId?: Scalar; severityLevel?: Scalar; timeOfDay?: string } = {}

@@ -1,7 +1,22 @@
 {
   "name": "uicons.js",
   "version": "3.0.1",
-  "description": "UICONS JavaScript Library",
+  "description": "Type-safe UICONS client for Pokémon GO — resolves icon & audio URLs to exact template-literal types, with no runtime dependencies.",
+  "keywords": [
+    "uicons",
+    "pokemon-go",
+    "pokemongo",
+    "pogo",
+    "pokemon",
+    "icons",
+    "audio",
+    "typescript",
+    "type-safe",
+    "template-literal-types",
+    "assets",
+    "asset-management",
+    "esm"
+  ],
   "repository": "https://github.com/TurtIeSocks/uicons.js",
   "author": "TurtIeSocks <58572875+TurtIeSocks@users.noreply.github.com>",
   "homepage": "https://TurtIeSocks.github.io/uicons.js/",

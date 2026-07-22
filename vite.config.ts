@@ -28,8 +28,8 @@ export default defineConfig(({ mode }) => {
       outDir: isClient
         ? resolve(__dirname, './dist-web')
         : resolve(__dirname, './dist'),
-      sourcemap: isClient ? false : false,
-      minify: isClient ? 'esbuild' : false,
+      sourcemap: false,
+      minify: isClient ? 'oxc' : false,
       input:
         mode === 'development' || isClient
           ? { main: resolve(__dirname, 'index.html') }
@@ -49,7 +49,15 @@ export default defineConfig(({ mode }) => {
               external: [],
             }
           : {
-              plugins: [typescript({ tsconfig: './tsconfig.build.json' })],
+              plugins: [
+                typescript({
+                  tsconfig: './tsconfig.build.json',
+                  // The plugin forces an ES module output for tree-shaking, so
+                  // pair it with bundler resolution to avoid the NodeNext
+                  // module/moduleResolution mismatch warning (TS5110).
+                  moduleResolution: 'bundler',
+                }),
+              ],
             },
       assetsDir: '',
       emptyOutDir: true,

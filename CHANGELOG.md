@@ -1,3 +1,10 @@
+## [3.0.1](https://github.com/TurtIeSocks/uicons.js/compare/v3.0.0...v3.0.1) (2026-07-22)
+
+
+### Bug Fixes
+
+* **types:** ship @na-ji/pogo-protos as a dependency ([dfc2c51](https://github.com/TurtIeSocks/uicons.js/commit/dfc2c51c67ac3b1a55c3165f59ce0d9952365dfd))
+
 # [3.0.0](https://github.com/TurtIeSocks/uicons.js/compare/v2.3.0...v3.0.0) (2026-07-22)
 
 

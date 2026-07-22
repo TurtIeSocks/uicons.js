@@ -77,25 +77,26 @@ export class UICONS<
   const Index extends UiconsIndex<readonly string[]> = UiconsIndex,
 > {
   #path: Path
-  #extensionMap: ExtensionMap
+  // set by init(); every icon method is guarded by #isReady() before use
+  #extensionMap!: ExtensionMap
   #label: string
 
-  #background: Set<string>
-  #device: Set<string>
-  #gym: Set<string>
-  #invasion: Set<string>
-  #misc: Set<string>
-  #nest: Set<string>
-  #pokemon: Set<string>
-  #pokestop: Set<string>
-  #tappable: Set<string>
-  #raid: { egg: Set<string> }
-  #reward: { [key in RewardTypeKeys]?: Set<string> }
-  #spawnpoint: Set<string>
-  #station: Set<string>
-  #team: Set<string>
-  #type: Set<string>
-  #weather: Set<string>
+  #background: Set<string> = new Set()
+  #device: Set<string> = new Set()
+  #gym: Set<string> = new Set()
+  #invasion: Set<string> = new Set()
+  #misc: Set<string> = new Set()
+  #nest: Set<string> = new Set()
+  #pokemon: Set<string> = new Set()
+  #pokestop: Set<string> = new Set()
+  #tappable: Set<string> = new Set()
+  #raid: { egg: Set<string> } = { egg: new Set() }
+  #reward: { [key in RewardTypeKeys]?: Set<string> } = {}
+  #spawnpoint: Set<string> = new Set()
+  #station: Set<string> = new Set()
+  #team: Set<string> = new Set()
+  #type: Set<string> = new Set()
+  #weather: Set<string> = new Set()
 
   /**
    * @param options The options object for the UICONS instance
@@ -247,8 +248,8 @@ export class UICONS<
         return this.#raid.egg.has(`${fileName}.${this.#extensionMap.raid?.egg}`)
       case 'reward':
         return second in this.#reward
-          ? !!this.#reward[second]?.has(
-              `${fileName}.${this.#extensionMap.reward[second]}`
+          ? !!this.#reward[second as RewardTypeKeys]?.has(
+              `${fileName}.${this.#extensionMap.reward?.[second as RewardTypeKeys]}`
             )
           : false
       case 'spawnpoint':
@@ -718,14 +719,14 @@ export class UICONS<
     for (let h = 0; h < hatchedSuffixes.length; h += 1) {
       for (let e = 0; e < exSuffixes.length; e += 1) {
         const result = `${level}${hatchedSuffixes[h]}${exSuffixes[e]}.${
-          this.#extensionMap.raid.egg
+          this.#extensionMap.raid?.egg
         }`
         if (this.#raid.egg.has(result)) {
           return `${baseUrl}/${result}`
         }
       }
     }
-    return `${baseUrl}/0.${this.#extensionMap.raid.egg}`
+    return `${baseUrl}/0.${this.#extensionMap.raid?.egg}`
   }
 
   /**
@@ -791,14 +792,14 @@ export class UICONS<
     for (let e = 0; e < evolutionSuffixes.length; e += 1) {
       for (let a = 0; a < amountSuffixes.length; a += 1) {
         const result = `${safeId}${evolutionSuffixes[e]}${amountSuffixes[a]}.${
-          this.#extensionMap.reward[questRewardType]
+          this.#extensionMap.reward?.[questRewardType]
         }`
         if (rewardSet.has(result)) {
           return `${baseUrl}/${result}`
         }
       }
     }
-    return `${baseUrl}/0.${this.#extensionMap.reward[questRewardType]}`
+    return `${baseUrl}/0.${this.#extensionMap.reward?.[questRewardType]}`
   }
 
   /**

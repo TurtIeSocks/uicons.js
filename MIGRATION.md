@@ -1,16 +1,16 @@
-# Migrating from v1 to v2
+# Migrating from v2 to v3
 
-v2 changes the **call signatures and types only**. Runtime lookup behavior — the candidate
+v3 changes the **call signatures and types only**. Runtime lookup behavior — the candidate
 search loops, fallbacks to `0.{ext}`, and returning `''` for missing categories — is
-unchanged from v1, with two degenerate-input fixes:
+unchanged from v2, with two degenerate-input fixes:
 
 - Empty file lists in the index (e.g. `{ gym: [] }`) are now treated like missing
-  categories (`''`, or the usual fallbacks for `reward`/`tappable`). v1 produced broken
+  categories (`''`, or the usual fallbacks for `reward`/`tappable`). v2 produced broken
   `0.[object Object]` / `0.undefined` URLs for these.
-- `misc()` with no argument now looks up `0.{ext}` directly; v1 first probed the literal
+- `misc()` with no argument now looks up `0.{ext}` directly; v2 first probed the literal
   file name `undefined.{ext}`. The returned URL is identical either way.
 
-**Requires TypeScript >= 5.0** (v2 uses `const` type parameters).
+**Requires TypeScript >= 5.0** (v3 uses `const` type parameters).
 
 ## Why
 
@@ -30,10 +30,10 @@ JS callers still get the old behavior plus a dev-mode deprecation warning). Use 
 options object:
 
 ```ts
-// v1 (removed)
+// v2 (removed)
 const uicons = new UICONS('https://example.com/uicons', 'cagemons')
 
-// v2
+// v3
 const uicons = new UICONS({ path: 'https://example.com/uicons', label: 'cagemons' })
 ```
 
@@ -41,7 +41,7 @@ const uicons = new UICONS({ path: 'https://example.com/uicons', label: 'cagemons
 
 New optional `extension` option — a **type-level only** hint that narrows return types
 when the index data is not statically known (e.g. when using `remoteInit`). At runtime
-the extension is always derived from the index data, exactly as in v1:
+the extension is always derived from the index data, exactly as in v2:
 
 ```ts
 const uicons = new UICONS({ path: 'https://example.com/uicons', extension: 'webp' })
@@ -53,9 +53,9 @@ ready.team({ teamId: 1 })
 ## Method mapping
 
 `has(location, fileName)` is unchanged. Every other method takes one optional object.
-All keys are optional with the same defaults as v1.
+All keys are optional with the same defaults as v2.
 
-| v1 positional call | v2 object call |
+| v2 positional call | v3 object call |
 | --- | --- |
 | `background(backgroundId)` | `background({ id })` |
 | `device(online)` | `device({ online })` |
@@ -76,21 +76,21 @@ All keys are optional with the same defaults as v1.
 
 ### reward(): `rewardIdOrAmount` renamed to `rewardId`
 
-The second positional parameter of v1's `reward()` is now the `rewardId` key. The runtime
+The second positional parameter of v2's `reward()` is now the `rewardId` key. The runtime
 still resolves the file name from `+rewardId || +amount || 0`.
 
-Note that v1's two-arg convenience overload `reward('stardust', 500)` fed its second
+Note that v2's two-arg convenience overload `reward('stardust', 500)` fed its second
 argument into the *rewardIdOrAmount* slot, not `amount` — so the 1:1 translation is
 `rewardId`, by position, not by the overload's parameter name. Passing `amount: 500`
 instead would additionally try the `500_a500` variant first, which can resolve to a
 different file when the repository contains `_a` variants:
 
 ```ts
-// v1
+// v2
 uicons.reward('item', 1)
 uicons.reward('stardust', 500)          // two-arg convenience overload
 
-// v2
+// v3
 uicons.reward({ questRewardType: 'item', rewardId: 1 })
 uicons.reward({ questRewardType: 'stardust', rewardId: 500 })
 ```

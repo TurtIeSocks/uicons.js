@@ -25,7 +25,7 @@ export function Nav() {
         <div className="nav-pill">
           <a className="brand" href="#top">
             uicons<span className="grad">.js</span>
-            <span className="ver">v2.0</span>
+            <span className="ver">v3.0</span>
           </a>
           <div className="nav-links">
             {LINKS.map((l) => (
@@ -50,6 +50,7 @@ export function Nav() {
             aria-label="Menu"
             aria-expanded={open}
             onClick={() => setOpen((o) => !o)}
+            type="button"
           >
             <span />
             <span />

@@ -1,3 +1,32 @@
+# [3.0.0](https://github.com/TurtIeSocks/uicons.js/compare/v2.3.0...v3.0.0) (2026-07-22)
+
+
+* feat!: migrate icon methods to object arguments with exact return types ([2bc357a](https://github.com/TurtIeSocks/uicons.js/commit/2bc357af44f5cd170ddc793aff75d801c2c2673c))
+
+
+### Bug Fixes
+
+* example typing ([88ee1cb](https://github.com/TurtIeSocks/uicons.js/commit/88ee1cb46af98cfbdfc2b7e898687030e43df8aa))
+* **example:** polish nav, masterfile toggle, and gallery padding ([f74689d](https://github.com/TurtIeSocks/uicons.js/commit/f74689d77078dcdeb09ce31dc17094ad39f8ff36))
+
+
+### Features
+
+* **example:** add an interactive Type Inspector section ([ed1a92c](https://github.com/TurtIeSocks/uicons.js/commit/ed1a92c12c92d8fcb29c69b973f611ef1ae3189f))
+* **example:** redesign the demo page as an Ethereal Glass showcase ([c96af75](https://github.com/TurtIeSocks/uicons.js/commit/c96af753486aeccc941480aa4d2a41573bcf6840))
+
+
+### BREAKING CHANGES
+
+* positional icon-method arguments have been replaced by
+a single object argument; the deprecated (path, label) constructor
+overload was removed from the types (untyped callers keep the old
+behavior plus a dev warning); reward()'s rewardIdOrAmount parameter is
+now the rewardId key; UiconsIndex accepts readonly arrays. TypeScript
+>= 5.0 is required. See MIGRATION.md.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
 # [2.3.0](https://github.com/TurtIeSocks/uicons.js/compare/v2.2.0...v2.3.0) (2026-07-21)
 
 

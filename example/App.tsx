@@ -1,15 +1,20 @@
 import * as React from 'react'
 
 import { getMonsFromIndex, getMonsFromMf, getMasterfile } from './utils'
-import { AUDIO_STYLES, ICON_STYLES } from './styles'
-import { Virtual } from './Virtual'
+import { ICON_STYLES, AUDIO_STYLES } from './styles'
+import { Nav } from './Nav'
+import { Hero } from './Hero'
+import { Features } from './Features'
+import { TypeInspector } from './TypeInspector'
+import { Gallery } from './Gallery'
+import { Footer } from './Footer'
 import type { Props, RawMon } from './types'
 
 export default function App() {
   const [mons, setMons] = React.useState<Props[]>([])
   const [rawMons, setRawMons] = React.useState<RawMon[]>([])
   const [icon, setIcon] = React.useState(ICON_STYLES[0])
-  const [audio, setAudio] = React.useState(AUDIO_STYLES[0])
+  const [audio] = React.useState(AUDIO_STYLES[0])
   const [full, setFull] = React.useState(false)
 
   React.useLayoutEffect(() => {
@@ -26,12 +31,23 @@ export default function App() {
   }, [rawMons, icon, audio, full])
 
   return (
-    <Virtual
-      mons={mons}
-      setAudio={setAudio}
-      setIcon={setIcon}
-      full={full}
-      setFull={setFull}
-    />
+    <>
+      <div className="mesh" aria-hidden />
+      <div className="grain" aria-hidden />
+      <Nav />
+      <main>
+        <Hero />
+        <Features />
+        <TypeInspector />
+        <Gallery
+          mons={mons}
+          icon={icon}
+          setIcon={setIcon}
+          full={full}
+          setFull={setFull}
+        />
+      </main>
+      <Footer />
+    </>
   )
 }

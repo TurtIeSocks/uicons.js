@@ -41,8 +41,8 @@ export async function getMonsFromMf(
     if (evo) title += `_${evo}`
     return {
       title,
-      src: newUicons.pokemon(id, evo, form),
-      cry: newUaudio.pokemon(id, evo, form),
+      src: newUicons.pokemon({ pokemonId: id, evolution: evo, form }),
+      cry: newUaudio.pokemon({ pokemonId: id, evolution: evo, form }),
     }
   })
 }
@@ -80,20 +80,19 @@ export async function getMonsFromIndex(
         const gender = parseArgs(rest, '_g') ?? 0
         const alignment = parseArgs(rest, '_a') ?? 0
         const bread = parseArgs(rest, '_b') ?? 0
-        const shiny = !!parseArgs(rest, '_s') ?? false
+        const shiny = !!parseArgs(rest, '_s')
         return {
           title,
           src: `${icon.path}/pokemon/${file}`,
-          cry: newUaudio.pokemon(
-            id,
-            evo,
+          cry: newUaudio.pokemon({
+            pokemonId: id,
+            evolution: evo,
             form,
-            0,
             gender,
             alignment,
             bread,
-            shiny
-          ),
+            shiny,
+          }),
         }
       }) || []
   )

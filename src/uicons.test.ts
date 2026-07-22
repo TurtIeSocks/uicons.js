@@ -54,24 +54,26 @@ describe('wav format', () => {
 
 describe('device', () => {
   test('online icon', () => {
-    expect(icons.device(true)).toBe(`${BASE_ICON_URL}/device/1.webp`)
+    expect(icons.device({ online: true })).toBe(`${BASE_ICON_URL}/device/1.webp`)
   })
 })
 
 describe('gym', () => {
   test('neutral icon', () => {
-    expect(icons.gym(0)).toBe(`${BASE_ICON_URL}/gym/0.webp`)
+    expect(icons.gym({ teamId: 0 })).toBe(`${BASE_ICON_URL}/gym/0.webp`)
   })
   test('valor in battle', () => {
-    expect(icons.gym(2, 3, true)).toBe(`${BASE_ICON_URL}/gym/2_t3_b.webp`)
+    expect(icons.gym({ teamId: 2, trainerCount: 3, inBattle: true })).toBe(
+      `${BASE_ICON_URL}/gym/2_t3_b.webp`
+    )
   })
   test('mystic ex', () => {
-    expect(icons.gym(1, 4, false, true)).toBe(
+    expect(icons.gym({ teamId: 1, trainerCount: 4, ex: true })).toBe(
       `${BASE_ICON_URL}/gym/1_t4_ex.webp`
     )
   })
   test('instinct ar', () => {
-    expect(icons.gym(3, 6, false, false, true)).toBe(
+    expect(icons.gym({ teamId: 3, trainerCount: 6, ar: true })).toBe(
       `${BASE_ICON_URL}/gym/3_t6_ar.webp`
     )
   })
@@ -79,32 +81,41 @@ describe('gym', () => {
 
 describe('invasion', () => {
   test('giovanni unconfirmed', () => {
-    expect(icons.invasion('44')).toBe(`${BASE_ICON_URL}/invasion/44_u.webp`)
+    expect(icons.invasion({ gruntId: '44' })).toBe(
+      `${BASE_ICON_URL}/invasion/44_u.webp`
+    )
   })
   test('giovanni confirmed', () => {
     expect(
-      icons.invasion(Rpc.EnumWrapper.InvasionCharacter.CHARACTER_GIOVANNI, true)
+      icons.invasion({
+        gruntId: Rpc.EnumWrapper.InvasionCharacter.CHARACTER_GIOVANNI,
+        confirmed: true,
+      })
     ).toBe(`${BASE_ICON_URL}/invasion/44.webp`)
   })
 })
 
 describe('misc', () => {
   test('fallback icon', () => {
-    expect(icons.misc('something_missing')).toBe(`${BASE_ICON_URL}/misc/0.webp`)
+    expect(icons.misc({ fileName: 'something_missing' })).toBe(
+      `${BASE_ICON_URL}/misc/0.webp`
+    )
   })
   test('has great league', () => {
-    expect(icons.misc('500')).toBe(`${BASE_ICON_URL}/misc/500.webp`)
+    expect(icons.misc({ fileName: '500' })).toBe(
+      `${BASE_ICON_URL}/misc/500.webp`
+    )
   })
 })
 
 describe('background', () => {
   test('fallback icon', () => {
-    expect(backgroundIcons.background(999)).toBe(
+    expect(backgroundIcons.background({ id: 999 })).toBe(
       `${BASE_ICON_URL}/background/0.webp`
     )
   })
   test('specific background', () => {
-    expect(backgroundIcons.background(1)).toBe(
+    expect(backgroundIcons.background({ id: 1 })).toBe(
       `${BASE_ICON_URL}/background/1.webp`
     )
   })
@@ -112,65 +123,73 @@ describe('background', () => {
 
 describe('nest', () => {
   test('grass - string', () => {
-    expect(icons.nest('12')).toBe(`${BASE_ICON_URL}/nest/12.webp`)
+    expect(icons.nest({ typeId: '12' })).toBe(`${BASE_ICON_URL}/nest/12.webp`)
   })
   test('none - number', () => {
-    expect(icons.nest(0)).toBe(`${BASE_ICON_URL}/nest/0.webp`)
+    expect(icons.nest({ typeId: 0 })).toBe(`${BASE_ICON_URL}/nest/0.webp`)
   })
 })
 
 describe('pokemon', () => {
   test('bulbasaur', () => {
-    expect(icons.pokemon('1')).toBe(`${BASE_ICON_URL}/pokemon/1.webp`)
+    expect(icons.pokemon({ pokemonId: '1' })).toBe(
+      `${BASE_ICON_URL}/pokemon/1.webp`
+    )
   })
   test('charmander form', () => {
-    expect(icons.pokemon(4, 0, 896)).toBe(
+    expect(icons.pokemon({ pokemonId: 4, form: 896 })).toBe(
       `${BASE_ICON_URL}/pokemon/4_f896.webp`
     )
   })
   test('mega blastoise', () => {
     expect(
-      icons.pokemon(
-        Rpc.HoloPokemonId.BLASTOISE,
-        Rpc.HoloTemporaryEvolutionId.TEMP_EVOLUTION_MEGA
-      )
+      icons.pokemon({
+        pokemonId: Rpc.HoloPokemonId.BLASTOISE,
+        evolution: Rpc.HoloTemporaryEvolutionId.TEMP_EVOLUTION_MEGA,
+      })
     ).toBe(`${BASE_ICON_URL}/pokemon/9_e1.webp`)
   })
 })
 
 describe('pokestops', () => {
   test('lure', () => {
-    expect(icons.pokestop(501)).toBe(`${BASE_ICON_URL}/pokestop/501.webp`)
+    expect(icons.pokestop({ lureId: 501 })).toBe(
+      `${BASE_ICON_URL}/pokestop/501.webp`
+    )
   })
   test('invasion', () => {
-    expect(icons.pokestop(0, 0)).toBe(`${BASE_ICON_URL}/pokestop/0_i.webp`)
+    expect(icons.pokestop({ lureId: 0, displayTypeId: 0 })).toBe(
+      `${BASE_ICON_URL}/pokestop/0_i.webp`
+    )
   })
   test('invasion & lure', () => {
-    expect(icons.pokestop(502, 0, false, false, 0)).toBe(`${BASE_ICON_URL}/pokestop/502_i.webp`)
+    expect(icons.pokestop({ lureId: 502, displayTypeId: 0, power: 0 })).toBe(
+      `${BASE_ICON_URL}/pokestop/502_i.webp`
+    )
   })
   test('quest', () => {
-    expect(icons.pokestop(0, false, true)).toBe(
+    expect(icons.pokestop({ questActive: true })).toBe(
       `${BASE_ICON_URL}/pokestop/0_q.webp`
     )
-    expect(icons.pokestop(0, false, 0)).toBe(
+    expect(icons.pokestop({ questActive: 0 })).toBe(
       `${BASE_ICON_URL}/pokestop/0_q.webp`
     )
-    expect(icons.pokestop(0, false, '1')).toBe(
+    expect(icons.pokestop({ questActive: '1' })).toBe(
       `${BASE_ICON_URL}/pokestop/0_q.webp`
     )
   })
   test('ar', () => {
-    expect(icons.pokestop(504, 0, false, true)).toBe(
+    expect(icons.pokestop({ lureId: 504, displayTypeId: 0, ar: true })).toBe(
       `${BASE_ICON_URL}/pokestop/504_i_ar.webp`
     )
   })
   test('kecleon', () => {
-    expect(icons.pokestop(0, '8', false, false, 0)).toBe(
+    expect(icons.pokestop({ displayTypeId: '8', power: 0 })).toBe(
       `${BASE_ICON_URL}/pokestop/0_i8.webp`
     )
   })
   test('gold coin', () => {
-    expect(icons.pokestop(0, 7, false, false, 0)).toBe(
+    expect(icons.pokestop({ displayTypeId: 7, power: 0 })).toBe(
       `${BASE_ICON_URL}/pokestop/0_i7.webp`
     )
   })
@@ -178,88 +197,107 @@ describe('pokestops', () => {
 
 describe('raid', () => {
   test('hatched', () => {
-    expect(icons.raidEgg('12', true)).toBe(
+    expect(icons.raidEgg({ level: '12', hatched: true })).toBe(
       `${BASE_ICON_URL}/raid/egg/12_h.webp`
     )
   })
   test('unhatched', () => {
-    expect(icons.raidEgg(1, false)).toBe(`${BASE_ICON_URL}/raid/egg/1.webp`)
+    expect(icons.raidEgg({ level: 1, hatched: false })).toBe(
+      `${BASE_ICON_URL}/raid/egg/1.webp`
+    )
   })
 })
 
 describe('reward', () => {
   test('experience', () => {
-    expect(icons.reward('experience', 100)).toBe(
-      `${BASE_ICON_URL}/reward/experience/100.webp`
-    )
+    expect(
+      icons.reward({ questRewardType: 'experience', rewardId: 100 })
+    ).toBe(`${BASE_ICON_URL}/reward/experience/100.webp`)
   })
   test('item without amount', () => {
-    expect(icons.reward('item', 1)).toBe(`${BASE_ICON_URL}/reward/item/1.webp`)
+    expect(icons.reward({ questRewardType: 'item', rewardId: 1 })).toBe(
+      `${BASE_ICON_URL}/reward/item/1.webp`
+    )
   })
   test('item with amount', () => {
-    expect(icons.reward('item', 1, 10)).toBe(
-      `${BASE_ICON_URL}/reward/item/1_a10.webp`
-    )
+    expect(
+      icons.reward({ questRewardType: 'item', rewardId: 1, amount: 10 })
+    ).toBe(`${BASE_ICON_URL}/reward/item/1_a10.webp`)
   })
   test('item with missing amount', () => {
-    expect(icons.reward('item', 2, 300)).toBe(
-      `${BASE_ICON_URL}/reward/item/2.webp`
-    )
+    expect(
+      icons.reward({ questRewardType: 'item', rewardId: 2, amount: 300 })
+    ).toBe(`${BASE_ICON_URL}/reward/item/2.webp`)
   })
   test('stardust with amount', () => {
-    expect(icons.reward('stardust', 500)).toBe(
+    expect(icons.reward({ questRewardType: 'stardust', rewardId: 500 })).toBe(
       `${BASE_ICON_URL}/reward/stardust/500.webp`
     )
   })
   test('stardust with missing amount', () => {
-    expect(icons.reward('stardust', 10_000)).toBe(
-      `${BASE_ICON_URL}/reward/stardust/0.webp`
-    )
+    expect(
+      icons.reward({ questRewardType: 'stardust', rewardId: 10_000 })
+    ).toBe(`${BASE_ICON_URL}/reward/stardust/0.webp`)
   })
   test('candy', () => {
-    expect(icons.reward('candy', 4)).toBe(
+    expect(icons.reward({ questRewardType: 'candy', rewardId: 4 })).toBe(
       `${BASE_ICON_URL}/reward/candy/4.webp`
     )
   })
   test('xl_candy', () => {
-    expect(icons.reward('xl_candy', '98')).toBe(
+    expect(icons.reward({ questRewardType: 'xl_candy', rewardId: '98' })).toBe(
       `${BASE_ICON_URL}/reward/xl_candy/98.webp`
     )
   })
   test('mega_resource', () => {
-    expect(icons.reward('mega_resource', 3)).toBe(
-      `${BASE_ICON_URL}/reward/mega_resource/3.webp`
-    )
+    expect(
+      icons.reward({ questRewardType: 'mega_resource', rewardId: 3 })
+    ).toBe(`${BASE_ICON_URL}/reward/mega_resource/3.webp`)
   })
   test('mega_resource with amount', () => {
-    expect(icons.reward('mega_resource', 6, 25)).toBe(
-      `${BASE_ICON_URL}/reward/mega_resource/6_a25.webp`
-    )
+    expect(
+      icons.reward({ questRewardType: 'mega_resource', rewardId: 6, amount: 25 })
+    ).toBe(`${BASE_ICON_URL}/reward/mega_resource/6_a25.webp`)
   })
   test('mega_resource with evolution and amount', () => {
     expect(
-      branchRewardIcons.reward(
-        'mega_resource',
-        6,
-        25,
-        Rpc.HoloTemporaryEvolutionId.TEMP_EVOLUTION_MEGA_X
-      )
+      branchRewardIcons.reward({
+        questRewardType: 'mega_resource',
+        rewardId: 6,
+        amount: 25,
+        evolution: Rpc.HoloTemporaryEvolutionId.TEMP_EVOLUTION_MEGA_X,
+      })
     ).toBe(`${BASE_ICON_URL}/reward/mega_resource/6_e2_a25.webp`)
   })
   test('mega_resource evolution falls back without amount', () => {
-    expect(branchRewardIcons.reward('mega_resource', 26, 25, 3)).toBe(
-      `${BASE_ICON_URL}/reward/mega_resource/26_e3.webp`
-    )
+    expect(
+      branchRewardIcons.reward({
+        questRewardType: 'mega_resource',
+        rewardId: 26,
+        amount: 25,
+        evolution: 3,
+      })
+    ).toBe(`${BASE_ICON_URL}/reward/mega_resource/26_e3.webp`)
   })
   test('mega_resource falls back to generic amount', () => {
-    expect(branchRewardIcons.reward('mega_resource', 150, 25, 2)).toBe(
-      `${BASE_ICON_URL}/reward/mega_resource/150_a25.webp`
-    )
+    expect(
+      branchRewardIcons.reward({
+        questRewardType: 'mega_resource',
+        rewardId: 150,
+        amount: 25,
+        evolution: 2,
+      })
+    ).toBe(`${BASE_ICON_URL}/reward/mega_resource/150_a25.webp`)
   })
   test('mega_resource falls back to generic Pokemon', () => {
-    expect(branchRewardIcons.reward('mega_resource', 3, 25, 2)).toBe(
-      `${BASE_ICON_URL}/reward/mega_resource/3.webp`
-    )
+    expect(
+      branchRewardIcons.reward({
+        questRewardType: 'mega_resource',
+        rewardId: 3,
+        amount: 25,
+        evolution: 2,
+      })
+    ).toBe(`${BASE_ICON_URL}/reward/mega_resource/3.webp`)
   })
 })
 
@@ -267,10 +305,7 @@ describe('tappable', () => {
   const custom = new UICONS({
     path: BASE_ICON_URL,
     data: {
-      tappable: [
-        'TAPPABLE_TYPE_POKEBALL.webp',
-        'TAPPABLE_TYPE_BREAKFAST.webp',
-      ],
+      tappable: ['TAPPABLE_TYPE_POKEBALL.webp', 'TAPPABLE_TYPE_BREAKFAST.webp'],
       reward: {
         item: ['1.webp'],
       },
@@ -278,13 +313,13 @@ describe('tappable', () => {
   })
 
   test('matches explicit type', () => {
-    expect(custom.tappable('TAPPABLE_TYPE_BREAKFAST')).toBe(
+    expect(custom.tappable({ tappableType: 'TAPPABLE_TYPE_BREAKFAST' })).toBe(
       `${BASE_ICON_URL}/tappable/TAPPABLE_TYPE_BREAKFAST.webp`
     )
   })
 
   test('fallback to default tappable type', () => {
-    expect(custom.tappable('TAPPABLE_TYPE_UNKNOWN')).toBe(
+    expect(custom.tappable({ tappableType: 'TAPPABLE_TYPE_UNKNOWN' })).toBe(
       `${BASE_ICON_URL}/tappable/TAPPABLE_TYPE_POKEBALL.webp`
     )
   })
@@ -298,7 +333,7 @@ describe('tappable', () => {
         },
       },
     })
-    expect(empty.tappable('TAPPABLE_TYPE_BREAKFAST')).toBe(
+    expect(empty.tappable({ tappableType: 'TAPPABLE_TYPE_BREAKFAST' })).toBe(
       `${BASE_ICON_URL}/reward/item/1.webp`
     )
   })
@@ -306,13 +341,17 @@ describe('tappable', () => {
 
 describe('spawnpoint', () => {
   test('verified', () => {
-    expect(icons.spawnpoint(true)).toBe(`${BASE_ICON_URL}/spawnpoint/1.webp`)
+    expect(icons.spawnpoint({ hasTth: true })).toBe(
+      `${BASE_ICON_URL}/spawnpoint/1.webp`
+    )
   })
 })
 
 describe('stations', () => {
   test('active', () => {
-    expect(icons.station(true)).toBe(`${BASE_ICON_URL}/station/1.webp`)
+    expect(icons.station({ active: true })).toBe(
+      `${BASE_ICON_URL}/station/1.webp`
+    )
   })
   test('inactive', () => {
     expect(icons.station()).toBe(`${BASE_ICON_URL}/station/0.webp`)
@@ -321,37 +360,44 @@ describe('stations', () => {
 
 describe('team', () => {
   test('instinct', () => {
-    expect(icons.team(3)).toBe(`${BASE_ICON_URL}/team/3.webp`)
+    expect(icons.team({ teamId: 3 })).toBe(`${BASE_ICON_URL}/team/3.webp`)
   })
   test('missing', () => {
-    expect(icons.team(10)).toBe(`${BASE_ICON_URL}/team/0.webp`)
+    expect(icons.team({ teamId: 10 })).toBe(`${BASE_ICON_URL}/team/0.webp`)
   })
 })
 
 describe('type', () => {
   test('fire - number', () => {
-    expect(icons.type(1)).toBe(`${BASE_ICON_URL}/type/1.webp`)
+    expect(icons.type({ typeId: 1 })).toBe(`${BASE_ICON_URL}/type/1.webp`)
   })
   test('steel - string', () => {
-    expect(icons.type('9')).toBe(`${BASE_ICON_URL}/type/9.webp`)
+    expect(icons.type({ typeId: '9' })).toBe(`${BASE_ICON_URL}/type/9.webp`)
   })
   test('bug - proto', () => {
-    expect(icons.type(Rpc.HoloPokemonType.POKEMON_TYPE_BUG)).toBe(
-      `${BASE_ICON_URL}/type/7.webp`
-    )
+    expect(
+      icons.type({ typeId: Rpc.HoloPokemonType.POKEMON_TYPE_BUG })
+    ).toBe(`${BASE_ICON_URL}/type/7.webp`)
   })
 })
 
 describe('weather', () => {
   test('id only', () => {
-    expect(icons.weather(2)).toBe(`${BASE_ICON_URL}/weather/2.webp`)
+    expect(icons.weather({ weatherId: 2 })).toBe(
+      `${BASE_ICON_URL}/weather/2.webp`
+    )
   })
   test('with day', () => {
-    expect(icons.weather(3, 0, 'day')).toBe(`${BASE_ICON_URL}/weather/3_d.webp`)
+    expect(icons.weather({ weatherId: 3, timeOfDay: 'day' })).toBe(
+      `${BASE_ICON_URL}/weather/3_d.webp`
+    )
   })
   test('with night', () => {
     expect(
-      icons.weather(Rpc.GameplayWeatherProto.WeatherCondition.CLEAR, 0, 'night')
+      icons.weather({
+        weatherId: Rpc.GameplayWeatherProto.WeatherCondition.CLEAR,
+        timeOfDay: 'night',
+      })
     ).toBe(`${BASE_ICON_URL}/weather/1_n.webp`)
   })
 })

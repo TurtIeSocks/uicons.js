@@ -32,7 +32,7 @@ const FEATURES: Feature[] = [
   {
     icon: <Feather />,
     title: 'Zero runtime deps',
-    body: 'Pure string building over a Set. Nothing to audit, nothing to bundle. Ships ESM + CJS with full .d.ts.',
+    body: 'Pure string building over a Set. Its one dependency is type-only, so nothing extra ships in your bundle. ESM + CJS with full .d.ts.',
     span: 'std',
   },
   {
@@ -80,7 +80,7 @@ export function Features() {
       <div className="section-head reveal" ref={head}>
         <span className="eyebrow">
           <span className="dot" />
-          Why v2
+          Why v3
         </span>
         <h2 className="h2">
           Boring to call.

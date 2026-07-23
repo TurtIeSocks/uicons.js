@@ -1,14 +1,13 @@
 import * as React from 'react'
-
-import { getMonsFromIndex, getMonsFromMf, getMasterfile } from './utils'
-import { ICON_STYLES, AUDIO_STYLES } from './styles'
-import { Nav } from './Nav'
-import { Hero } from './Hero'
 import { Features } from './Features'
-import { TypeInspector } from './TypeInspector'
-import { Gallery } from './Gallery'
 import { Footer } from './Footer'
+import { Gallery } from './Gallery'
+import { Hero } from './Hero'
+import { Nav } from './Nav'
+import { AUDIO_STYLES, ICON_STYLES } from './styles'
+import { TypeInspector } from './TypeInspector'
 import type { Props, RawMon } from './types'
+import { getMasterfile, getMonsFromIndex, getMonsFromMf } from './utils'
 
 export default function App() {
   const [mons, setMons] = React.useState<Props[]>([])

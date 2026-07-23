@@ -1,4 +1,4 @@
-import { UICONS, UiconsIndex } from '../src'
+import { UICONS, type UiconsIndex } from '../src'
 import { MASTERFILE_URL } from './styles'
 import type { Asset, Pokemon, Props, RawMon } from './types'
 
@@ -56,7 +56,7 @@ export async function getMonsFromIndex(
   icon: Asset,
   audio: Asset
 ): Promise<Props[]> {
-  const iconIndex = await fetch(icon.path + '/index.json')
+  const iconIndex = await fetch(`${icon.path}/index.json`)
   const iconJson: UiconsIndex = await iconIndex.json()
   const newUaudio = new UICONS(audio.path)
   await newUaudio.remoteInit()

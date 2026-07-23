@@ -1,32 +1,32 @@
 import type { Rpc } from '@na-ji/pogo-protos'
 import type {
-  UiconsIndex,
-  RewardTypeKeys,
-  TimeOfDay,
-  ExtensionMap,
-  Paths,
-  EnumVal,
-  TrainerCounts,
-  LureIDs,
-  Options,
-  Scalar,
-  Hint,
   BackgroundUrl,
   DeviceUrl,
+  EnumVal,
+  ExtensionMap,
   GymUrl,
   HasResult,
+  Hint,
   InvasionUrl,
+  LureIDs,
   MiscUrl,
   NestUrl,
+  Options,
+  Paths,
   PokemonUrl,
   PokestopUrl,
   RaidEggUrl,
+  RewardTypeKeys,
   RewardUrl,
+  Scalar,
   SpawnpointUrl,
   StationUrl,
   TappableUrl,
   TeamUrl,
+  TimeOfDay,
+  TrainerCounts,
   TypeUrl,
+  UiconsIndex,
   WeatherUrl,
 } from './types.js'
 
@@ -119,10 +119,17 @@ export class UICONS<
    * @param path The base URL of the UICONS repository
    */
   constructor(path: Path)
-  constructor(optionsOrPath: Path | Options<Path, Ext, Index>, oldLabel?: string) {
+  constructor(
+    optionsOrPath: Path | Options<Path, Ext, Index>,
+    oldLabel?: string
+  ) {
     const { path, label, data } =
       typeof optionsOrPath === 'string'
-        ? ({ path: optionsOrPath, label: oldLabel } as Options<Path, Ext, Index>)
+        ? ({ path: optionsOrPath, label: oldLabel } as Options<
+            Path,
+            Ext,
+            Index
+          >)
         : optionsOrPath
 
     this.#path = (path.endsWith('/') ? path.slice(0, -1) : path) as Path
@@ -189,7 +196,8 @@ export class UICONS<
     ext: string | undefined
   ): string {
     const names = suffixDims.reduce<string[]>(
-      (acc, dim) => acc.flatMap((prefix) => dim.map((suffix) => prefix + suffix)),
+      (acc, dim) =>
+        acc.flatMap((prefix) => dim.map((suffix) => prefix + suffix)),
       [`${id}`]
     )
     for (const name of names) {
@@ -379,9 +387,7 @@ export class UICONS<
   }): InvasionUrl<Index, Path, Ext, GruntId, Confirmed>
   invasion(args: { gruntId?: Scalar; confirmed?: boolean } = {}): string {
     const { gruntId = 0, confirmed = false } = args
-    return this.#resolve('invasion', gruntId, [
-      confirmed ? [''] : ['_u', ''],
-    ])
+    return this.#resolve('invasion', gruntId, [confirmed ? [''] : ['_u', '']])
   }
 
   /**
@@ -434,7 +440,10 @@ export class UICONS<
     form?: Hint<Form, EnumVal<typeof Rpc.PokemonDisplayProto.Form>>
     costume?: Hint<Costume, EnumVal<typeof Rpc.PokemonDisplayProto.Costume>>
     gender?: Hint<Gender, EnumVal<typeof Rpc.PokemonDisplayProto.Gender>>
-    alignment?: Hint<Alignment, EnumVal<typeof Rpc.PokemonDisplayProto.Alignment>>
+    alignment?: Hint<
+      Alignment,
+      EnumVal<typeof Rpc.PokemonDisplayProto.Alignment>
+    >
     bread?: Hint<Bread, EnumVal<typeof Rpc.BreadModeEnum.Modifier>>
     shiny?: Hint<Shiny, boolean>
   }): PokemonUrl<
@@ -506,7 +515,16 @@ export class UICONS<
     questActive?: Hint<QuestActive, boolean>
     ar?: Hint<Ar, boolean>
     power?: Hint<Power, boolean | EnumVal<typeof Rpc.FortPowerUpLevel>>
-  }): PokestopUrl<Index, Path, Ext, LureId, DisplayTypeId, QuestActive, Ar, Power>
+  }): PokestopUrl<
+    Index,
+    Path,
+    Ext,
+    LureId,
+    DisplayTypeId,
+    QuestActive,
+    Ar,
+    Power
+  >
   pokestop(
     args: {
       lureId?: Scalar
@@ -630,7 +648,8 @@ export class UICONS<
     const { hasTth = false } = args
     if (!this.#isReady('spawnpoint')) return ''
 
-    return hasTth && this.#files.spawnpoint.has(`1.${this.#extensionMap.spawnpoint}`)
+    return hasTth &&
+      this.#files.spawnpoint.has(`1.${this.#extensionMap.spawnpoint}`)
       ? `${this.#path}/spawnpoint/1.${this.#extensionMap.spawnpoint}`
       : `${this.#path}/spawnpoint/0.${this.#extensionMap.spawnpoint}`
   }
@@ -658,7 +677,8 @@ export class UICONS<
   tappable<T extends Scalar = 'TAPPABLE_TYPE_POKEBALL'>(args?: {
     tappableType?: Hint<
       T,
-      'TAPPABLE_TYPE_POKEBALL' | (keyof typeof Rpc.Tappable.TappableType & string)
+      | 'TAPPABLE_TYPE_POKEBALL'
+      | (keyof typeof Rpc.Tappable.TappableType & string)
     >
   }): TappableUrl<Index, Path, Ext, T>
   tappable(args: { tappableType?: Scalar } = {}): string {
@@ -740,7 +760,11 @@ export class UICONS<
     timeOfDay?: Hint<Time, TimeOfDay>
   }): WeatherUrl<Index, Path, Ext, WeatherId, Severity, Time>
   weather(
-    args: { weatherId?: Scalar; severityLevel?: Scalar; timeOfDay?: string } = {}
+    args: {
+      weatherId?: Scalar
+      severityLevel?: Scalar
+      timeOfDay?: string
+    } = {}
   ): string {
     const { weatherId = 0, severityLevel = 0, timeOfDay = 'day' } = args
     return this.#resolve('weather', weatherId, [

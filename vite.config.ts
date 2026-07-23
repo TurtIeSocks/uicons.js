@@ -1,9 +1,8 @@
-import { resolve } from 'path'
-
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
-import checker from 'vite-plugin-checker'
+import { resolve } from 'node:path'
 import typescript from '@rollup/plugin-typescript'
+import react from '@vitejs/plugin-react-swc'
+import { defineConfig } from 'vite'
+import checker from 'vite-plugin-checker'
 
 export default defineConfig(({ mode }) => {
   const isClient = process.argv.includes('-r')
@@ -40,7 +39,8 @@ export default defineConfig(({ mode }) => {
           : {
               name: 'uicons.js',
               entry: 'src/index.ts',
-              fileName: (format, entry) => `${entry}.${format === 'cjs' ? 'cjs' : 'mjs'}`,
+              fileName: (format, entry) =>
+                `${entry}.${format === 'cjs' ? 'cjs' : 'mjs'}`,
               formats: ['es', 'cjs'],
             },
       rollupOptions:

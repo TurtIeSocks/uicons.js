@@ -5,11 +5,10 @@
 import { Rpc } from '@na-ji/pogo-protos'
 import { UICONS } from './uicons.ts'
 
-type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y
-  ? 1
-  : 2
-  ? true
-  : false
+type Equal<X, Y> =
+  (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2
+    ? true
+    : false
 type Expect<T extends true> = T
 
 const BASE = 'https://example.com/uicons'
@@ -82,9 +81,7 @@ describe('exact literal inference (typed index data)', () => {
     type _1 = Expect<
       Equal<typeof unconfirmed, `${typeof BASE}/invasion/44_u.webp`>
     >
-    type _2 = Expect<
-      Equal<typeof confirmed, `${typeof BASE}/invasion/44.webp`>
-    >
+    type _2 = Expect<Equal<typeof confirmed, `${typeof BASE}/invasion/44.webp`>>
     expect(unconfirmed).toBe(`${BASE}/invasion/44_u.webp`)
     expect(confirmed).toBe(`${BASE}/invasion/44.webp`)
   })
@@ -104,9 +101,7 @@ describe('exact literal inference (typed index data)', () => {
 
   test('raid egg resolves nested folders', () => {
     const hatched = u.raidEgg({ level: 12, hatched: true })
-    type _1 = Expect<
-      Equal<typeof hatched, `${typeof BASE}/raid/egg/12_h.webp`>
-    >
+    type _1 = Expect<Equal<typeof hatched, `${typeof BASE}/raid/egg/12_h.webp`>>
     expect(hatched).toBe(`${BASE}/raid/egg/12_h.webp`)
   })
 
@@ -188,10 +183,7 @@ describe('exact literal inference (typed index data)', () => {
     const hit = u.tappable({ tappableType: 'TAPPABLE_TYPE_BREAKFAST' })
     const pokeball = u.tappable({ tappableType: 'TAPPABLE_TYPE_UNKNOWN' })
     type _1 = Expect<
-      Equal<
-        typeof hit,
-        `${typeof BASE}/tappable/TAPPABLE_TYPE_BREAKFAST.webp`
-      >
+      Equal<typeof hit, `${typeof BASE}/tappable/TAPPABLE_TYPE_BREAKFAST.webp`>
     >
     type _2 = Expect<
       Equal<
@@ -229,8 +221,7 @@ describe('fallback typing without literal index data', () => {
     type _1 = Expect<
       Equal<
         typeof url,
-        | `${typeof BASE}/team/0.webp`
-        | `${typeof BASE}/team/1.webp`
+        `${typeof BASE}/team/0.webp` | `${typeof BASE}/team/1.webp`
       >
     >
     expect(url).toBe(`${BASE}/team/0.webp`)
@@ -273,7 +264,10 @@ describe('fallback typing without literal index data', () => {
       path: BASE,
       data: { misc: ['0.png'], reward: { item: ['1.png'] } },
     })
-    const url = partialReward.reward({ questRewardType: 'stardust', rewardId: 500 })
+    const url = partialReward.reward({
+      questRewardType: 'stardust',
+      rewardId: 500,
+    })
     type _1 = Expect<Equal<typeof url, `${typeof BASE}/misc/0.png`>>
     expect(url).toBe(`${BASE}/misc/0.png`)
   })

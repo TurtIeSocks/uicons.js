@@ -32,7 +32,7 @@ export const ICON_STYLES: Asset[] = [
   {
     name: 'Circles',
     path: 'https://raw.githubusercontent.com/TurtIeSocks/rust-uicons/main/uicons/safe/svg',
-  }
+  },
 ]
 
 export const AUDIO_STYLES: Asset[] = [

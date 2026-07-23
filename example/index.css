@@ -43,7 +43,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -61,7 +61,7 @@ body {
 }
 .mesh::before,
 .mesh::after {
-  content: '';
+  content: "";
   position: absolute;
   width: 60vmax;
   height: 60vmax;
@@ -112,7 +112,7 @@ section {
 h1,
 h2,
 h3 {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: "Space Grotesk", sans-serif;
   font-weight: 600;
   letter-spacing: -0.03em;
   line-height: 1.02;
@@ -130,7 +130,12 @@ h3 {
   max-width: 46ch;
 }
 .grad {
-  background: linear-gradient(120deg, var(--emerald), var(--cyan) 60%, var(--violet));
+  background: linear-gradient(
+    120deg,
+    var(--emerald),
+    var(--cyan) 60%,
+    var(--violet)
+  );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -189,7 +194,9 @@ h3 {
   cursor: pointer;
   border: 1px solid transparent;
   text-decoration: none;
-  transition: transform 0.5s var(--spring), background 0.5s var(--spring),
+  transition:
+    transform 0.5s var(--spring),
+    background 0.5s var(--spring),
     border-color 0.5s var(--spring);
 }
 .btn:active {
@@ -245,7 +252,9 @@ h3 {
   opacity: 0;
   transform: translateY(2.5rem);
   filter: blur(8px);
-  transition: opacity 0.9s var(--spring), transform 0.9s var(--spring),
+  transition:
+    opacity 0.9s var(--spring),
+    transform 0.9s var(--spring),
     filter 0.9s var(--spring);
   transition-delay: var(--reveal-delay, 0ms);
 }
@@ -288,12 +297,14 @@ h3 {
   border: 1px solid var(--hair);
   backdrop-filter: blur(20px) saturate(1.4);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  box-shadow: 0 20px 50px -30px rgba(0, 0, 0, 0.9), var(--inset-hi);
+  box-shadow:
+    0 20px 50px -30px rgba(0, 0, 0, 0.9),
+    var(--inset-hi);
 }
 .brand {
   display: flex;
   align-items: center;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: "Space Grotesk", sans-serif;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--ink);
@@ -367,7 +378,9 @@ h3 {
   width: 16px;
   height: 1.5px;
   background: var(--ink);
-  transition: transform 0.5s var(--spring), opacity 0.3s var(--spring);
+  transition:
+    transform 0.5s var(--spring),
+    opacity 0.3s var(--spring);
 }
 .burger span:nth-child(1) {
   transform: translate(-50%, -5px);
@@ -410,7 +423,7 @@ h3 {
   pointer-events: auto;
 }
 .overlay a {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: "Space Grotesk", sans-serif;
   font-size: clamp(2rem, 9vw, 3.5rem);
   font-weight: 600;
   letter-spacing: -0.03em;
@@ -418,16 +431,26 @@ h3 {
   text-decoration: none;
   opacity: 0;
   transform: translateY(2rem);
-  transition: opacity 0.6s var(--spring), transform 0.6s var(--spring);
+  transition:
+    opacity 0.6s var(--spring),
+    transform 0.6s var(--spring);
 }
 .overlay.open a {
   opacity: 1;
   transform: none;
 }
-.overlay.open a:nth-child(1) { transition-delay: 0.08s; }
-.overlay.open a:nth-child(2) { transition-delay: 0.14s; }
-.overlay.open a:nth-child(3) { transition-delay: 0.2s; }
-.overlay.open a:nth-child(4) { transition-delay: 0.26s; }
+.overlay.open a:nth-child(1) {
+  transition-delay: 0.08s;
+}
+.overlay.open a:nth-child(2) {
+  transition-delay: 0.14s;
+}
+.overlay.open a:nth-child(3) {
+  transition-delay: 0.2s;
+}
+.overlay.open a:nth-child(4) {
+  transition-delay: 0.26s;
+}
 
 /* ================================ HERO ================================= */
 .hero {
@@ -467,7 +490,7 @@ h3 {
   gap: 0.15rem;
 }
 .hero-meta .num {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: "Space Grotesk", sans-serif;
   font-size: 1.7rem;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -499,25 +522,38 @@ h3 {
 }
 .code-top .name {
   margin-left: 0.6rem;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-size: 0.74rem;
   color: var(--ink-faint);
 }
 pre.code {
   margin: 0;
   padding: 1.4rem 1.5rem;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-size: clamp(0.72rem, 1vw, 0.84rem);
   line-height: 1.85;
   overflow-x: auto;
   tab-size: 2;
 }
-pre.code .k { color: #c084fc; }   /* keyword */
-pre.code .s { color: #6ee7b7; }   /* string  */
-pre.code .t { color: #67e8f9; }   /* type    */
-pre.code .f { color: #93c5fd; }   /* fn/prop */
-pre.code .n { color: #fbbf24; }   /* number  */
-pre.code .c { color: var(--ink-faint); font-style: italic; }
+pre.code .k {
+  color: #c084fc;
+} /* keyword */
+pre.code .s {
+  color: #6ee7b7;
+} /* string  */
+pre.code .t {
+  color: #67e8f9;
+} /* type    */
+pre.code .f {
+  color: #93c5fd;
+} /* fn/prop */
+pre.code .n {
+  color: #fbbf24;
+} /* number  */
+pre.code .c {
+  color: var(--ink-faint);
+  font-style: italic;
+}
 pre.code .hint {
   color: var(--emerald);
   background: rgba(16, 185, 129, 0.08);
@@ -556,7 +592,9 @@ pre.code .hint {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-  transition: transform 0.6s var(--spring), border-color 0.6s var(--spring);
+  transition:
+    transform 0.6s var(--spring),
+    border-color 0.6s var(--spring);
 }
 .cell:hover .core {
   transform: translateY(-4px);
@@ -590,7 +628,7 @@ pre.code .hint {
 }
 .cell .mono {
   margin-top: auto;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-size: 0.76rem;
   color: var(--ink-faint);
   padding-top: 0.6rem;
@@ -627,7 +665,9 @@ pre.code .hint {
   padding: 0.45rem 0.9rem;
   border-radius: 999px;
   cursor: pointer;
-  transition: color 0.4s var(--spring), background 0.4s var(--spring);
+  transition:
+    color 0.4s var(--spring),
+    background 0.4s var(--spring);
 }
 .segment button:hover {
   color: var(--ink);
@@ -650,7 +690,9 @@ pre.code .hint {
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--hair);
-  transition: border-color 0.4s var(--spring), background 0.4s var(--spring),
+  transition:
+    border-color 0.4s var(--spring),
+    background 0.4s var(--spring),
     color 0.4s var(--spring);
 }
 .toggle:hover {
@@ -673,7 +715,7 @@ pre.code .hint {
   transition: background 0.4s var(--spring);
 }
 .toggle .track::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 2px;
   left: 2px;
@@ -723,7 +765,9 @@ pre.code .hint {
   padding: 0.6rem;
   cursor: pointer;
   color: var(--ink-faint);
-  transition: transform 0.5s var(--spring), border-color 0.5s var(--spring),
+  transition:
+    transform 0.5s var(--spring),
+    border-color 0.5s var(--spring),
     background 0.5s var(--spring);
 }
 .tile:hover {
@@ -740,7 +784,7 @@ pre.code .hint {
   object-fit: contain;
 }
 .tile .cap {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-size: 0.6rem;
   color: var(--ink-faint);
   max-width: 100%;
@@ -857,7 +901,7 @@ footer {
   gap: 0.6rem;
 }
 .insp-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-size: 0.66rem;
   text-transform: uppercase;
   letter-spacing: 0.18em;
@@ -868,7 +912,7 @@ footer {
 }
 .insp-controls .segment button {
   padding: 0.4rem 0.7rem;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
 }
 .insp-switches {
   display: flex;
@@ -906,10 +950,13 @@ footer {
   padding: 0.5rem 0.75rem;
   border-radius: 0.7rem;
   border: 1px solid transparent;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-size: 0.8rem;
-  transition: opacity 0.5s var(--spring), background 0.5s var(--spring),
-    border-color 0.5s var(--spring), transform 0.5s var(--spring);
+  transition:
+    opacity 0.5s var(--spring),
+    background 0.5s var(--spring),
+    border-color 0.5s var(--spring),
+    transform 0.5s var(--spring);
 }
 .trace-ic {
   width: 1.05rem;
@@ -982,7 +1029,7 @@ footer {
   min-width: 0;
 }
 .insp-literal {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-size: 0.82rem;
   color: var(--emerald);
   word-break: break-all;
@@ -1006,14 +1053,16 @@ footer {
   gap: 0.35rem;
 }
 .idx-chip {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-size: 0.66rem;
   padding: 0.2rem 0.5rem;
   border-radius: 0.5rem;
   color: var(--ink-faint);
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--hair);
-  transition: color 0.4s var(--spring), background 0.4s var(--spring),
+  transition:
+    color 0.4s var(--spring),
+    background 0.4s var(--spring),
     border-color 0.4s var(--spring);
 }
 .idx-chip.win {

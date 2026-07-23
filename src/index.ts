@@ -1,12 +1,12 @@
 export type {
-  TimeOfDay,
-  TrainerCounts,
-  RewardTypeKeys,
-  UiconsIndex,
+  EnumVal,
   LureIDs,
   Options,
-  Scalar,
-  EnumVal,
   Paths,
+  RewardTypeKeys,
+  Scalar,
+  TimeOfDay,
+  TrainerCounts,
+  UiconsIndex,
 } from './types.js'
 export { UICONS } from './uicons.js'

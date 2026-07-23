@@ -1,5 +1,3 @@
-import * as React from 'react'
-
 const REPO = 'https://github.com/TurtIeSocks/uicons.js'
 
 export function Footer() {

@@ -2,8 +2,8 @@ import * as React from 'react'
 import { VirtuosoGrid, type VirtuosoGridProps } from 'react-virtuoso'
 
 import { ICON_STYLES } from './styles'
-import { useReveal } from './useReveal'
 import type { Asset, Props, Setter } from './types'
+import { useReveal } from './useReveal'
 
 function Tile({ title, src, cry }: Props) {
   return (
@@ -55,8 +55,8 @@ export function Gallery({ mons, icon, setIcon, full, setFull }: GalleryProps) {
           <span className="grad">one API.</span>
         </h2>
         <p>
-          Swap between real community icon repositories below. Tap any Pokémon to
-          hear its cry — resolved through the same methods, live.
+          Swap between real community icon repositories below. Tap any Pokémon
+          to hear its cry — resolved through the same methods, live.
         </p>
       </div>
 
@@ -66,6 +66,7 @@ export function Gallery({ mons, icon, setIcon, full, setFull }: GalleryProps) {
             <button
               key={style.name}
               role="tab"
+              type="button"
               aria-selected={style.name === icon.name}
               className={style.name === icon.name ? 'active' : ''}
               onClick={() => setIcon(style)}
@@ -78,6 +79,7 @@ export function Gallery({ mons, icon, setIcon, full, setFull }: GalleryProps) {
           className={`toggle${full ? ' on' : ''}`}
           onClick={() => setFull((f) => !f)}
           aria-pressed={full}
+          type="button"
         >
           <span className="track" />
           {full ? 'Full repository' : 'Masterfile only'}

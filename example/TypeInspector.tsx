@@ -1,9 +1,9 @@
 import * as React from 'react'
 
 import { UICONS } from '../src'
+import { Check } from './icons'
 import { ICON_STYLES } from './styles'
 import { useReveal } from './useReveal'
-import { Check } from './icons'
 
 const BASE = ICON_STYLES[0].path.replace(/\/$/, '')
 const EXT = 'webp'
@@ -42,7 +42,8 @@ function gymCandidates(
   let acc = ['']
   for (const dim of dims) {
     const next: string[] = []
-    for (const prefix of acc) for (const suffix of dim) next.push(prefix + suffix)
+    for (const prefix of acc)
+      for (const suffix of dim) next.push(prefix + suffix)
     acc = next
   }
   return acc.map((suffix) => `${teamId}${suffix}`)
@@ -117,10 +118,10 @@ export function TypeInspector() {
           <span className="grad">resolve themselves.</span>
         </h2>
         <p>
-          Change the arguments. The type system walks the same candidate list the
-          runtime does — most specific first, first match in your index wins — and
-          lands on one URL literal. This is the real class running, so the type
-          below is exactly what your editor would infer.
+          Change the arguments. The type system walks the same candidate list
+          the runtime does — most specific first, first match in your index wins
+          — and lands on one URL literal. This is the real class running, so the
+          type below is exactly what your editor would infer.
         </p>
       </div>
 
@@ -135,6 +136,7 @@ export function TypeInspector() {
                   {TEAMS.map((t) => (
                     <button
                       key={t}
+                      type="button"
                       className={t === teamId ? 'active' : ''}
                       onClick={() => setTeamId(t)}
                     >
@@ -150,6 +152,7 @@ export function TypeInspector() {
                   {[0, 1, 2, 3, 4, 5, 6].map((n) => (
                     <button
                       key={n}
+                      type="button"
                       className={n === trainerCount ? 'active' : ''}
                       onClick={() => setTrainerCount(n)}
                     >
@@ -162,6 +165,7 @@ export function TypeInspector() {
               <div className="insp-switches">
                 <button
                   className={`toggle${inBattle ? ' on' : ''}`}
+                  type="button"
                   onClick={() => setInBattle((v) => !v)}
                   aria-pressed={inBattle}
                 >
@@ -170,6 +174,7 @@ export function TypeInspector() {
                 </button>
                 <button
                   className={`toggle${ex ? ' on' : ''}`}
+                  type="button"
                   onClick={() => setEx((v) => !v)}
                   aria-pressed={ex}
                 >

@@ -1,5 +1,5 @@
-import * as React from 'react'
-import { Target, Braces, Feather, Layers, Waves, Bolt } from './icons'
+import type * as React from 'react'
+import { Bolt, Braces, Feather, Layers, Target, Waves } from './icons'
 import { useReveal } from './useReveal'
 
 interface Feature {
@@ -88,8 +88,8 @@ export function Features() {
           <span className="grad">Impossible to misuse.</span>
         </h2>
         <p>
-          The ergonomics of a one-line helper with the guarantees of a hand-written
-          type for every possible URL.
+          The ergonomics of a one-line helper with the guarantees of a
+          hand-written type for every possible URL.
         </p>
       </div>
       <div className="bento">

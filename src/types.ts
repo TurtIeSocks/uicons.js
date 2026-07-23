@@ -29,9 +29,7 @@ export type LureIDs = StringOrNumber<
  * are captured as tuples of string literals, which lets every icon method
  * resolve its exact return URL at the type level.
  */
-export interface UiconsIndex<
-  T extends readonly string[] = string[],
-> {
+export interface UiconsIndex<T extends readonly string[] = string[]> {
   background?: T
   device?: T
   gym?: T
@@ -83,7 +81,9 @@ export interface Options<
 
 /** Runtime shape of the per-category extension lookup built from an index file. */
 export type ExtensionMap = {
-  [K in keyof UiconsIndex]?: UiconsIndex[K] extends readonly string[] | undefined
+  [K in keyof UiconsIndex]?: UiconsIndex[K] extends
+    | readonly string[]
+    | undefined
     ? string
     : { [K2 in keyof NonNullable<UiconsIndex[K]>]?: string }
 }
@@ -182,9 +182,8 @@ type IsLiteralFlag<T> = [T] extends [boolean]
 // can be thousands of members wide) out of the cross-product machinery, which
 // would otherwise explode during checking. When any arg is collapsed the
 // `Lit` gate routes to the coarse result anyway, so nothing is lost.
-type LitScalar<V, D extends Scalar> = IsLiteralScalar<V> extends true
-  ? V & Scalar
-  : D
+type LitScalar<V, D extends Scalar> =
+  IsLiteralScalar<V> extends true ? V & Scalar : D
 
 type LitBool<B> = IsLiteralBool<B> extends true ? B : false
 
@@ -237,7 +236,10 @@ type ConcatEach<
   P extends string,
   S extends readonly string[],
   Acc extends readonly string[] = [],
-> = S extends readonly [infer H extends string, ...infer R extends readonly string[]]
+> = S extends readonly [
+  infer H extends string,
+  ...infer R extends readonly string[],
+]
   ? ConcatEach<P, R, [...Acc, `${P}${H}`]>
   : Acc
 
@@ -270,7 +272,10 @@ type AppendEach<
   S extends readonly string[],
   Suf extends string,
   Acc extends readonly string[] = [],
-> = S extends readonly [infer H extends string, ...infer R extends readonly string[]]
+> = S extends readonly [
+  infer H extends string,
+  ...infer R extends readonly string[],
+]
   ? AppendEach<R, Suf, [...Acc, `${H}${Suf}`]>
   : Acc
 
@@ -398,20 +403,20 @@ type ToggleUrl<
   : [Exclude<F, undefined>] extends [readonly []]
     ? ''
     : Exclude<F, undefined> extends infer A
-    ? A extends readonly string[]
-      ? CategoryExt<A, ExtHint> extends infer E extends string
-        ? On extends true
-          ? Checked extends true
-            ? IsTuple<A> extends true
-              ? `1.${E}` extends A[number]
-                ? `${CleanPath<Path>}/${Folder}/1.${E}`
-                : `${CleanPath<Path>}/${Folder}/0.${E}`
-              : `${CleanPath<Path>}/${Folder}/${'0' | '1'}.${E}`
-            : `${CleanPath<Path>}/${Folder}/1.${E}`
-          : `${CleanPath<Path>}/${Folder}/0.${E}`
+      ? A extends readonly string[]
+        ? CategoryExt<A, ExtHint> extends infer E extends string
+          ? On extends true
+            ? Checked extends true
+              ? IsTuple<A> extends true
+                ? `1.${E}` extends A[number]
+                  ? `${CleanPath<Path>}/${Folder}/1.${E}`
+                  : `${CleanPath<Path>}/${Folder}/0.${E}`
+                : `${CleanPath<Path>}/${Folder}/${'0' | '1'}.${E}`
+              : `${CleanPath<Path>}/${Folder}/1.${E}`
+            : `${CleanPath<Path>}/${Folder}/0.${E}`
+          : never
         : never
       : never
-    : never
 
 // ---------------------------------------------------------------------------
 // Per-method candidate lists (in exact runtime try-order)
@@ -503,21 +508,23 @@ type NumOf<S> = S extends number
       ? N
       : never
 
-type SafeAmount<A extends Scalar> = NumOf<A> extends infer NA
-  ? [NA] extends [never]
-    ? 0
-    : [NA] extends [0]
+type SafeAmount<A extends Scalar> =
+  NumOf<A> extends infer NA
+    ? [NA] extends [never]
       ? 0
-      : NA
-  : never
+      : [NA] extends [0]
+        ? 0
+        : NA
+    : never
 
-type SafeId<Id extends Scalar, A extends Scalar> = NumOf<Id> extends infer NI
-  ? [NI] extends [never]
-    ? SafeAmount<A>
-    : [NI] extends [0]
+type SafeId<Id extends Scalar, A extends Scalar> =
+  NumOf<Id> extends infer NI
+    ? [NI] extends [never]
       ? SafeAmount<A>
-      : NI
-  : never
+      : [NI] extends [0]
+        ? SafeAmount<A>
+        : NI
+    : never
 
 /** Integer greater than 1 (mirrors `Number.isInteger(a) && a > 1`). */
 type IsAmountable<N extends number> = N extends 0 | 1
@@ -773,24 +780,24 @@ export type RewardUrl<
         : [Exclude<F, undefined>] extends [readonly []]
           ? MiscZeroUrl<Index, Path, Ext> // empty reward lists are dropped at init, so the runtime takes the misc fallback
           : ResolveIcon<
-          F,
-          Path,
-          `reward/${QT}`,
-          Ext,
-          RewardNames<
-            LitScalar<Id, 0>,
-            LitScalar<Amount, 0>,
-            LitScalar<Evolution, 0>
-          >,
-          AllLit<
-            [
-              IsLiteralScalar<Id>,
-              IsLiteralScalar<Amount>,
-              IsLiteralScalar<Evolution>,
-            ]
-          >
-        >
-    : never
+              F,
+              Path,
+              `reward/${QT}`,
+              Ext,
+              RewardNames<
+                LitScalar<Id, 0>,
+                LitScalar<Amount, 0>,
+                LitScalar<Evolution, 0>
+              >,
+              AllLit<
+                [
+                  IsLiteralScalar<Id>,
+                  IsLiteralScalar<Amount>,
+                  IsLiteralScalar<Evolution>,
+                ]
+              >
+            >
+      : never
   : never
 
 export type SpawnpointUrl<
@@ -818,41 +825,42 @@ export type TappableUrl<
   Path extends string,
   Ext extends string,
   T extends Scalar,
-> = Get<Index, 'tappable'> extends infer F
-  ? [F] extends [undefined]
-    ? RewardItemFallback<Index, Path, Ext>
-    : [Exclude<F, undefined>] extends [readonly []]
+> =
+  Get<Index, 'tappable'> extends infer F
+    ? [F] extends [undefined]
       ? RewardItemFallback<Index, Path, Ext>
-      : Exclude<F, undefined> extends infer A
-      ? A extends readonly string[]
-        ? CategoryExt<A, Ext> extends infer E extends string
-          ? IsLiteralScalar<T> extends true
-            ? IsTuple<A> extends true
-              ? FirstMatch<
-                  [`${T}.${E}`, `TAPPABLE_TYPE_POKEBALL.${E}`],
-                  A[number],
-                  never
-                > extends infer R
-                ? [R] extends [never]
-                  ? RewardItemFallback<Index, Path, Ext>
-                  : `${CleanPath<Path>}/tappable/${R & string}`
-                : never
-              :
-                  | `${CleanPath<Path>}/tappable/${
-                      | `${T}.${E}`
-                      | `TAPPABLE_TYPE_POKEBALL.${E}`}`
-                  | RewardItemFallback<Index, Path, Ext>
-            : IsTuple<A> extends true
-              ?
-                  | `${CleanPath<Path>}/tappable/${A[number]}`
-                  | RewardItemFallback<Index, Path, Ext>
-              :
-                  | `${CleanPath<Path>}/tappable/${string}.${E}`
-                  | RewardItemFallback<Index, Path, Ext>
+      : [Exclude<F, undefined>] extends [readonly []]
+        ? RewardItemFallback<Index, Path, Ext>
+        : Exclude<F, undefined> extends infer A
+          ? A extends readonly string[]
+            ? CategoryExt<A, Ext> extends infer E extends string
+              ? IsLiteralScalar<T> extends true
+                ? IsTuple<A> extends true
+                  ? FirstMatch<
+                      [`${T}.${E}`, `TAPPABLE_TYPE_POKEBALL.${E}`],
+                      A[number],
+                      never
+                    > extends infer R
+                    ? [R] extends [never]
+                      ? RewardItemFallback<Index, Path, Ext>
+                      : `${CleanPath<Path>}/tappable/${R & string}`
+                    : never
+                  :
+                      | `${CleanPath<Path>}/tappable/${
+                          | `${T}.${E}`
+                          | `TAPPABLE_TYPE_POKEBALL.${E}`}`
+                      | RewardItemFallback<Index, Path, Ext>
+                : IsTuple<A> extends true
+                  ?
+                      | `${CleanPath<Path>}/tappable/${A[number]}`
+                      | RewardItemFallback<Index, Path, Ext>
+                  :
+                      | `${CleanPath<Path>}/tappable/${string}.${E}`
+                      | RewardItemFallback<Index, Path, Ext>
+              : never
+            : never
           : never
-        : never
-      : never
-  : never
+    : never
 
 export type TeamUrl<
   Index,
@@ -925,20 +933,21 @@ export type HasResult<
   L extends string,
   FN extends Scalar,
   Ext extends string,
-> = FilesAt<Index, L> extends infer F
-  ? [F] extends [undefined]
-    ? false
-    : [Exclude<F, undefined>] extends [readonly []]
+> =
+  FilesAt<Index, L> extends infer F
+    ? [F] extends [undefined]
       ? false
-      : Exclude<F, undefined> extends infer A
-      ? A extends readonly string[]
-        ? IsTuple<A> extends true
-          ? IsLiteralScalar<FN> extends true
-            ? `${FN}.${CategoryExt<A, Ext>}` extends A[number]
-              ? true
-              : false
+      : [Exclude<F, undefined>] extends [readonly []]
+        ? false
+        : Exclude<F, undefined> extends infer A
+          ? A extends readonly string[]
+            ? IsTuple<A> extends true
+              ? IsLiteralScalar<FN> extends true
+                ? `${FN}.${CategoryExt<A, Ext>}` extends A[number]
+                  ? true
+                  : false
+                : boolean
+              : boolean
             : boolean
-          : boolean
-        : boolean
-      : never
-  : never
+          : never
+    : never

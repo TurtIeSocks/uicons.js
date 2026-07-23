@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ArrowUpRight, Copy, Check } from './icons'
+import { ArrowUpRight, Check, Copy } from './icons'
 import { useReveal } from './useReveal'
 
 const REPO = 'https://github.com/TurtIeSocks/uicons.js'
@@ -16,7 +16,7 @@ function InstallButton() {
     )
   }
   return (
-    <button className="btn btn-primary" onClick={copy}>
+    <button className="btn btn-primary" type="button" onClick={copy}>
       <span style={{ fontFamily: "'JetBrains Mono', monospace" }}>
         npm i uicons.js
       </span>
@@ -44,9 +44,8 @@ export function Hero() {
           </h1>
           <p className="lede">
             A tiny library for Pokémon GO asset URLs. Feed it your{' '}
-            <code>index.json</code> and every method returns the{' '}
-            <em>exact</em> URL string — resolved, fallbacks and all, at the type
-            level.
+            <code>index.json</code> and every method returns the <em>exact</em>{' '}
+            URL string — resolved, fallbacks and all, at the type level.
           </p>
           <div className="hero-cta">
             <InstallButton />
@@ -89,7 +88,8 @@ export function Hero() {
             <pre className="code">
               <code>
                 <span className="k">const</span> uicons ={' '}
-                <span className="k">new</span> <span className="t">UICONS</span>({'{'}
+                <span className="k">new</span> <span className="t">UICONS</span>
+                ({'{'}
                 {'\n'}
                 {'  '}path: <span className="s">'https://cdn.gg/uicons'</span>,
                 {'\n'}
@@ -97,7 +97,9 @@ export function Hero() {
                 <span className="s">'1.webp'</span>] {'}'},{'\n'}
                 {'}'}){'\n'}
                 {'\n'}
-                <span className="c">// exact literal — not just `string`</span>
+                <span className="c">
+                  {/* exact literal — not just `string` */}
+                </span>
                 {'\n'}
                 uicons.<span className="f">team</span>({'{'} teamId:{' '}
                 <span className="n">1</span> {'}'}){'\n'}
@@ -106,9 +108,13 @@ export function Hero() {
                 </span>
                 {'\n'}
                 {'\n'}
-                <span className="c">// 9.webp is absent → type sees the</span>
+                <span className="c">
+                  {/* 9.webp is absent → type sees the */}
+                </span>
                 {'\n'}
-                <span className="c">// fallback the runtime would pick</span>
+                <span className="c">
+                  {/* fallback the runtime would pick */}
+                </span>
                 {'\n'}
                 uicons.<span className="f">team</span>({'{'} teamId:{' '}
                 <span className="n">9</span> {'}'}){'\n'}

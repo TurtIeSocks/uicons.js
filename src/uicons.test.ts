@@ -1,5 +1,5 @@
-import { UICONS } from './uicons.ts'
 import { Rpc } from '@na-ji/pogo-protos'
+import { UICONS } from './uicons.ts'
 
 const BASE_ICON_URL =
   'https://raw.githubusercontent.com/WatWowMap/wwm-uicons-webp/main'
@@ -54,7 +54,9 @@ describe('wav format', () => {
 
 describe('device', () => {
   test('online icon', () => {
-    expect(icons.device({ online: true })).toBe(`${BASE_ICON_URL}/device/1.webp`)
+    expect(icons.device({ online: true })).toBe(
+      `${BASE_ICON_URL}/device/1.webp`
+    )
   })
 })
 
@@ -210,9 +212,9 @@ describe('raid', () => {
 
 describe('reward', () => {
   test('experience', () => {
-    expect(
-      icons.reward({ questRewardType: 'experience', rewardId: 100 })
-    ).toBe(`${BASE_ICON_URL}/reward/experience/100.webp`)
+    expect(icons.reward({ questRewardType: 'experience', rewardId: 100 })).toBe(
+      `${BASE_ICON_URL}/reward/experience/100.webp`
+    )
   })
   test('item without amount', () => {
     expect(icons.reward({ questRewardType: 'item', rewardId: 1 })).toBe(
@@ -256,7 +258,11 @@ describe('reward', () => {
   })
   test('mega_resource with amount', () => {
     expect(
-      icons.reward({ questRewardType: 'mega_resource', rewardId: 6, amount: 25 })
+      icons.reward({
+        questRewardType: 'mega_resource',
+        rewardId: 6,
+        amount: 25,
+      })
     ).toBe(`${BASE_ICON_URL}/reward/mega_resource/6_a25.webp`)
   })
   test('mega_resource with evolution and amount', () => {
@@ -375,9 +381,9 @@ describe('type', () => {
     expect(icons.type({ typeId: '9' })).toBe(`${BASE_ICON_URL}/type/9.webp`)
   })
   test('bug - proto', () => {
-    expect(
-      icons.type({ typeId: Rpc.HoloPokemonType.POKEMON_TYPE_BUG })
-    ).toBe(`${BASE_ICON_URL}/type/7.webp`)
+    expect(icons.type({ typeId: Rpc.HoloPokemonType.POKEMON_TYPE_BUG })).toBe(
+      `${BASE_ICON_URL}/type/7.webp`
+    )
   })
 })
 

@@ -6,10 +6,11 @@
 // and an unresolved generic instantiates to its default — which silently hides
 // the vocabulary unless it lives in the property type (see `Hint` in
 // src/types.ts). Run with: node scripts/check-intellisense.mjs
-import ts from 'typescript'
+
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import ts from 'typescript'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -35,7 +36,10 @@ const EXPECT = {
 
 const probePath = path.join(ROOT, '__check_intellisense.ts')
 const files = new Map([[probePath, PROBE]])
-const configFile = ts.readConfigFile(path.join(ROOT, 'tsconfig.json'), ts.sys.readFile)
+const configFile = ts.readConfigFile(
+  path.join(ROOT, 'tsconfig.json'),
+  ts.sys.readFile
+)
 const parsed = ts.parseJsonConfigFileContent(configFile.config, ts.sys, ROOT)
 
 const host = {
@@ -62,14 +66,20 @@ let failed = false
 for (const [marker, expected] of Object.entries(EXPECT)) {
   const pos = PROBE.indexOf(`/*${marker}*/`)
   const offered = new Set(
-    (ls.getCompletionsAtPosition(probePath, pos, {})?.entries ?? []).map((e) => e.name)
+    (ls.getCompletionsAtPosition(probePath, pos, {})?.entries ?? []).map(
+      (e) => e.name
+    )
   )
   const missing = expected.filter((v) => !offered.has(v))
   if (missing.length) {
     failed = true
-    console.error(`✗ ${marker}: missing suggestions [${missing.join(', ')}] (got ${offered.size} entries)`)
+    console.error(
+      `✗ ${marker}: missing suggestions [${missing.join(', ')}] (got ${offered.size} entries)`
+    )
   } else {
-    console.log(`✓ ${marker}: ${expected.join(', ')} all offered (${offered.size} entries)`)
+    console.log(
+      `✓ ${marker}: ${expected.join(', ')} all offered (${offered.size} entries)`
+    )
   }
 }
 

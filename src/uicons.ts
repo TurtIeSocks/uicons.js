@@ -151,17 +151,33 @@ export class UICONS<
     }
   }
 
-  #buildExtensions(json: UiconsIndex<readonly string[]>): ExtensionMap {
+  #buildExtensions(
+    json: UiconsIndex<readonly string[]>,
+    path = ''
+  ): ExtensionMap {
     return Object.fromEntries(
       Object.entries(json)
         .map(([category, values]) => {
+          const location = path ? `${path}.${category}` : category
           if (Array.isArray(values)) {
+            for (const [index, value] of values.entries()) {
+              if (typeof value !== 'string') {
+                const type = Array.isArray(value)
+                  ? 'array'
+                  : value === null
+                    ? 'null'
+                    : typeof value
+                throw new TypeError(
+                  `Invalid UICONS index: ${location}[${index}] must be a filename string; received ${type}`
+                )
+              }
+            }
             return [
               category,
               values.length > 0 ? values[0].split('.').pop() : '',
             ]
           } else if (values && typeof values === 'object') {
-            const nested = this.#buildExtensions(values)
+            const nested = this.#buildExtensions(values, location)
             return [category, Object.keys(nested).length > 0 ? nested : '']
           }
           return [category, '']
@@ -249,10 +265,12 @@ export class UICONS<
    * This is used to initialize the UICONS class if you have already fetched the index.json file and want init the class synchronously
    * @param data The index.json file from the UICONS repository
    * @returns the same instance, typed with the provided index data
+   * @throws {TypeError} If a filename array contains a non-string entry
    */
   init<const D extends UiconsIndex<readonly string[]>>(
     data: D
   ): UICONS<Path, Ext, D> {
+    const extensionMap = this.#buildExtensions(data)
     this.#files = buildFiles(data)
     this.#raid = { egg: new Set(data.raid?.egg || []) }
     this.#reward = Object.fromEntries(
@@ -260,7 +278,7 @@ export class UICONS<
         .filter(([, v]) => Array.isArray(v) && v.length > 0)
         .map(([k, v]) => [k, new Set(v)])
     )
-    this.#extensionMap = this.#buildExtensions(data)
+    this.#extensionMap = extensionMap
     return this as unknown as UICONS<Path, Ext, D>
   }
 

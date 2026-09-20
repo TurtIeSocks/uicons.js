@@ -50,9 +50,15 @@ const CATEGORIES = [
 /** Categories whose files live in a folder named after the category itself. */
 type FlatCategory = (typeof CATEGORIES)[number]
 
+const filenameStrings = (values: readonly unknown[] = []): string[] =>
+  values.filter((value): value is string => typeof value === 'string')
+
 const buildFiles = (data: UiconsIndex<readonly string[]> = {}) =>
   Object.fromEntries(
-    CATEGORIES.map((category) => [category, new Set(data[category] || [])])
+    CATEGORIES.map((category) => [
+      category,
+      new Set(filenameStrings(data[category] || [])),
+    ])
   ) as Record<FlatCategory, Set<string>>
 
 /**
@@ -156,10 +162,8 @@ export class UICONS<
       Object.entries(json)
         .map(([category, values]) => {
           if (Array.isArray(values)) {
-            return [
-              category,
-              values.length > 0 ? values[0].split('.').pop() : '',
-            ]
+            const filename = values.find((value) => typeof value === 'string')
+            return [category, filename?.split('.').pop() ?? '']
           } else if (values && typeof values === 'object') {
             const nested = this.#buildExtensions(values)
             return [category, Object.keys(nested).length > 0 ? nested : '']
@@ -249,18 +253,20 @@ export class UICONS<
    * This is used to initialize the UICONS class if you have already fetched the index.json file and want init the class synchronously
    * @param data The index.json file from the UICONS repository
    * @returns the same instance, typed with the provided index data
+   * Non-string entries in filename arrays are ignored.
    */
   init<const D extends UiconsIndex<readonly string[]>>(
     data: D
   ): UICONS<Path, Ext, D> {
+    const extensionMap = this.#buildExtensions(data)
     this.#files = buildFiles(data)
-    this.#raid = { egg: new Set(data.raid?.egg || []) }
+    this.#raid = { egg: new Set(filenameStrings(data.raid?.egg || [])) }
     this.#reward = Object.fromEntries(
       Object.entries(data.reward || {})
         .filter(([, v]) => Array.isArray(v) && v.length > 0)
-        .map(([k, v]) => [k, new Set(v)])
+        .map(([k, v]) => [k, new Set(filenameStrings(v))])
     )
-    this.#extensionMap = this.#buildExtensions(data)
+    this.#extensionMap = extensionMap
     return this as unknown as UICONS<Path, Ext, D>
   }
 

@@ -50,15 +50,20 @@ const CATEGORIES = [
 /** Categories whose files live in a folder named after the category itself. */
 type FlatCategory = (typeof CATEGORIES)[number]
 
+/** Upstream indexes are untyped JSON, so only non-empty strings are filenames. */
+const isFilename = (value: unknown): value is string =>
+  typeof value === 'string' && value !== ''
+
 /**
- * The valid filenames of an index entry. Upstream indexes are untyped JSON,
- * so anything that is not an array of strings is dropped. Every file set and
- * the extension map read through this, so they cannot disagree.
+ * The valid filenames of an index entry, or none when it is not an array.
+ * The file sets and the extension map both filter with `isFilename`, so a
+ * file the extension was read from is always in its file set.
  */
 const fileNames = (values: unknown): string[] =>
-  Array.isArray(values)
-    ? values.filter((value): value is string => typeof value === 'string')
-    : []
+  Array.isArray(values) ? values.filter(isFilename) : []
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
 
 const buildFiles = (data: UiconsIndex<readonly string[]> = {}) =>
   Object.fromEntries(
@@ -166,7 +171,7 @@ export class UICONS<
       Object.entries(json)
         .map(([category, values]) => {
           if (Array.isArray(values)) {
-            const [first] = fileNames(values)
+            const first = values.find(isFilename)
             return [category, first ? first.split('.').pop() : '']
           } else if (values && typeof values === 'object') {
             const nested = this.#buildExtensions(values)
@@ -264,7 +269,7 @@ export class UICONS<
     this.#files = buildFiles(data)
     this.#raid = { egg: new Set(fileNames(data.raid?.egg)) }
     this.#reward = Object.fromEntries(
-      Object.entries(data.reward || {})
+      Object.entries(isRecord(data.reward) ? data.reward : {})
         .map(([k, v]) => [k, fileNames(v)] as const)
         .filter(([, names]) => names.length > 0)
         .map(([k, names]) => [k, new Set(names)])

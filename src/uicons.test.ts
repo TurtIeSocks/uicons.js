@@ -1,4 +1,5 @@
 import { Rpc } from '@na-ji/pogo-protos'
+import type { UiconsIndex } from './types.ts'
 import { UICONS } from './uicons.ts'
 
 const BASE_ICON_URL =
@@ -409,20 +410,21 @@ describe('weather', () => {
 })
 
 describe('malformed index', () => {
-  // The index is untyped JSON upstream, so entries can be any shape
-  const malformed = new UICONS({
-    path: BASE_ICON_URL,
-    data: {
-      pokemon: [[], '0.png', 7, null, '25.png'],
-      team: 'not an array',
-      raid: { egg: [{}, '1.png'] },
-      reward: {
-        item: [[], '1.png'],
-        stardust: [42, null],
-        experience: 'not an array',
-      },
-    } as never,
-  })
+  // The index is untyped JSON upstream, so entries can be any shape. Typing
+  // the literal as unknown mirrors what remoteInit does with a parsed response.
+  const upstreamIndex: unknown = {
+    pokemon: [[], '', '0.png', 7, null, '25.png'],
+    team: 'not an array',
+    raid: { egg: [{}, '1.png'] },
+    reward: {
+      item: [[], '1.png'],
+      stardust: [42, null],
+      experience: 'not an array',
+    },
+  }
+  const malformed = new UICONS({ path: BASE_ICON_URL }).init(
+    upstreamIndex as UiconsIndex
+  )
 
   test('init succeeds and valid icons resolve', () => {
     expect(malformed.pokemon({ pokemonId: 25 })).toBe(
@@ -435,7 +437,7 @@ describe('malformed index', () => {
       `${BASE_ICON_URL}/reward/item/1.png`
     )
   })
-  test('a first entry that is not a string does not set the extension', () => {
+  test('a first entry that is not a valid filename does not set the extension', () => {
     expect(malformed.pokemon()).toBe(`${BASE_ICON_URL}/pokemon/0.png`)
   })
   test('a category that is not an array is skipped', () => {
@@ -451,8 +453,16 @@ describe('malformed index', () => {
     expect(malformed.has('raid.egg', 1)).toBe(true)
     expect(malformed.has('reward.item', 1)).toBe(true)
   })
-  test('a reward type with no string entries is skipped', () => {
-    expect(malformed.has('reward.stardust' as never, 42)).toBe(false)
-    expect(malformed.has('reward.experience' as never, 0)).toBe(false)
+  test('a reward type with no valid filenames is skipped', () => {
+    expect(malformed.has('reward.stardust', 42)).toBe(false)
+    expect(malformed.has('reward.experience', 0)).toBe(false)
+  })
+  test('a reward section that is not an object is skipped', () => {
+    const arrayReward = new UICONS({ path: BASE_ICON_URL }).init({
+      pokemon: ['0.png'],
+      reward: ['1.png'],
+    } as unknown as UiconsIndex)
+    expect(arrayReward.has('pokemon', 0)).toBe(true)
+    expect(arrayReward.reward()).toBe('')
   })
 })

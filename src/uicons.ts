@@ -50,10 +50,57 @@ const CATEGORIES = [
 /** Categories whose files live in a folder named after the category itself. */
 type FlatCategory = (typeof CATEGORIES)[number]
 
+/** Upstream indexes are untyped JSON, so only non-empty strings are filenames. */
+const isFilename = (value: unknown): value is string =>
+  typeof value === 'string' && value !== ''
+
+/**
+ * The valid filenames of an index entry, or none when it is not an array.
+ * The file sets and the extension map both filter with `isFilename`, so a
+ * file the extension was read from is always in its file set.
+ */
+const fileNames = (values: unknown): string[] =>
+  Array.isArray(values) ? values.filter(isFilename) : []
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+
 const buildFiles = (data: UiconsIndex<readonly string[]> = {}) =>
   Object.fromEntries(
-    CATEGORIES.map((category) => [category, new Set(data[category] || [])])
+    CATEGORIES.map((category) => [category, new Set(fileNames(data[category]))])
   ) as Record<FlatCategory, Set<string>>
+
+/** The extension of the first valid filename, if there is one. */
+const extensionOf = (values: unknown) => {
+  const first = Array.isArray(values) ? values.find(isFilename) : undefined
+  return first?.split('.').pop()
+}
+
+/**
+ * Walks the same shape as the file sets (flat categories, `raid.egg` and
+ * `reward.{type}`), so a section the file sets skip never gets an extension.
+ */
+const buildExtensions = (
+  data: UiconsIndex<readonly string[]>
+): ExtensionMap => {
+  const flat = CATEGORIES.map((category) => [
+    category,
+    extensionOf(data[category]),
+  ])
+  const egg = extensionOf(isRecord(data.raid) ? data.raid.egg : undefined)
+  const reward = Object.fromEntries(
+    Object.entries(isRecord(data.reward) ? data.reward : {})
+      .map(([type, values]) => [type, extensionOf(values)] as const)
+      .filter(([, extension]) => extension)
+  )
+  return Object.fromEntries(
+    [
+      ...flat,
+      ['raid', egg ? { egg } : undefined],
+      ['reward', Object.keys(reward).length > 0 ? reward : undefined],
+    ].filter(([, extension]) => extension)
+  )
+}
 
 /**
  * Universal ICONS Class for Pokémon GO asset management
@@ -151,25 +198,6 @@ export class UICONS<
     }
   }
 
-  #buildExtensions(json: UiconsIndex<readonly string[]>): ExtensionMap {
-    return Object.fromEntries(
-      Object.entries(json)
-        .map(([category, values]) => {
-          if (Array.isArray(values)) {
-            return [
-              category,
-              values.length > 0 ? values[0].split('.').pop() : '',
-            ]
-          } else if (values && typeof values === 'object') {
-            const nested = this.#buildExtensions(values)
-            return [category, Object.keys(nested).length > 0 ? nested : '']
-          }
-          return [category, '']
-        })
-        .filter(([_, value]) => value !== '')
-    )
-  }
-
   #isReady(key?: keyof ExtensionMap): boolean {
     if (!this.#extensionMap) throw new Error('UICONS not initialized')
     if (key && !this.#extensionMap[key]) return false
@@ -254,13 +282,14 @@ export class UICONS<
     data: D
   ): UICONS<Path, Ext, D> {
     this.#files = buildFiles(data)
-    this.#raid = { egg: new Set(data.raid?.egg || []) }
+    this.#raid = { egg: new Set(fileNames(data.raid?.egg)) }
     this.#reward = Object.fromEntries(
-      Object.entries(data.reward || {})
-        .filter(([, v]) => Array.isArray(v) && v.length > 0)
-        .map(([k, v]) => [k, new Set(v)])
+      Object.entries(isRecord(data.reward) ? data.reward : {})
+        .map(([k, v]) => [k, fileNames(v)] as const)
+        .filter(([, names]) => names.length > 0)
+        .map(([k, names]) => [k, new Set(names)])
     )
-    this.#extensionMap = this.#buildExtensions(data)
+    this.#extensionMap = buildExtensions(data)
     return this as unknown as UICONS<Path, Ext, D>
   }
 

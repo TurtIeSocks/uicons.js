@@ -1,3 +1,12 @@
+## [3.1.1](https://github.com/TurtIeSocks/uicons.js/compare/v3.1.0...v3.1.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* address review findings on index filename filtering ([2fd47f6](https://github.com/TurtIeSocks/uicons.js/commit/2fd47f66c37fc9b3f08b776c5afe224ac78992b1))
+* build the extension map from the same shape as the file sets ([43a2fb9](https://github.com/TurtIeSocks/uicons.js/commit/43a2fb9f7bec6f83c7703368028150aa95469ceb))
+* skip non-string filenames in an index instead of failing init() ([f496b6a](https://github.com/TurtIeSocks/uicons.js/commit/f496b6a90d9cdd0a3fec1a44bf6f485da2d559e8))
+
 # [3.1.0](https://github.com/TurtIeSocks/uicons.js/compare/v3.0.1...v3.1.0) (2026-07-22)
 
 

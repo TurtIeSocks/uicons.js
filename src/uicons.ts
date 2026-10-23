@@ -50,9 +50,22 @@ const CATEGORIES = [
 /** Categories whose files live in a folder named after the category itself. */
 type FlatCategory = (typeof CATEGORIES)[number]
 
+/**
+ * The valid filenames of an index entry. Upstream indexes are untyped JSON,
+ * so anything that is not an array of strings is dropped. Every file set and
+ * the extension map read through this, so they cannot disagree.
+ */
+const fileNames = (values: unknown): string[] =>
+  Array.isArray(values)
+    ? values.filter((value): value is string => typeof value === 'string')
+    : []
+
 const buildFiles = (data: UiconsIndex<readonly string[]> = {}) =>
   Object.fromEntries(
-    CATEGORIES.map((category) => [category, new Set(data[category] || [])])
+    CATEGORIES.map((category) => [
+      category,
+      new Set(fileNames(data[category])),
+    ])
   ) as Record<FlatCategory, Set<string>>
 
 /**
@@ -156,10 +169,8 @@ export class UICONS<
       Object.entries(json)
         .map(([category, values]) => {
           if (Array.isArray(values)) {
-            return [
-              category,
-              values.length > 0 ? values[0].split('.').pop() : '',
-            ]
+            const [first] = fileNames(values)
+            return [category, first ? first.split('.').pop() : '']
           } else if (values && typeof values === 'object') {
             const nested = this.#buildExtensions(values)
             return [category, Object.keys(nested).length > 0 ? nested : '']
@@ -254,11 +265,12 @@ export class UICONS<
     data: D
   ): UICONS<Path, Ext, D> {
     this.#files = buildFiles(data)
-    this.#raid = { egg: new Set(data.raid?.egg || []) }
+    this.#raid = { egg: new Set(fileNames(data.raid?.egg)) }
     this.#reward = Object.fromEntries(
       Object.entries(data.reward || {})
-        .filter(([, v]) => Array.isArray(v) && v.length > 0)
-        .map(([k, v]) => [k, new Set(v)])
+        .map(([k, v]) => [k, fileNames(v)] as const)
+        .filter(([, names]) => names.length > 0)
+        .map(([k, names]) => [k, new Set(names)])
     )
     this.#extensionMap = this.#buildExtensions(data)
     return this as unknown as UICONS<Path, Ext, D>

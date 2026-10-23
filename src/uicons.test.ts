@@ -407,3 +407,52 @@ describe('weather', () => {
     ).toBe(`${BASE_ICON_URL}/weather/1_n.webp`)
   })
 })
+
+describe('malformed index', () => {
+  // The index is untyped JSON upstream, so entries can be any shape
+  const malformed = new UICONS({
+    path: BASE_ICON_URL,
+    data: {
+      pokemon: [[], '0.png', 7, null, '25.png'],
+      team: 'not an array',
+      raid: { egg: [{}, '1.png'] },
+      reward: {
+        item: [[], '1.png'],
+        stardust: [42, null],
+        experience: 'not an array',
+      },
+    } as never,
+  })
+
+  test('init succeeds and valid icons resolve', () => {
+    expect(malformed.pokemon({ pokemonId: 25 })).toBe(
+      `${BASE_ICON_URL}/pokemon/25.png`
+    )
+    expect(malformed.raidEgg({ level: 1 })).toBe(
+      `${BASE_ICON_URL}/raid/egg/1.png`
+    )
+    expect(malformed.reward({ questRewardType: 'item', rewardId: 1 })).toBe(
+      `${BASE_ICON_URL}/reward/item/1.png`
+    )
+  })
+  test('a first entry that is not a string does not set the extension', () => {
+    expect(malformed.pokemon()).toBe(`${BASE_ICON_URL}/pokemon/0.png`)
+  })
+  test('a category that is not an array is skipped', () => {
+    expect(malformed.team()).toBe('')
+    expect(malformed.has('team', 0)).toBe(false)
+  })
+  test('has agrees with the url getter', () => {
+    expect(malformed.has('pokemon', 25)).toBe(true)
+    expect(malformed.has('pokemon', 7)).toBe(false)
+    expect(malformed.pokemon({ pokemonId: 7 })).toBe(
+      `${BASE_ICON_URL}/pokemon/0.png`
+    )
+    expect(malformed.has('raid.egg', 1)).toBe(true)
+    expect(malformed.has('reward.item', 1)).toBe(true)
+  })
+  test('a reward type with no string entries is skipped', () => {
+    expect(malformed.has('reward.stardust' as never, 42)).toBe(false)
+    expect(malformed.has('reward.experience' as never, 0)).toBe(false)
+  })
+})

@@ -1,0 +1,91 @@
+# pogo-protos [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?hosted_button_id=WXA874KBC7RNN)
+Uses [protobuf.js](https://github.com/dcodeIO/protobuf.js) to compile the Protobuf files from
+[POGOProtos](https://github.com/Furtif/POGOProtos) into an easy to use Node module.
+
+[![Test Build](https://github.com/Furtif/pogo-protos/actions/workflows/test.yml/badge.svg)](https://github.com/Furtif/pogo-protos/actions)
+![license](https://img.shields.io/npm/l/pogo-protos.svg)
+
+
+## How to use
+```javascript
+const POGOProtos = require('pogo-protos');
+
+const nbPokemon = Object.keys(POGOProtos.Rpc.HoloPokemonId).length -1;
+console.log(`We have ${nbPokemon} pokemons in protos.`);
+const nbCostumes = Object.keys(POGOProtos.Rpc.PokemonDisplayProto.Costume).length -1;
+console.log(`We have ${nbCostumes} costumes in protos.`);
+const nbForms = Object.keys(POGOProtos.Rpc.PokemonDisplayProto.Form).length -1;
+console.log(`We have ${nbForms} forms in protos.`);
+const nbBadges = Object.keys(POGOProtos.Rpc.HoloBadgeType).length -1;
+console.log(`We have ${nbBadges} badges in protos.`);
+const nbMoves = Object.keys(POGOProtos.Rpc.HoloPokemonMove).length -1;
+console.log(`We have ${nbMoves} moves in protos.`);
+const nbItems = Object.keys(POGOProtos.Rpc.Item).length -1;
+console.log(`We have ${nbItems} items in protos.`);
+const nbMethodRequests = Object.keys(POGOProtos.Rpc.Method).length -1;
+console.log(`We have ${nbMethodRequests} method requests in protos.`);
+const nbSocialRequests = Object.keys(POGOProtos.Rpc.InternalSocialAction).length -1;
+console.log(`We have ${nbSocialRequests} social requests in protos.`);
+const nbPlatformRequests = Object.keys(POGOProtos.Rpc.PlatformClientAction).length -1;
+console.log(`We have ${nbPlatformRequests} platform requests in protos.`);
+const nbGameActionClientRequests = Object.keys(POGOProtos.Rpc.GameBackgroundModeAction).length -1;
+console.log(`We have ${nbGameActionClientRequests} game action client requests in protos.`);
+const nbGameActionRequests = Object.keys(POGOProtos.Rpc.GameIapAction).length -1;
+console.log(`We have ${nbGameActionRequests} game action requests in protos.`);
+const nbGameAdventureSyncRequests = Object.keys(POGOProtos.Rpc.GameAdventureSyncAction).length -1;
+console.log(`We have ${nbGameAdventureSyncRequests} game adventure sync requests in protos.`);
+const nbPGameOthersRequests = Object.keys(POGOProtos.Rpc.GameAccountRegistryActions).length -1;
+console.log(`We have ${nbPGameOthersRequests} game others requests in protos.`);
+const nbPlayerSubmissionsRequests = Object.keys(POGOProtos.Rpc.TitanPlayerSubmissionAction).length -1;
+console.log(`We have ${nbPlayerSubmissionsRequests} Player Submissions requests in protos.`);
+const nbGamefitnessRequests = Object.keys(POGOProtos.Rpc.GameFitnessAction).length -1;
+console.log(`We have ${nbGamefitnessRequests} game fitness requests in protos.`);
+
+// Count of all req's
+const all_in_one = nbMethodRequests 
++ nbSocialRequests 
++ nbPlatformRequests 
++ nbGameActionClientRequests 
++ nbGameActionRequests 
++ nbGameAdventureSyncRequests 
++ nbPGameOthersRequests 
++ nbPlayerSubmissionsRequests 
++ nbGamefitnessRequests;
+
+console.log(`We have ${all_in_one} (GLOBAL) multi method requests in protos.\n`);
+
+var myMessage = POGOProtos.Rpc.RecycleItemProto.fromObject({
+    item: POGOProtos.Rpc.Item.ITEM_POTION,
+    count: 50
+});
+  
+var encoded = POGOProtos.Rpc.RecycleItemProto.encode(myMessage).finish();
+var decodedAgain = POGOProtos.Rpc.RecycleItemProto.decode(encoded);
+console.log('Test encode/decode:\nItem: ' + decodedAgain.item + ' count: ' + decodedAgain.count);
+
+// will print:
+// We have x pokemons in protos.
+// We have x costumes in protos.
+// We have x forms in protos.
+// We have x badges in protos.
+// We have x moves in protos.
+// We have x items in protos.
+// We have x method requests in protos.
+// We have x social requests in protos.
+// We have x platform requests in protos.
+// We have x game action client requests in protos.
+// We have x game action requests in protos.
+// We have x game adventure sync requests in protos.
+// We have x game others requests in protos.
+// We have x Player Submissions requests in protos.
+// We have x game fitness requests in protos.
+// We have x (GLOBAL) multi method requests in protos.
+
+//Test encode/decode:
+//Item: 101 count: 50
+```
+
+For more details see the [protobuf.js documentation](https://github.com/dcodeIO/protobuf.js/wiki).
+
+## Usage with TypeScript
+TypeScript definitions are included. Modern IDE should use them automatically.

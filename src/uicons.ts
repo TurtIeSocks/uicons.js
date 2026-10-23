@@ -70,6 +70,38 @@ const buildFiles = (data: UiconsIndex<readonly string[]> = {}) =>
     CATEGORIES.map((category) => [category, new Set(fileNames(data[category]))])
   ) as Record<FlatCategory, Set<string>>
 
+/** The extension of the first valid filename, if there is one. */
+const extensionOf = (values: unknown) => {
+  const first = Array.isArray(values) ? values.find(isFilename) : undefined
+  return first?.split('.').pop()
+}
+
+/**
+ * Walks the same shape as the file sets (flat categories, `raid.egg` and
+ * `reward.{type}`), so a section the file sets skip never gets an extension.
+ */
+const buildExtensions = (
+  data: UiconsIndex<readonly string[]>
+): ExtensionMap => {
+  const flat = CATEGORIES.map((category) => [
+    category,
+    extensionOf(data[category]),
+  ])
+  const egg = extensionOf(isRecord(data.raid) ? data.raid.egg : undefined)
+  const reward = Object.fromEntries(
+    Object.entries(isRecord(data.reward) ? data.reward : {})
+      .map(([type, values]) => [type, extensionOf(values)] as const)
+      .filter(([, extension]) => extension)
+  )
+  return Object.fromEntries(
+    [
+      ...flat,
+      ['raid', egg ? { egg } : undefined],
+      ['reward', Object.keys(reward).length > 0 ? reward : undefined],
+    ].filter(([, extension]) => extension)
+  )
+}
+
 /**
  * Universal ICONS Class for Pokémon GO asset management
  *
@@ -166,23 +198,6 @@ export class UICONS<
     }
   }
 
-  #buildExtensions(json: UiconsIndex<readonly string[]>): ExtensionMap {
-    return Object.fromEntries(
-      Object.entries(json)
-        .map(([category, values]) => {
-          if (Array.isArray(values)) {
-            const first = values.find(isFilename)
-            return [category, first ? first.split('.').pop() : '']
-          } else if (values && typeof values === 'object') {
-            const nested = this.#buildExtensions(values)
-            return [category, Object.keys(nested).length > 0 ? nested : '']
-          }
-          return [category, '']
-        })
-        .filter(([_, value]) => value !== '')
-    )
-  }
-
   #isReady(key?: keyof ExtensionMap): boolean {
     if (!this.#extensionMap) throw new Error('UICONS not initialized')
     if (key && !this.#extensionMap[key]) return false
@@ -274,7 +289,7 @@ export class UICONS<
         .filter(([, names]) => names.length > 0)
         .map(([k, names]) => [k, new Set(names)])
     )
-    this.#extensionMap = this.#buildExtensions(data)
+    this.#extensionMap = buildExtensions(data)
     return this as unknown as UICONS<Path, Ext, D>
   }
 

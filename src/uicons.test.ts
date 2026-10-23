@@ -465,4 +465,12 @@ describe('malformed index', () => {
     expect(arrayReward.has('pokemon', 0)).toBe(true)
     expect(arrayReward.reward()).toBe('')
   })
+  test('a section of the wrong shape gets no extension', () => {
+    const wrongShape = new UICONS({ path: BASE_ICON_URL }).init({
+      raid: ['1.png'],
+      pokemon: { x: ['1.png'] },
+    } as unknown as UiconsIndex)
+    expect(wrongShape.raidEgg()).toBe('')
+    expect(wrongShape.pokemon()).toBe('')
+  })
 })

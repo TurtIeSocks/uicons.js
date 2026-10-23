@@ -62,10 +62,7 @@ const fileNames = (values: unknown): string[] =>
 
 const buildFiles = (data: UiconsIndex<readonly string[]> = {}) =>
   Object.fromEntries(
-    CATEGORIES.map((category) => [
-      category,
-      new Set(fileNames(data[category])),
-    ])
+    CATEGORIES.map((category) => [category, new Set(fileNames(data[category]))])
   ) as Record<FlatCategory, Set<string>>
 
 /**
